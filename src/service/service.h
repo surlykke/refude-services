@@ -25,19 +25,6 @@ private:
 	QLocalServer mServer;
 };
 
-class Service : public QThread {
-public:
-	Service(QIODevice* inOut);
-	virtual ~Service();
-
-protected:
-	void Q_DECL_OVERRIDE run();
-
-private:
-	QIODevice* mInOut;
-
-};
-
 
 
 #endif	/* SERVICELISTENER_H */

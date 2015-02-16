@@ -19,7 +19,8 @@ set(CLIENT_SOURCE_FILES
 
 set(SERVICE_SOURCE_FILES
     src/service/main.cpp
-	src/service/service_listener.cpp
+	src/service/service.cpp
+	src/service/request_handler.cpp
 )
 
 add_executable(${PROJECT}-client 

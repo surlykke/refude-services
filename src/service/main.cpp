@@ -1,4 +1,4 @@
-#include "service_listener.h"
+#include "service.h"
 #include <QCoreApplication>
 
 int main(int argc, char *argv[])

@@ -20,6 +20,8 @@ Unlike DBus whic is an RPC type of IPC,  RFDS and Rest is _document_ orientated.
 RFDS is a RestFul api. That means that it is based on the Http 1.1 protocol, and defined through a set of constraints within that. Some of these are:
 
 - Document type is a json type (TBD - but basically: Json with links.)
+- Character encoding of requests and responses are always UTF-8
+- If a resouce can be updated, it happens by the HTTP peration PATCH and with a json-patch document. 
 - Links should be opaque, but carrying _relation_ annotations to indicate their semantics.
 	- RFSD defines a set of relations. Individual services may define additional relations.
 	
@@ -38,6 +40,8 @@ The project has two aims:
 
 All of the above is probably rather abstract. Hopefuly it will be better as I get around to actually defining the api, but until then, here is an example which can perhaps illustrate the idea:
 
-###Icon service
+###Example: Icon service
 
-(TBD)
+This is a service an application can ask to resolve icon names. Let's assume the application wants the 'edit' icon, and that the user is using the 'oxygen' icon theme.
+
+Let's assume the service sits on the url [!

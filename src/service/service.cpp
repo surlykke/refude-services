@@ -5,14 +5,16 @@
  * Created on 14. februar 2015, 19:10
  */
 
-#include "service_listener.h"
+#include "service.h"
+#include "request_handler.h"
 
 #include <QLocalSocket>
 #include <QIODevice>
 #include <QDebug>
 #include <QString>
 #include <QFile>
-#include <qt/QtCore/qcoreapplication.h>
+#include <QThreadPool>
+#include <QCoreApplication>
 
 #define SERVICE_PATH "/home/christian/tmp/service"
 
@@ -38,10 +40,7 @@ void ServiceListener::run()
 	{
 		qDebug() << "Incoming..";
 		QLocalSocket *socket = mServer.nextPendingConnection();
-		Service *service = new Service(socket);
-		socket->moveToThread(service);
-		service->start();
-		qDebug() << "Service started...";
+		RequestHandler::handleRequest(socket);
 	}
 
 	QCoreApplication::exit(0);
@@ -53,29 +52,3 @@ ServiceListener::~ServiceListener()
 {
 }
 
-Service::Service(QIODevice* inOut) : mInOut(inOut)
-{
-}
-
-Service::~Service()
-{
-	qDebug() << "Service destructor";
-}
-
-
-
-void Service::run() 
-{
-	while (true) 
-	{
-		if (mInOut->waitForReadyRead(-1))
-		{
-			qDebug() << mInOut->readAll();
-		}
-		else 
-		{
-			qDebug() << "dying..";
-			return;
-		}
-	}
-}
