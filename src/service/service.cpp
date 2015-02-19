@@ -6,7 +6,7 @@
  */
 
 #include "service.h"
-#include "request_handler.h"
+#include "requesthandler.h"
 
 #include <QLocalSocket>
 #include <QIODevice>
@@ -18,7 +18,8 @@
 
 #define SERVICE_PATH "/home/christian/tmp/service"
 
-ServiceListener::ServiceListener(): mServer()
+ServiceListener::ServiceListener(): 
+	mServer(), mRequestQueue()
 {
 }
 
@@ -36,11 +37,16 @@ void ServiceListener::run()
 		QCoreApplication::exit(1);
 	}
 
+	for (int i = 0; i < 5; i++)
+	{
+		(new RequestHandler(i, &mRequestQueue))->start();
+	}
+	
 	while(mServer.waitForNewConnection(-1)) 
 	{
 		qDebug() << "Incoming..";
 		QLocalSocket *socket = mServer.nextPendingConnection();
-		RequestHandler::handleRequest(socket);
+		mRequestQueue.enqueue(socket);
 	}
 
 	QCoreApplication::exit(0);

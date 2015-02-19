@@ -18,9 +18,11 @@ set(CLIENT_SOURCE_FILES
 )
 
 set(SERVICE_SOURCE_FILES
-    src/service/main.cpp
+	src/service/main.cpp
 	src/service/service.cpp
-	src/service/request_handler.cpp
+	src/service/requesthandler.cpp
+	src/service/requestqueue.cpp
+	src/service/httpheaders.cpp 
 )
 
 add_executable(${PROJECT}-client 

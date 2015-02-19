@@ -8,6 +8,8 @@
 #ifndef REQUESTHANDLER_H
 #define	REQUESTHANDLER_H
 
+#include "requestqueue.h"
+
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
@@ -17,22 +19,19 @@ class QIODevice;
 class RequestHandler : public QThread
 {
 public:
-	static void handleRequest(QIODevice* inOut);
-    virtual ~RequestHandler();
+    RequestHandler(int num, RequestQueue* requestQueue);
+	virtual ~RequestHandler();
 
 protected:	
 	virtual void Q_DECL_OVERRIDE run();
 
-
 private:
-	static QWaitCondition mWait;	
-	static QMutex mLock;
-    
-	RequestHandler();
+	RequestQueue *mRequestQueue;
 	QIODevice *mInOut;
 	char incoming[8192];
-	bool mIdle;	
+	int mNum;
 };
+
 
 #endif	/* REQUESTHANDLER_H */
 

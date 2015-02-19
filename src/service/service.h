@@ -10,6 +10,9 @@
 
 #include <QLocalServer>
 #include <QThread>
+#include <QVector>
+
+#include "requestqueue.h"
 
 class QIODevice;
 
@@ -23,6 +26,8 @@ protected:
 
 private:
 	QLocalServer mServer;
+	RequestQueue mRequestQueue;
+	
 };
 
 
