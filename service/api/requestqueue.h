@@ -8,26 +8,24 @@
 #ifndef REQUESTQUEUE_H
 #define	REQUESTQUEUE_H
 
-#include <QMutex>
-#include <QWaitCondition>
-#include <QVector>
+#include <pthread.h>
 
 class RequestQueue {
 public:
 	RequestQueue();
 	virtual ~RequestQueue();
 	
-	void enqueue(QIODevice *ioDevice);
-	QIODevice *dequeue();
+	void enqueue(int requestSocket);
+	int dequeue();
 	
 private:
 	static const int mask = 7;	
 	void increment(int& index) { index = (index + 1) & 7; }
 		
-	QIODevice* mQueue[8];
-	QWaitCondition mNotFull;	
-	QWaitCondition mNotEmpty;
-	QMutex mLock;
+	int mQueue[8];
+	pthread_mutex_t mLock;
+	pthread_cond_t mNotFull;	
+	pthread_cond_t mNotEmpty;
 	int mSize;
 	int queueStart;
 	int	queueEnd; 

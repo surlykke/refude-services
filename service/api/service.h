@@ -8,29 +8,26 @@
 #ifndef SERVICELISTENER_H
 #define	SERVICELISTENER_H
 
-#include <QLocalServer>
-#include <QThread>
-#include <QVector>
+#include <pthread.h>
+#include <linux/un.h>
 
 #include "requestqueue.h"
 
-class QIODevice;
-
-class ServiceListener : public QThread {
+class ServiceListener {
 public:
     ServiceListener();
     virtual ~ServiceListener();
 
-protected:
-	void Q_DECL_OVERRIDE run();
+	bool setup(const char* socketPath);
+
+	static void* launch(void* serviceListenerPtr);
 
 private:
-	QLocalServer mServer;
-	RequestQueue mRequestQueue;
+	void run();
 	
+	int listenSocket;
+	RequestQueue requestQueue;
 };
-
-
 
 #endif	/* SERVICELISTENER_H */
 
