@@ -1,22 +1,8 @@
-/* 
- * File:   main.cpp
- * Author: Christian Surlykke <christian@surlykke.dk>
- *
- * Created on 1. marts 2015, 21:22
- */
+#include <sys/types.h>
+#include <sys/socket.h>
 
-#include <QCoreApplication>
-
-#include "power.h"
-
-/*
- * 
- */
-int main(int argc, char** argv)
+int main(int argc, char *argv[])
 {
-	QCoreApplication app(argc, argv);
-	Power rfdsBattery;
-	
-    return app.exec();
+	 
+	return 0;
 }
-
