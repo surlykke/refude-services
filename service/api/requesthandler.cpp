@@ -7,14 +7,19 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "requesthandler.h"
 #include "requestqueue.h"
 #include "httpprotocol.h"
 
-RequestHandler::RequestHandler(RequestQueue *requestQueue) :
-mRequestQueue(requestQueue), mRequestSocket(-1),
-mBufferEnd(0), mNextLineStart(0), mState(START)
+RequestHandler::RequestHandler(RequestQueue *requestQueue, ResourceMap* resourceMap) :
+	mRequestQueue(requestQueue), 
+	mResourceMap(resourceMap),
+	mRequestSocket(-1),
+	mBufferEnd(0), 
+	mNextLineStart(0), 
+	mState(START)
 {
 }
 
@@ -32,15 +37,17 @@ void* RequestHandler::launch(void* requestHandlerPtr)
 
 void RequestHandler::run()
 {
+	printf("RequestHandler::run..\n");
     for (;;)
     {
         mRequestSocket = mRequestQueue->dequeue();
+		printf("Got a socket");
         mBufferEnd = mNextLineStart = 0;
         mBodyStart = -1;
         mState = START;
 
-		for(;;)
-		{
+		/*for(;;)
+		{*/
             ssize_t bytesRead = read(mRequestSocket, mBuffer + mBufferEnd, 8192 - mBufferEnd);
 
             if (bytesRead <= 0)
@@ -48,8 +55,11 @@ void RequestHandler::run()
                 internalError();
                 return;
             }
+			printf("Read: %s\n", mBuffer);
+			write(mRequestSocket, "yeeehar", 7);
+			close(mRequestSocket);
 
-            mBufferEnd += bytesRead;
+            /*mBufferEnd += bytesRead;
 			if (mState <= HEADERS)
             {
                 processHeaders();
@@ -57,9 +67,9 @@ void RequestHandler::run()
             else
             {
                 //FIXME
-            }
+            }*/
 
-        }
+        /*}*/
     }
 }
 

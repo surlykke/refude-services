@@ -6,6 +6,6 @@ find_package(Qt5Core REQUIRED)
 
 file(GLOB SOURCE_FILES *.cpp)
 
-add_executable(${PROJECT} ${SOURCE_FILES})
+add_library(${PROJECT} ${SOURCE_FILES})
 
 target_link_libraries(${PROJECT} pthread)

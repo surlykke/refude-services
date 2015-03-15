@@ -12,22 +12,28 @@
 #include <linux/un.h>
 
 #include "requestqueue.h"
+#include "abstractresource.h"
 
 class ServiceListener {
 public:
     ServiceListener();
     virtual ~ServiceListener();
 
-	bool setup(const char* socketPath);
-
-	static void* launch(void* serviceListenerPtr);
+	void setup(const char* socketPath);
+	void map(AbstractResource* resource, const char* path);
+	bool unmap(AbstractResource* resource);
 
 private:
+	
+	static void* startListenThread(void* serviceListenerPtr);
 	void run();
 	
 	int listenSocket;
 	RequestQueue requestQueue;
+	ResourceMap mResourceMap;
 };
+
+
 
 #endif	/* SERVICELISTENER_H */
 

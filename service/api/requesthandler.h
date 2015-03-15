@@ -9,11 +9,12 @@
 #define	REQUESTHANDLER_H
 
 #include "requestqueue.h"
+#include "abstractresource.h"
 
 class RequestHandler 
 {
 public:
-    RequestHandler(RequestQueue* requestQueue);
+    RequestHandler(RequestQueue* requestQueue, ResourceMap* resourceMap);
 	virtual ~RequestHandler();
 
 	void start();
@@ -31,6 +32,7 @@ private:
 	void getPath(int from, int to);
 
 	RequestQueue *mRequestQueue;
+	ResourceMap* mResourceMap;
 	int mRequestSocket;
 	static const int bufferCapacity = 8192;
 	char mBuffer[bufferCapacity];

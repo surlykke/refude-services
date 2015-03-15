@@ -9,7 +9,9 @@ find_package(Qt5Core REQUIRED)
 
 file(GLOB SOURCE_FILES *.cpp)
 
+include_directories(${CMAKE_SOURCE_DIR}/service/api)
+
 add_executable(${PROJECT} ${SOURCE_FILES} ) 
 
-target_link_libraries(${PROJECT} Qt5::Core Qt5::Network)
+target_link_libraries(${PROJECT} Qt5::Core pthread Qt5::Network ${CMAKE_BINARY_DIR}/service/api/librfds-api.a )
 

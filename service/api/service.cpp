@@ -8,6 +8,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <stdio.h>
+#include <error.h>
+#include <errno.h>
 
 #include "service.h"
 #include "requesthandler.h"
@@ -22,12 +25,11 @@ ServiceListener::~ServiceListener()
 {
 }
 
-bool ServiceListener::setup(const char* socketPath)
+void ServiceListener::setup(const char* socketPath)
 {
 	if (strlen(socketPath) >= UNIX_PATH_MAX)
 	{
-		// Log error
-		return false;
+		error(1, errno, "socketPath to long");
 	}
 		
 	struct sockaddr_un sockaddr;
@@ -35,39 +37,36 @@ bool ServiceListener::setup(const char* socketPath)
 	
 	if ((listenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)	
 	{
-		// Log error
-		return false;
+		error(1, errno, "creation of listen socket failed");
 	}
 
 	if ((bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(struct sockaddr_un))) < 0)
 	{
-		// Log error
-		return false;
+		error(1, errno, "binding to listen socket failed");
 	}
 
 	if (listen(listenSocket, 8) < 0)
 	{
-		// Log error
-		return false;
+		error(1, errno, "Listen failed");
 	}
 
 	pthread_t threads[5];	
 	for (int i = 0; i < 5; i++)
 	{
-		pthread_create(threads + i, 0, RequestHandler::launch, new RequestHandler(&requestQueue));
+		if (pthread_create(threads + i, 0, RequestHandler::launch, new RequestHandler(&requestQueue, &mResourceMap)) < 0)
+		{
+			error(1, errno, "Thread creation failed");
+		}
 	}
 	
 	pthread_t thread;
-	if (pthread_create(&thread, 0, &ServiceListener::launch, this) < 0)
+	if (pthread_create(&thread, 0, &ServiceListener::startListenThread, this) < 0)
 	{
-		// Log error
-		return false;
+		error(1, errno, "Thread creation failed");
 	}
-
-	return true;
 }
 
-void* ServiceListener::launch(void* serviceListenerPtr)
+void* ServiceListener::startListenThread(void* serviceListenerPtr)
 {
 	((ServiceListener*) serviceListenerPtr)->run();
 	return NULL;
@@ -76,14 +75,16 @@ void* ServiceListener::launch(void* serviceListenerPtr)
 
 void ServiceListener::run()
 {
+	printf("ServiceListener::run.. \n");
 	for(;;)	
 	{
 		int requestSocket;
 		if ((requestSocket = accept(listenSocket, NULL, 0)) < 0)
 		{
-			// Log error
-			return;
+			error(0, errno, "accept");
 		}
+
+		printf("Incoming...\n");
 
 		requestQueue.enqueue(requestSocket);
 	}

@@ -6,6 +6,7 @@
  */
 
 #include <pthread.h>
+#include <stdio.h>
 
 #include "requestqueue.h"
 
@@ -32,7 +33,7 @@ void RequestQueue::enqueue(int requestSocket)
 
 	mQueue[queueEnd] = requestSocket;
 	increment(queueEnd);
-	
+	printf("enqueue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
 	pthread_cond_signal(&mNotEmpty);
 	pthread_mutex_unlock(&mLock);
 }
@@ -50,6 +51,7 @@ int RequestQueue::dequeue()
 	mQueue[queueStart] = 0;
 	increment(queueStart);
 
+	printf("dequeue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
 	pthread_cond_signal(&mNotFull);
 	pthread_mutex_unlock(&mLock);
 
