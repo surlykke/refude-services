@@ -14,12 +14,8 @@
 #include "httpprotocol.h"
 
 RequestHandler::RequestHandler(RequestQueue *requestQueue, ResourceMap* resourceMap) :
-	mRequestQueue(requestQueue), 
-	mResourceMap(resourceMap),
-	mRequestSocket(-1),
-	mBufferEnd(0), 
-	mNextLineStart(0), 
-	mState(START)
+mRequestQueue(requestQueue),
+mResourceMap(resourceMap)
 {
 }
 
@@ -30,118 +26,173 @@ RequestHandler::~RequestHandler()
 
 void* RequestHandler::launch(void* requestHandlerPtr)
 {
-	((RequestHandler*) requestHandlerPtr)->run();
-	return NULL;
+    ((RequestHandler*) requestHandlerPtr)->run();
+    return NULL;
 }
-
 
 void RequestHandler::run()
 {
-	printf("RequestHandler::run..\n");
+    printf("RequestHandler::run..\n");
     for (;;)
     {
         mRequestSocket = mRequestQueue->dequeue();
-		printf("Got a socket");
-        mBufferEnd = mNextLineStart = 0;
-        mBodyStart = -1;
-        mState = START;
+        printf("Got a socket\n");
+        try
+        {
 
-		/*for(;;)
-		{*/
-            ssize_t bytesRead = read(mRequestSocket, mBuffer + mBufferEnd, 8192 - mBufferEnd);
+            mHttpRequest.clear();
+            mHeadersDone = false;
+            mReceived = 0;
+            mNextLineStart = 0;
 
-            if (bytesRead <= 0)
+            mPathStart = 0;
+            mQueryStringStart = 0;
+            mContentLength = 0;
+            mBodyStart = 0;
+
+            for (;;)
             {
-                internalError();
-                return;
+                printf("Reading..");
+                ssize_t bytesRead = read(mRequestSocket, mBuffer + mReceived, 8192 - mReceived);
+                printf("Read: %s", mBuffer + mReceived);
+                mReceived += bytesRead;
+
+                if (bytesRead <= 0)
+                {
+                    throw Status::Http500;
+                }
+                
+				if (!mHeadersDone)
+                {
+                    processLines();
+                }
+
+                if (mHeadersDone && mReceived >= (mBodyStart + mContentLength))
+                {
+                    endOfRequest();
+					close(mRequestSocket);
+                    break;
+                }
             }
-			printf("Read: %s\n", mBuffer);
-			write(mRequestSocket, "yeeehar", 7);
-			close(mRequestSocket);
-
-            /*mBufferEnd += bytesRead;
-			if (mState <= HEADERS)
-            {
-                processHeaders();
-            }
-            else
-            {
-                //FIXME
-            }*/
-
-        /*}*/
+        }
+        catch (Status status)
+        {
+            printf("Error");
+            write(mRequestSocket, statusLine(status), strlen(statusLine(status)));
+            write(mRequestSocket, "\r\n", 2);
+            close(mRequestSocket);
+        }
     }
 }
 
-void RequestHandler::processHeaders()
+void RequestHandler::processLines()
 {
     int p = mNextLineStart;
-    while (p < mBufferEnd - 1)
+    for (; p < mReceived; p++)
     {
         if (mBuffer[p] == '\r' && mBuffer[p + 1] == '\n')
         {
-            if (p == mNextLineStart) // Empty line signals end of header section
+            if (mNextLineStart == 0)
             {
-                mState = BODY;
-                return;
+                processMethod(p + 2);
+            }
+            else if (p == mNextLineStart) // Empty line signals end of header section
+            {
+                mBodyStart = p + 2;
+                endOfHeaders();
+
             }
             else
             {
-                processHeaderLine(mNextLineStart, p);
+                processHeaderLine(mNextLineStart, p + 2);
             }
+            mNextLineStart = p + 2;
         }
     }
 }
 
 void RequestHandler::processMethod(int lineLength)
 {
-	if (!strncmp("GET", mBuffer, 3))
-	{
-		/* Handle GET */
-	}
-	else if (!strncmp("PATCH", mBuffer, 5))
-	{
-		/* Handle PATCH */
-	}
-	else 
-	{
-	}
+    printf("processMethod\n");
+    mHttpRequest.method = string2Method(mBuffer);
+
+    int p = methodLength(mHttpRequest.method);
+    p = skipSpace(p, lineLength - 2);
+
+    if (p == methodLength(mHttpRequest.method)) // No space after method
+    {
+        throw Status::Http400;
+    }
+
+    mPathStart = p;
+
+    for (p++; p < lineLength - 2; p++)
+    {
+        if (isspace(mBuffer[p]))
+        {
+            mBuffer[p] = '\0';
+            break;
+        }
+        if (mBuffer[p] == '?')
+        {
+            mQueryStringStart = p + 1;
+            mBuffer[p] = '\0';
+        }
+    }
+    printf("path: %s\n", mBuffer + mPathStart);
+    printf("queryString: %s\n", mBuffer + mQueryStringStart);
+}
+
+void RequestHandler::endOfHeaders()
+{
+    printf("endOfHeaders\n");
+    if (mHttpRequest.method == Method::UNKNOWN)
+    {
+        throw Status::Http400;
+    }
+
+    mHeadersDone = true;
+}
+
+void RequestHandler::endOfRequest()
+{
+    mHttpRequest.path = mBuffer + mPathStart;
+    mHttpRequest.queryString = mBuffer + mQueryStringStart;
+    mHttpRequest.body = mBuffer + mBodyStart;
+
+
+    // Mock..
+    const char* response =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/json+vnd.rfds; charset=utf-8\r\n"
+        "Content-Length: 2\r\n"
+        "\r\n"
+        "{}";
+
+	printf("Writing:\n%s", response);
+
+    write(mRequestSocket, response, strlen(response));
+}
+
+int RequestHandler::skipSpace(int from, int to)
+{
+    while (from < to && isspace(mBuffer[from]))
+        from++;
+
+    return from;
 }
 
 void RequestHandler::processHeaderLine(int from, int to)
 {
-    if (mNextLineStart == 0)
+    printf("processHeaderLine\n");
+    if (strncasecmp(mBuffer + from, "content-length", 14) == 0)
     {
-       if (!strncmp("GET", mBuffer, 3))
+        if (mBuffer[from + 15] != ':')
         {
-            /* Handle GET */
+            throw Status::Http400;
         }
-        else if (!strncmp("PATCH", mBuffer, 5))
-        {
-            /* Handle PATCH */
-        }
-		else 
-		{
-		}
+
+        mContentLength = atoi(mBuffer + 15);
     }
-}
-
-
-//void RequestHandler::cannedResponse()
-//{
-//    const char* response =
-//        "HTTP/1.1 200 OK\r\n"
-//        "Content-Type: application/json+vnd.rfds; charset=utf-8\r\n"
-//        "Content-Length: 17\r\n"
-//        "\r\n"
-//        "{\"key\" : \"value\"}";
-//
-//    mSocket->write(response);
-//}
-
-
-
-void RequestHandler::internalError()
-{
 
 }

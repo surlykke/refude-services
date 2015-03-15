@@ -17,6 +17,9 @@ RequestQueue::RequestQueue()
 	mNotFull = PTHREAD_COND_INITIALIZER;
 
 	for (int i = 0; i < 8; i++) mQueue[i] = 0;
+	
+	queueStart = 0;
+	queueEnd = 0;
 }
 
 RequestQueue::~RequestQueue()
@@ -36,6 +39,7 @@ void RequestQueue::enqueue(int requestSocket)
 	printf("enqueue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
 	pthread_cond_signal(&mNotEmpty);
 	pthread_mutex_unlock(&mLock);
+	printf("enqueue done\n");
 }
 
 int RequestQueue::dequeue()
@@ -55,6 +59,7 @@ int RequestQueue::dequeue()
 	pthread_cond_signal(&mNotFull);
 	pthread_mutex_unlock(&mLock);
 
+	printf("dequeue done\n");
 	return dequeuedSocket;
 }
 

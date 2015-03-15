@@ -21,9 +21,11 @@ enum class Method {
 	UNKNOWN
 };
 
-Method fromStr(const char* str);
+Method string2Method(const char* str);
+int methodLength(Method method);
 
-enum class Header {
+
+enum class Header : int {
 	accept_charset,
 	accept_encoding,
 	accept_language,
@@ -54,10 +56,14 @@ enum class Header {
 	user_agent,
 	upgrade,
 	via,
-	warning
+	warning,
+	unknown
 };
 
 const char *strVal(Header header);
+
+Header string2Header(const char* str);
+
 
 enum class Status {
 	Http200,

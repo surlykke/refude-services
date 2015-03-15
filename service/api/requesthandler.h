@@ -10,6 +10,7 @@
 
 #include "requestqueue.h"
 #include "abstractresource.h"
+#include "httprequest.h"
 
 class RequestHandler 
 {
@@ -24,33 +25,30 @@ public:
 private:
 	void run();
 	
-	void internalError();
-	void error(const char* message);
-	void processHeaders();
+	void processLines();
 	void processMethod(int lineLength);	
 	void processHeaderLine(int from, int to);	
-	void getPath(int from, int to);
+	void endOfHeaders();
+	void endOfRequest();	
+	int skipSpace(int from, int to);
 
 	RequestQueue *mRequestQueue;
 	ResourceMap* mResourceMap;
+
 	int mRequestSocket;
 	static const int bufferCapacity = 8192;
 	char mBuffer[bufferCapacity];
-	int mBufferEnd;
+
+	HttpRequest mHttpRequest;
+	bool mHeadersDone;
+	int mReceived;
+	int mProcessed;
 	int mNextLineStart;
+
+	int mPathStart;
+	int mQueryStringStart;
+	int mContentLength;
 	int mBodyStart;
-
-	enum
-	{
-		START,	
-		HEADERS,
-		ERR_METHOD_NOT_SUPPORTED,
-		ERR_UNKNOWN_HEADER,
-		ERR_INVALID_HEADER,
-		BODY,
-		DONE
-	} mState;
-
 
 };
 

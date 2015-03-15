@@ -8,7 +8,7 @@
 #include "httpprotocol.h"
 #include <string.h>
 
-Method fromStr(const char* str)
+Method string2Method(const char* str)
 {
 
 	if (strncmp("GET", str, 3) == 0) return Method::GET;
@@ -22,6 +22,13 @@ Method fromStr(const char* str)
 	if (strncmp("CONNECT", str, 7) == 0) return Method::CONNECT;
 
 	return Method::UNKNOWN;
+}
+
+int methodLengths[] = { 3, 5, 4, 6, 3, 4, 5, 7, 7 };
+
+int methodLength(Method method)
+{
+	return methodLengths[(int) method];
 }
 
 const char* header_str_value[] = 
@@ -56,12 +63,26 @@ const char* header_str_value[] =
 	"user-agent",
 	"upgrade",
 	"via",
-	"warning" 
+	"warning",
+	"unknown"
 };
 
 const char* strVal(Header header)
 {
 	return header_str_value[(int) header];
+}
+
+Header string2Header(const char* str)
+{
+	for(int i = 0; i < (int) Header::unknown; i++)
+	{
+		if (strcasecmp(str, header_str_value[i]) == 0)
+		{
+			return (Header) i;
+		}
+	}
+
+	return Header::unknown;
 }
 
 const char* status_line[] =
@@ -130,3 +151,7 @@ const char* status_line[] =
 };
 
 
+const char* statusLine(Status status) 
+{
+	return status_line[(int)status];
+}

@@ -87,6 +87,7 @@ void ServiceListener::run()
 		printf("Incoming...\n");
 
 		requestQueue.enqueue(requestSocket);
+		printf("enqueued..");
 	}
 }
 

@@ -26,7 +26,6 @@ private:
 	pthread_mutex_t mLock;
 	pthread_cond_t mNotFull;	
 	pthread_cond_t mNotEmpty;
-	int mSize;
 	int queueStart;
 	int	queueEnd; 
 
