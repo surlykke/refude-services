@@ -32,7 +32,6 @@ void* RequestHandler::launch(void* requestHandlerPtr)
 
 void RequestHandler::run()
 {
-    printf("RequestHandler::run..\n");
     for (;;)
     {
         _requestSocket = mRequestQueue->dequeue();
@@ -77,13 +76,10 @@ void RequestHandler::run()
 
 void RequestHandler::readRequestLine()
 {
-	printf("Read requestLine\n");
 	while (nextChar() != ' ');
 
 	_method = string2Method(_buffer);
 	
-	printf("_method: %d\n", _method);
-
 	if (_method == Method::UNKNOWN)
 	{
 		throw Status::Http403;
@@ -91,13 +87,10 @@ void RequestHandler::readRequestLine()
 	
 	_pathStart = _currentPos + 1;
 
-	printf("Path start at:\n%s\n", _buffer + _pathStart);
-
 	while (! isspace(nextChar()))
 	{
 		if (_buffer[_currentPos] == '?')
 		{
-			printf("Found '?' at\n%s\n", _buffer + _currentPos);
 			_queryStringStart = _currentPos + 1;
 			_buffer[_currentPos] = '\0';
 		}
@@ -112,18 +105,12 @@ void RequestHandler::readRequestLine()
 	int protocolStart = _currentPos + 1;
 
 	while (! isspace(nextChar()));
-
 	
-	printf("Looking for protocol at\n%s\n", _buffer + protocolStart);
-
 	if (strncmp(_buffer + protocolStart, "HTTP/1.1", 8) != 0)
 	{
 		throw Status::Http505;
 	}
 
-	printf("_currentPos - protocolStart = %d\n", _currentPos - protocolStart);
-
-	printf(" current and next: %d %d\n", _buffer[_currentPos], _buffer[_currentPos + 1]);
 	if (_buffer[_currentPos] != '\r' || nextChar() != '\n')
 	{
 		throw Status::Http403;
@@ -137,7 +124,6 @@ void RequestHandler::readRequestLine()
  */
 void RequestHandler::readHeaderLine()
 {
-	printf("readHeaderling at:\n%s\n", _buffer + _currentPos + 1);
 	int colonPos = -1;
 	int lineStart = _currentPos + 1;
 
@@ -160,12 +146,8 @@ void RequestHandler::readHeaderLine()
 	
 	if (nextChar() != '\n') // TODO: Is this right?
 	{
-		printf("No \\n\n");
 		throw Status::Http403;
 	}
-	
-
-	printf("lineStart: %d, _currentPos: %d\n", lineStart, _currentPos);
 	
 	if (_currentPos == lineStart + 1)
 	{
@@ -176,7 +158,6 @@ void RequestHandler::readHeaderLine()
 	{	
 		if (colonPos < 1) // None or empty header name
 		{
-			printf("No colon..\n");
 			throw Status::Http403;
 		}
 	
@@ -189,10 +170,8 @@ void RequestHandler::readHeaderLine()
 
 void RequestHandler::readBody()
 {
-	printf("readBody, _bodyStart: %d, _contentLength: %d, _received: %d\n", _bodyStart, _contentLength, _received);
 	while (_bodyStart + _contentLength > _received)	
 	{
-		printf("readBody - receive\n");	
 		receive();
 	}
 	_buffer[_bodyStart + _contentLength] = '\0';
@@ -228,8 +207,6 @@ void RequestHandler::receive()
 
 void RequestHandler::addHeader(const char* name, const char* value)
 {
-	printf("Add header: <%s> -> <%s>", name, value);
-	
 	if (strcasecmp(name, "content-length") == 0)
 	{
 		char* valueEnd;
