@@ -97,7 +97,9 @@ void RequestHandler::readRequestLine()
 	{
 		if (_buffer[_currentPos] == '?')
 		{
-			_queryStringStart = _currentPos;
+			printf("Found '?' at\n%s\n", _buffer + _currentPos);
+			_queryStringStart = _currentPos + 1;
+			_buffer[_currentPos] = '\0';
 		}
 	};
 
