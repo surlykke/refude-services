@@ -8,17 +8,17 @@
 #ifndef POWER_H
 #define	POWER_H
 
-#include <QObject>
-#include <QList>
-#include <QJsonObject>
+#include "abstractresource.h"
 
-class Power : QObject
+class Power : public AbstractResource
 {
-	Q_OBJECT
-
 public:
+	static const char* cannedResponse;
+
 	Power();
 	virtual ~Power();
+
+	virtual void doGET(int socket, const char* path, const char* queryString);
 	
 };
 

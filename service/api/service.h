@@ -21,7 +21,7 @@ public:
 
 	void setup(const char* socketPath);
 	void map(AbstractResource* resource, const char* path);
-	bool unmap(AbstractResource* resource);
+	void unmap(AbstractResource* resource);
 
 private:
 	

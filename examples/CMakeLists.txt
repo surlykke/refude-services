@@ -1,4 +1,4 @@
-set(PROJECT "rfds-examples")
+set(PROJECT "rfds-power")
 project(${PROJECT})
 
 set(CMAKE_AUTOMOC ON)

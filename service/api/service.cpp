@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <error.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "service.h"
 #include "requesthandler.h"
@@ -31,7 +32,7 @@ void ServiceListener::setup(const char* socketPath)
 	{
 		error(1, errno, "socketPath to long");
 	}
-	
+
 	struct sockaddr_un sockaddr;
 	memset(&sockaddr, 0, sizeof(struct sockaddr_un));
 	sockaddr.sun_family = AF_UNIX; 
@@ -41,6 +42,9 @@ void ServiceListener::setup(const char* socketPath)
 	{
 		error(1, errno, "creation of listen socket failed");
 	}
+
+
+	unlink(socketPath);
 
 	if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) < 0)
 	{
@@ -93,5 +97,13 @@ void ServiceListener::run()
 	}
 }
 
+void ServiceListener::map(AbstractResource* resource, const char* path)
+{
+	mResourceMap.map(path, resource);
+}
 
+void ServiceListener::unmap(AbstractResource* resource)
+{
+	mResourceMap.unMap(resource);
+}
 

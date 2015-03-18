@@ -19,9 +19,9 @@ AbstractResource::~AbstractResource()
 
 struct ResourceMapping
 {
-	ResourceMapping(const char* path, const AbstractResource* resource): path(path), resource(resource) {};
+	ResourceMapping(const char* path, AbstractResource* resource): path(path), resource(resource) {};
 	const char* path;
-	const AbstractResource *resource;
+	AbstractResource *resource;
 };
 
 struct ResourceMappings
@@ -32,8 +32,9 @@ struct ResourceMappings
 	int capacity;
 	int numElements;
 	
-	void addMapping(const char* path, const AbstractResource* resource)
+	void addMapping(const char* path, AbstractResource* resource)
 	{
+		printf("AddMapping, capacity: %d, numElements: %d", capacity, numElements);
 		while (capacity <= numElements)
 		{
 			capacity += 8;
@@ -58,7 +59,7 @@ struct ResourceMappings
 		numElements -= numRemoved;
 	}
 
-	const AbstractResource* resource(const char* path)
+	AbstractResource* resource(const char* path)
 	{
 		for (int i = 0; i < numElements; i++)
 		{
@@ -75,20 +76,21 @@ struct ResourceMappings
 ResourceMap::ResourceMap()
 {
 	mLock = PTHREAD_RWLOCK_INITIALIZER;
+	mResourceMappings = new ResourceMappings;
 }
 
 ResourceMap::~ResourceMap()
 {
 }
 
-void ResourceMap::map(const char* path, const AbstractResource* resource)
+void ResourceMap::map(const char* path, AbstractResource* resource)
 {
 	pthread_rwlock_wrlock(&mLock);
 	mResourceMappings->addMapping(path, resource);		
 	pthread_rwlock_unlock(&mLock);
 }
 
-void ResourceMap::unMap(const AbstractResource* resource)
+void ResourceMap::unMap(AbstractResource* resource)
 {
 	pthread_rwlock_wrlock(&mLock);
 	mResourceMappings->remove(resource);
@@ -96,10 +98,10 @@ void ResourceMap::unMap(const AbstractResource* resource)
 }
 
 
-const AbstractResource* ResourceMap::resource(const char* path)
+AbstractResource* ResourceMap::resource(const char* path)
 {
 	pthread_rwlock_rdlock(&mLock);
-	const AbstractResource* resource = mResourceMappings->resource(path);
+	AbstractResource* resource = mResourceMappings->resource(path);
 	pthread_rwlock_unlock(&mLock);
 
 	return resource;

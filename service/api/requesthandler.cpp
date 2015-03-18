@@ -35,164 +35,215 @@ void RequestHandler::run()
     printf("RequestHandler::run..\n");
     for (;;)
     {
-        mRequestSocket = mRequestQueue->dequeue();
-        printf("Got a socket\n");
-        try
+        _requestSocket = mRequestQueue->dequeue();
+		try
         {
+			_currentPos = -1;
+			_received = 0;
+			_headersDone = false;
 
-            mHttpRequest.clear();
-            mHeadersDone = false;
-            mReceived = 0;
-            mNextLineStart = 0;
+			_method = Method::UNKNOWN;
+			_pathStart = -1;
+			_queryStringStart = -1;
+			_contentLength = 0;
+			_bodyStart = -1;
 
-            mPathStart = 0;
-            mQueryStringStart = 0;
-            mContentLength = 0;
-            mBodyStart = 0;
+			readRequestLine();
+			while (! _headersDone) readHeaderLine();
+			readBody();
+			printf("Path: %s\n", _buffer + _pathStart);
+			printf("Query string: %s\n", _buffer + _queryStringStart);
+			printf("Body: %s\n", _buffer + _bodyStart);
 
-            for (;;)
-            {
-                printf("Reading..");
-                ssize_t bytesRead = read(mRequestSocket, mBuffer + mReceived, 8192 - mReceived);
-                printf("Read: %s", mBuffer + mReceived);
-                mReceived += bytesRead;
+			AbstractResource* resource = mResourceMap->resource(_buffer + _pathStart);
+			if (! resource)
+			{
+				throw Status::Http404;
+			}
 
-                if (bytesRead <= 0)
-                {
-                    throw Status::Http500;
-                }
-                
-				if (!mHeadersDone)
-                {
-                    processLines();
-                }
+			resource->doGET(_requestSocket, _buffer + _pathStart, _buffer + _queryStringStart);
 
-                if (mHeadersDone && mReceived >= (mBodyStart + mContentLength))
-                {
-                    endOfRequest();
-					close(mRequestSocket);
-                    break;
-                }
-            }
+			close(_requestSocket); // FIXME Handle keep alive
         }
         catch (Status status)
         {
-            printf("Error");
-            write(mRequestSocket, statusLine(status), strlen(statusLine(status)));
-            write(mRequestSocket, "\r\n", 2);
-            close(mRequestSocket);
+            printf("Error\n");
+            write(_requestSocket, statusLine(status), strlen(statusLine(status)));
+            write(_requestSocket, "\r\n", 2);
+            close(_requestSocket);
         }
     }
 }
 
-void RequestHandler::processLines()
+void RequestHandler::readRequestLine()
 {
-    int p = mNextLineStart;
-    for (; p < mReceived; p++)
-    {
-        if (mBuffer[p] == '\r' && mBuffer[p + 1] == '\n')
-        {
-            if (mNextLineStart == 0)
-            {
-                processMethod(p + 2);
-            }
-            else if (p == mNextLineStart) // Empty line signals end of header section
-            {
-                mBodyStart = p + 2;
-                endOfHeaders();
+	printf("Read requestLine\n");
+	while (nextChar() != ' ');
 
-            }
-            else
-            {
-                processHeaderLine(mNextLineStart, p + 2);
-            }
-            mNextLineStart = p + 2;
-        }
-    }
+	_method = string2Method(_buffer);
+	
+	printf("_method: %d\n", _method);
+
+	if (_method == Method::UNKNOWN)
+	{
+		throw Status::Http403;
+	}
+	
+	_pathStart = _currentPos + 1;
+
+	printf("Path start at:\n%s\n", _buffer + _pathStart);
+
+	while (! isspace(nextChar()))
+	{
+		if (_buffer[_currentPos] == '?')
+		{
+			_queryStringStart = _currentPos;
+		}
+	};
+
+	_buffer[_currentPos] = '\0';
+	if (_queryStringStart == 0)
+	{
+		_queryStringStart = _currentPos;
+	}
+
+	int protocolStart = _currentPos + 1;
+
+	while (! isspace(nextChar()));
+
+	
+	printf("Looking for protocol at\n%s\n", _buffer + protocolStart);
+
+	if (strncmp(_buffer + protocolStart, "HTTP/1.1", 8) != 0)
+	{
+		throw Status::Http505;
+	}
+
+	printf("_currentPos - protocolStart = %d\n", _currentPos - protocolStart);
+
+	printf(" current and next: %d %d\n", _buffer[_currentPos], _buffer[_currentPos + 1]);
+	if (_buffer[_currentPos] != '\r' || nextChar() != '\n')
+	{
+		throw Status::Http403;
+	}
 }
 
-void RequestHandler::processMethod(int lineLength)
+/* TODO: Full implementation of spec
+ *  - multiline header definitions
+ *  - Illegal chars in names/values
+ *  - Normalize whitespace
+ */
+void RequestHandler::readHeaderLine()
 {
-    printf("processMethod\n");
-    mHttpRequest.method = string2Method(mBuffer);
+	printf("readHeaderling at:\n%s\n", _buffer + _currentPos + 1);
+	int colonPos = -1;
+	int lineStart = _currentPos + 1;
 
-    int p = methodLength(mHttpRequest.method);
-    p = skipSpace(p, lineLength - 2);
+	for (;;)	
+	{
+		nextChar();
+		if (_buffer[_currentPos] == '\r')
+		{
+			break;
+		}
+		else if	(_buffer[_currentPos] == '\n')
+		{
+			throw Status::Http403;
+		}
+		else if (_buffer[_currentPos] == ':')
+		{
+			colonPos = _currentPos;
+		}
+	}
+	
+	if (nextChar() != '\n') // TODO: Is this right?
+	{
+		printf("No \\n\n");
+		throw Status::Http403;
+	}
+	
 
-    if (p == methodLength(mHttpRequest.method)) // No space after method
-    {
-        throw Status::Http400;
-    }
-
-    mPathStart = p;
-
-    for (p++; p < lineLength - 2; p++)
-    {
-        if (isspace(mBuffer[p]))
-        {
-            mBuffer[p] = '\0';
-            break;
-        }
-        if (mBuffer[p] == '?')
-        {
-            mQueryStringStart = p + 1;
-            mBuffer[p] = '\0';
-        }
-    }
-    printf("path: %s\n", mBuffer + mPathStart);
-    printf("queryString: %s\n", mBuffer + mQueryStringStart);
+	printf("lineStart: %d, _currentPos: %d\n", lineStart, _currentPos);
+	
+	if (_currentPos == lineStart + 1)
+	{
+		_headersDone = true;
+		_bodyStart = _currentPos + 1;
+	}
+	else 
+	{	
+		if (colonPos < 1) // None or empty header name
+		{
+			printf("No colon..\n");
+			throw Status::Http403;
+		}
+	
+		_buffer[colonPos] = '\0';
+		_buffer[_currentPos - 1] = '\0';
+		addHeader(_buffer + lineStart, _buffer + colonPos + 1);
+	}
 }
 
-void RequestHandler::endOfHeaders()
-{
-    printf("endOfHeaders\n");
-    if (mHttpRequest.method == Method::UNKNOWN)
-    {
-        throw Status::Http400;
-    }
 
-    mHeadersDone = true;
+void RequestHandler::readBody()
+{
+	printf("readBody, _bodyStart: %d, _contentLength: %d, _received: %d\n", _bodyStart, _contentLength, _received);
+	while (_bodyStart + _contentLength > _received)	
+	{
+		printf("readBody - receive\n");	
+		receive();
+	}
+	_buffer[_bodyStart + _contentLength] = '\0';
 }
 
-void RequestHandler::endOfRequest()
+char RequestHandler::nextChar()
 {
-    mHttpRequest.path = mBuffer + mPathStart;
-    mHttpRequest.queryString = mBuffer + mQueryStringStart;
-    mHttpRequest.body = mBuffer + mBodyStart;
+	_currentPos++;	
+	while ( _currentPos >= _received)
+	{
+		receive();
+	}
 
-
-    // Mock..
-    const char* response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/json+vnd.rfds; charset=utf-8\r\n"
-        "Content-Length: 2\r\n"
-        "\r\n"
-        "{}";
-
-	printf("Writing:\n%s", response);
-
-    write(mRequestSocket, response, strlen(response));
+	return _buffer[_currentPos];
 }
 
-int RequestHandler::skipSpace(int from, int to)
+void RequestHandler::readTo(char c)
 {
-    while (from < to && isspace(mBuffer[from]))
-        from++;
-
-    return from;
+	while (nextChar() != c);
 }
 
-void RequestHandler::processHeaderLine(int from, int to)
+void RequestHandler::receive()
 {
-    printf("processHeaderLine\n");
-    if (strncasecmp(mBuffer + from, "content-length", 14) == 0)
-    {
-        if (mBuffer[from + 15] != ':')
-        {
-            throw Status::Http400;
-        }
+	int bytesRead = read(_requestSocket + _currentPos, _buffer + _received, 8190 - _received);
+	if (bytesRead < 0)	
+	{
+		printf("Brokent pipe\n");
+		throw Status::Http403; // FIXME Broken pipe thing	
+	}
+	printf("Received:\n%s\n", _buffer + _received);
+	_received += bytesRead;
+}
 
-        mContentLength = atoi(mBuffer + 15);
-    }
-
+void RequestHandler::addHeader(const char* name, const char* value)
+{
+	printf("Add header: <%s> -> <%s>", name, value);
+	
+	if (strcasecmp(name, "content-length") == 0)
+	{
+		char* valueEnd;
+		_contentLength = strtoul(value, &valueEnd, 10);
+		
+		if (valueEnd == value) // Empty value 
+		{
+			throw Status::Http403;
+		}
+		
+		for (; *valueEnd != '\0'; valueEnd++) // Non ws trailing characters
+		{
+			if (! isspace(*valueEnd))
+			{
+				throw Status::Http403;
+			}
+		}
+	}
 }

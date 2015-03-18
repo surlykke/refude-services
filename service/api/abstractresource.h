@@ -11,14 +11,16 @@
 #include <pthread.h>
 #include <map>
 
+#include "httpprotocol.h"
+
 class AbstractResource
 {
 public:
 	AbstractResource();
 	virtual ~AbstractResource();
 
-	virtual const char* GET(const char* path, const char* queryString) = 0;
-	virtual bool PATCH(const char* patchJS) { return false; }
+	virtual void doGET(int socket, const char* path, const char* queryString) = 0;
+	virtual void doPATCH(int socket, const char* path, const char* patchJS) { throw Status::Http411; }
 
 };
 
@@ -30,9 +32,9 @@ public:
 	ResourceMap();
 	virtual ~ResourceMap();
 
-	void map(const char* path, const AbstractResource* resource);
-	void unMap(const AbstractResource* resource);
-	const AbstractResource* resource(const char* path);
+	void map(const char* path, AbstractResource* resource);
+	void unMap(AbstractResource* resource);
+	AbstractResource* resource(const char* path);
 
 private:
 	pthread_rwlock_t mLock;

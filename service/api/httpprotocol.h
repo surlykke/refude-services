@@ -22,6 +22,7 @@ enum class Method {
 };
 
 Method string2Method(const char* str);
+
 int methodLength(Method method);
 
 

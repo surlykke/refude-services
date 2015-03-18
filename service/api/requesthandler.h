@@ -25,32 +25,34 @@ public:
 private:
 	void run();
 	
-	void processLines();
-	void processMethod(int lineLength);	
-	void processHeaderLine(int from, int to);	
-	void endOfHeaders();
-	void endOfRequest();	
-	int skipSpace(int from, int to);
+	void readRequestLine();
+	void readHeaderLine();
+	void readBody();
+
+
+	char nextChar();
+	void readTo(char c);
+	void receive();
+	void addHeader(const char* name, const char* value);
+	
+	char _buffer[8192];
+
+	int _requestSocket;
+	int _currentPos;
+	int _received;
+	bool _headersDone;
+	
+	Method _method;
+	int _pathStart;
+	int _queryStringStart;
+	int _contentLength;
+	int _bodyStart;
 
 	RequestQueue *mRequestQueue;
 	ResourceMap* mResourceMap;
 
-	int mRequestSocket;
-	static const int bufferCapacity = 8192;
-	char mBuffer[bufferCapacity];
-
-	HttpRequest mHttpRequest;
-	bool mHeadersDone;
-	int mReceived;
-	int mProcessed;
-	int mNextLineStart;
-
-	int mPathStart;
-	int mQueryStringStart;
-	int mContentLength;
-	int mBodyStart;
-
 };
+
 
 
 #endif	/* REQUESTHANDLER_H */
