@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 {
 	QCoreApplication app(argc, argv);
 	ServiceListener serviceListener;
-	serviceListener.setup("dk.surlykke-it.rfds.Power");
+	serviceListener.setup("org.restfulipc.examples.Power");
 	serviceListener.map(new Power(), "/Bat0");
 	char* versionInfo =
 		"{\n"

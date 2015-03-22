@@ -22,5 +22,5 @@ public:
 	
 };
 
-#endif	/* RFDSPOWER_H */
+#endif	/* POWER_H */
 
