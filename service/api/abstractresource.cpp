@@ -5,6 +5,7 @@
  * Created on 15. marts 2015, 09:42
  */
 #include <string.h>
+#include <unistd.h>
 
 #include "abstractresource.h"
 
@@ -14,6 +15,43 @@ AbstractResource::AbstractResource()
 
 AbstractResource::~AbstractResource()
 {
+}
+
+void StaticResource::doGET(int socket, const char* path, const char* queryString)
+{
+	printf("Into doGET\nabout to write\n%s\n", content);
+	int pos = 0; 
+	do
+	{
+		pos += write(socket, content + pos, size - pos);
+		printf("wrote, pos now: %d", pos);
+	}
+	while (pos < size);
+}
+
+StaticResource::StaticResource(const char* content) : content(0)
+{
+	buildResource(content);
+}
+
+void StaticResource::buildResource(const char* content)
+{
+	const char* header =
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: application/json; charset=UTF-8\r\n"
+		"Content-Length: %d\r\n"
+		"\r\n";
+
+	int contentLength = strlen(content);
+	
+	this->content = new char[strlen(header) + 6 + strlen(content)];
+	sprintf(this->content, header, contentLength);
+	char* contentStart = this->content + strlen(this->content);
+	strcpy(contentStart, content);
+	size = strlen(this->content);
+
+	printf("Build resource:\n%s\n", this->content);
+	printf("size: %d\n", size);
 }
 
 
