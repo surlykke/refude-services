@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	ServiceListener serviceListener;
 	serviceListener.setup("org.restfulipc.examples.Power");
 	serviceListener.map(new Power(), "/Bat0");
-	char* versionInfo =
+	const char* versionInfo =
 		"{\n"
 		"  \"version\" : \"0.01\",\n"
 		"  \"author\" : \"Christian Surlyke\"\n"

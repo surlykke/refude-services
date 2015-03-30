@@ -146,7 +146,7 @@ void RequestHandler::readHeaderLine()
 	
 	if (nextChar() != '\n') // TODO: Is this right?
 	{
-		throw Status::Http403;
+		throw Status::Http400;
 	}
 	
 	if (_currentPos == lineStart + 1)
@@ -158,7 +158,7 @@ void RequestHandler::readHeaderLine()
 	{	
 		if (colonPos < 1) // None or empty header name
 		{
-			throw Status::Http403;
+			throw Status::Http400;
 		}
 	
 		_buffer[colonPos] = '\0';
