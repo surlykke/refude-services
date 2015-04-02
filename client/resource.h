@@ -27,7 +27,6 @@ private:
 	int bufpos;
 
 	CURL *curlHandle;
-
 };
 
 #endif	/* RESOURCE_H */
