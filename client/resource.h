@@ -9,24 +9,23 @@
 #define	RESOURCE_H
 
 #include <curl/curl.h>
+#include "../common/httpmessage.h"
 
 class Resource
 {
 public:
-	Resource(const char *path);
+	Resource(const char* address, const char *path);
 	virtual ~Resource();
 
 	void update();
+	int createConnection(const char* port, const char* path);
+
 private:
-	
-	static size_t write_callback(char *ptr, size_t size, size_t nmemb, void *userdata);
+	void assert(bool condition);
 
-	size_t curlWriteback(char *ptr, size_t size, size_t nmemb);
-
-	char buf[8192];
-	int bufpos;
-
-	CURL *curlHandle;
+	HttpMessage _response;
+	char _getRequest[128];
+	int _getRequestLength;
 };
 
 #endif	/* RESOURCE_H */

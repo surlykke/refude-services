@@ -10,7 +10,7 @@
 
 #include "requestqueue.h"
 #include "abstractresource.h"
-#include "httprequest.h"
+#include "../../common/httpmessage.h"
 
 class RequestHandler 
 {
@@ -29,28 +29,13 @@ private:
 	void readHeaderLine();
 	void readBody();
 
-
-	char nextChar();
-	void readTo(char c);
-	void receive();
-	void addHeader(const char* name, const char* value);
-	
 	char _buffer[8192];
 
 	int _requestSocket;
-	int _currentPos;
-	int _received;
-	bool _headersDone;
-	
-	Method _method;
-	int _pathStart;
-	int _queryStringStart;
-	int _contentLength;
-	int _bodyStart;
+	HttpMessage _request;
 
 	RequestQueue *mRequestQueue;
 	ResourceMap* mResourceMap;
-
 };
 
 

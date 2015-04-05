@@ -17,7 +17,7 @@ AbstractResource::~AbstractResource()
 {
 }
 
-void StaticResource::doGET(int socket, const char* path, const char* queryString)
+void StaticResource::doRequest(int socket, const HttpMessage& request)
 {
 	printf("Into doGET\nabout to write\n%s\n", content);
 	int pos = 0; 

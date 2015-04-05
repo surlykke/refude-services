@@ -18,8 +18,7 @@ public:
 	Power();
 	virtual ~Power();
 
-	virtual void doGET(int socket, const char* path, const char* queryString);
-	
+	virtual void doRequest(int socket, const HttpMessage& request);
 };
 
 #endif	/* POWER_H */

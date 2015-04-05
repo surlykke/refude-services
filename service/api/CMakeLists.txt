@@ -8,4 +8,7 @@ file(GLOB SOURCE_FILES *.cpp)
 
 add_library(${PROJECT} ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT} pthread)
+message("CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
+message("CMAKE_BINARY_DIR ${CMAKE_BINARY_DIR}")
+
+target_link_libraries(${PROJECT} pthread ${CMAKE_BINARY_DIR}/common/librfds-common.a)

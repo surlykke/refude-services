@@ -1,11 +1,13 @@
 /* 
- * File:   httpmessage.cpp
+ * File:   httprequest.cpp
  * Author: Christian Surlykke <christian@surlykke.dk>
  * 
- * Created on 2. april 2015, 10:14
+ * Created on 15. marts 2015, 14:36
  */
 
-#include <vector>
+#include <string.h>
+#include <unistd.h>
+#include <iosfwd>
 
 #include "httpmessage.h"
 
@@ -13,100 +15,243 @@ HttpMessage::HttpMessage()
 {
 }
 
+
 HttpMessage::~HttpMessage()
 {
 }
 
-char HttpMessage::map[] = { 'A','B','C','D','E','F','G','H','I','J','K','L','M',
-	                      'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-	                      'a','b','c','d','e','f','g','h','i','j','k','l','m',
-	                      'n','o','p','q','r','s','t','u','v','w','x','y','z',
-	                      '0','1','2','3','4','5','6','7','8','9','/','+' };
-
-void HttpMessage::base64Encode(const std::vector<char>& bytes, std::vector<char>& encodedBytes)
+void HttpMessage::clear()
 {
-	int bytePos = 0;
-	char e1, e2, e3, e4;
+	_method = Method::UNKNOWN;
+	_path = 0;
+	_queryString = 0;
+	for (int i = 0; i < (int) Header::unknown; i++)
+		_headers[i] = 0;
+	_body = 0;
+	_contentLength = 0;
+}
+
+
+/*void HttpMessage::handleUpgrade(AbstractResource* resource)
+{
+	// We only handle websocket upgrades
+	assert(strcasecmp(_request.headerValue(Header::upgrade), "websocket") == 0, Status::Http406);
+	const char* subprotocol = _request.headerValue(Header::sec_websocket_protocol);
+	assert(subprotocol != 0);
+	assert(resource->canHandleWebsocket(_request.path, _request.queryString, subprotocol), Status::Http404);
+	char handshakeResponse[strlen(handshakeResponseTemplate) + 20];
+	sprintf(handshakeResponse, handshakeResponseTemplate, subprotocol);
+	write(_requestSocket, handshakeResponse, strlen(handshakeResponse));
+	resource->addWebsocket(_requestSocket, _request.path, _request.queryString, _request.headerValue(Header::sec_websocket_protocol));
+}
+
+const char* HttpMessage::handshakeResponseTemplate =
+	"HTTP/1.1 101 Switching Protocols"
+	"Upgrade: websocket"
+	"Connection: Upgrade"
+	"Sec-WebSocket-Protocol: %s";
+*/
+
+
+
+HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message) : 
+	_socket(socket), 
+	_message(message),
+	_bufferEnd(0),
+	_currentPos(-1)
+{
+}
+
+void HttpMessageReader::readMessage(bool request)
+{
+	_message.clear();	
 	
-	while (bytePos <= bytes.size() - 3)
-	{
-		base64Encode(e1, e2, e3, e4, bytes[bytePos], bytes[bytePos + 1], bytes[bytePos + 2]);
-		encodedBytes.push_back(e1);
-		encodedBytes.push_back(e2);
-		encodedBytes.push_back(e3);
-		encodedBytes.push_back(e4);
-		bytePos += 3;
-	}
-	
-	if (bytePos == bytes.size() - 1)
-	{
-		base64Encode(e1, e2, e3, e4, bytes[bytePos]);
-		encodedBytes.push_back(e1);
-		encodedBytes.push_back(e2);
-		encodedBytes.push_back('=');
-		encodedBytes.push_back('=');
-	}
-	else if (bytePos == bytes.size() - 2)
-	{
-		base64Encode(e1, e2, e3, e4, bytes[bytePos], bytes[bytePos + 1]);
-		encodedBytes.push_back(e1);
-		encodedBytes.push_back(e2);
-		encodedBytes.push_back(e3);
-		encodedBytes.push_back('=');
-	}
-
-}
-
-void HttpMessage::base64Decode(const std::vector<char>& encodedBytes, std::vector<char>& bytes)
-{
-	int pos = 0;
-	char b1, b2, b3;
-	while (pos < encodedBytes.size() - 3)
-	{
-		base64Decode(b1, b2, b3, encodedBytes[pos], encodedBytes[pos + 1], encodedBytes[pos + 2], encodedBytes[pos + 3]);
-		bytes.push_back(b1);
-		if (encodedBytes[pos + 2] != '=') bytes.push_back(b2);
-		if (encodedBytes[pos + 3] != '=') bytes.push_back(b3);
-	}
-}
+	_bufferEnd = 0;
+	_currentPos = -1;	
 
 
-void HttpMessage::base64Encode(char& e1, char& e2, char& e3, char& e4,
-							   const char b1, const char b2, const char b3)
-{
-	e1 = map[(b1 & 0b11111100) >> 2];
-	e2 = map[((b1 & 0b00000011) << 4) + ((b2 & 0b11110000) >> 4)];
-	e3 = map[((b2 & 0b00001111) << 2) + ((b3 & 0b11000000) >> 6)];
-	e4 = map[b3 & 0b00111111];
-}
-
-void HttpMessage::base64Decode(char& b1, char& b2, char& b3, const char e1, const char e2, const char e3, const char e4)
-{
-	char i1, i2, i3, i4;
-	for (char i = 0; i < 64; i++)
+	if (request)
 	{
-		if (map[i] == e1) i1 = i;
-		if (map[i] == e2) i2 = i;
-		if (map[i] == e3) i3 = i;
-		if (map[i] == e4) i4 = i;
-	}
-
-	b1 = (i1 << 2) + ((i2 & 0b00110000) >> 4);
-	if (e3 != '=')
-	{
-		b2 = ((i2 & 0b00001111) << 4) + ((i3 & 0b00111100) >> 2);
+		readRequestLine();
 	}
 	else 
 	{
-		b2 = 0;
+		readStatusLine();
+	}
+	
+	readHeaderLines();
+	readBody();
+}
+
+void HttpMessageReader::readRequestLine()
+{
+	int queryStringStart;
+
+	while (nextChar() != ' ');
+	
+	_message._method = string2Method(_message._buffer);
+	assert(_message._method != Method::UNKNOWN);
+	_message._path = _message._buffer + _currentPos + 1;
+
+	while (! isspace(nextChar()))
+	{
+		if (_message._buffer[_currentPos] == '?')
+		{
+			_message._queryString = _message._buffer + _currentPos + 1;
+			_message._buffer[_currentPos] = '\0';
+		}
+	};
+
+	_message._buffer[_currentPos] = '\0';
+
+	if (_message._queryString == 0)
+	{
+		_message._queryString = _message._buffer + _currentPos;
 	}
 
-	if (e4 != '=')
+	int protocolStart = _currentPos + 1;
+
+	while (! isspace(nextChar()));
+	
+	assert(_message._buffer[_currentPos] == '\r' && nextChar() == '\n');
+}
+
+void HttpMessageReader::readStatusLine()
+{
+	while (!isspace(nextChar()));
+	assert(_currentPos > 0);
+	assert(strncmp("HTTP/1.1", _message._buffer, 8) == 0);
+	while (isspace(nextChar()));
+	int statuscodeStart = _currentPos;
+	assert(isdigit(currentChar()));
+	while (isdigit(nextChar()));
+	errno = 0;
+	long int status = strtol(_message._buffer + statuscodeStart, 0, 10);
+	assert(status > 100 && status < 600);
+	_message._status = (int) status;
+
+	// We ignore what follows the status code. This means that a message like
+	// 'HTTP/1.1 200 Completely f**cked up' will be interpreted as 
+	// 'HTTP/1.1 200 Ok'
+	// (Why does the http protocol specify that both the code and the text is sent?)
+	while (currentChar() != '\r')
 	{
-		b3 = ((i3 &0b00000011) << 6 + i4);
+		assert(currentChar() != '\n');
+		nextChar();
+	}
+
+	assert(nextChar() == '\n');
+}
+
+
+
+/* TODO: Full implementation of spec
+ *  - multiline header definitions
+ *  - Illegal chars in names/values
+ *  - Normalize whitespace
+ */
+void HttpMessageReader::readHeaderLines()
+{
+	for(;;)
+	{
+		int colonPos = -1;
+		int lineStart = _currentPos + 1;
+
+		for (;;)	
+		{
+			nextChar();
+			assert(_message._buffer[_currentPos] != '\n');
+			
+			if (_message._buffer[_currentPos] == '\r')
+			{
+				break;
+			}
+			else if (_message._buffer[_currentPos] == ':')
+			{
+				colonPos = _currentPos;
+			}
+		}
+		
+		assert(nextChar() == '\n');
+		
+		if (_currentPos == lineStart + 1)
+		{
+			_message._body = _message._buffer + _currentPos + 1;
+			return;
+		}
+		else 
+		{	
+			assert(colonPos > lineStart); // None or empty header name
+			_message._buffer[colonPos] = '\0';
+			_message._buffer[_currentPos - 1] = '\0';
+			Header h = string2Header(_message._buffer + lineStart);
+
+			if (h != Header::unknown)
+			{
+				_message._headers[(int) h] = _message._buffer + colonPos + 1;
+			}
+		}
+	}
+}
+
+
+void HttpMessageReader::readBody()
+{
+	if (_message._method == Method::GET || _message._method == Method::HEAD)	// Others?
+	{
+		return;
 	}
 	else 
 	{
-		b3 = 0;
+		assert(_message.headerValue(Header::content_length) != 0, Error::MissingContentLength);
+		errno = 0;
+		_message._contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
+		assert(errno == 0);
+	
+		int bodyStart = _currentPos;	
+
+		while (bodyStart + _message._contentLength > _bufferEnd)	
+		{
+			receive();
+		}
+		_message._buffer[bodyStart + _message._contentLength] = '\0';
 	}
 }
+
+char HttpMessageReader::currentChar()
+{
+	return _message._buffer[_currentPos];
+}
+
+
+char HttpMessageReader::nextChar()
+{
+	_currentPos++;	
+
+	while ( _currentPos >= _bufferEnd)
+	{
+		receive();
+	}
+
+	return _message._buffer[_currentPos];
+}
+
+void HttpMessageReader::receive()
+{
+	int bytesRead = read(_socket, _message._buffer + _bufferEnd, 8190 - _bufferEnd);
+	if (bytesRead < 0)	
+	{
+		printf("Brokent pipe\n");
+		throw Status::Http403; // FIXME Broken pipe thing	
+	}
+	_bufferEnd += bytesRead;
+}
+
+void HttpMessageReader::assert(bool condition, Error error)
+{
+	if (! condition)
+	{
+		throw error;
+	}
+}
+

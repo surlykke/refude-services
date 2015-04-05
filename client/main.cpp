@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 {
 	cout << "Hello world!" << std::endl;
 
-	Resource resource("org.restfulipc.examples.Power");	
+	Resource resource("org.restfulipc.examples.Power", "/Version");	
 	
 	resource.update();
 

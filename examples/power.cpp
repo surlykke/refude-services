@@ -25,7 +25,7 @@ Power::~Power()
 {
 }
 
-void Power::doGET(int socket, const char* path, const char* queryString)
+void Power::doRequest(int socket, const HttpMessage& request)
 {
 	write(socket, cannedResponse, strlen(cannedResponse));
 }

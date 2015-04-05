@@ -12,7 +12,8 @@
 #include <map>
 #include <string.h>
 
-#include "httpprotocol.h"
+#include "../../common/httpprotocol.h"
+#include "../../common/httpmessage.h"
 
 class AbstractResource
 {
@@ -20,19 +21,17 @@ public:
 	AbstractResource();
 	virtual ~AbstractResource();
 
-	virtual void doGET(int socket, const char* path, const char* queryString) = 0;
-	virtual void doPATCH(int socket, const char* path, const char* patchJS) { throw Status::Http411; }
-
+	virtual void doRequest(int socket, const HttpMessage& request) = 0;
+	virtual void doWebsocketRequest(int socket, const char* path, const char* queryString, const char *subprotocol) { } // FIXME
 };
 
 class StaticResource : public AbstractResource
 {
 public:
 	StaticResource(const char* content);
-	
 	~StaticResource() { delete this->content; }
 
-	virtual void doGET(int socket, const char* path, const char* queryString);
+	virtual void doRequest(int socket, const HttpMessage& request);
 
 private:
 	void buildResource(const char* content);

@@ -25,7 +25,7 @@ Method string2Method(const char* str);
 
 int methodLength(Method method);
 
-
+// Those headers we care about (TODO: Need them all?)
 enum class Header : int {
 	accept_charset,
 	accept_encoding,
@@ -53,6 +53,7 @@ enum class Header : int {
 	proxy_authorization,
 	range,
 	referer,
+	sec_websocket_protocol,
 	te,
 	user_agent,
 	upgrade,
