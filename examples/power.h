@@ -10,15 +10,11 @@
 
 #include "abstractresource.h"
 
-class Power : public AbstractResource
+class Power : public GenericResource
 {
 public:
-	static const char* cannedResponse;
-
 	Power();
 	virtual ~Power();
-
-	virtual void doRequest(int socket, const HttpMessage& request);
 };
 
 #endif	/* POWER_H */

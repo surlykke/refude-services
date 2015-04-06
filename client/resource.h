@@ -10,6 +10,7 @@
 
 #include <curl/curl.h>
 #include "../common/httpmessage.h"
+#include "../common/websocket.h"
 
 class Resource
 {
@@ -17,12 +18,20 @@ public:
 	Resource(const char* address, const char *path);
 	virtual ~Resource();
 
-	void update();
-	int createConnection(const char* port, const char* path);
+	void update();	
+	
 
 private:
+	WebSocket createWebsocket(const char* protocol);
+	int createConnection(const char* address);
+	inline void writeMessage(int socket, const char* data, int nbytes);
+	inline int writeSome(int socket, const char* data, int nbytes);
 	void assert(bool condition);
+	
+	const char* _address;
+	const char* _path;
 
+	int _socket;
 	HttpMessage _response;
 	char _getRequest[128];
 	int _getRequestLength;

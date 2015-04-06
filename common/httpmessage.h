@@ -19,13 +19,13 @@ struct HttpMessage
 	virtual ~HttpMessage();
 	void clear();
 
-	inline Method method() { return _method; }
-	inline const char* path() { return _path; }
-	inline const char* queryString() { return _queryString; }
-	inline int status() { return _status; } 
-	inline const char* headerValue(Header h) { return _headers[(int) h]; }
-	inline const char* body() { return _body; }
-	inline int contentLength() { return _contentLength; }
+	inline Method method() const { return _method; }
+	inline const char* path() const { return _path; }
+	inline const char* queryString() const { return _queryString; }
+	inline int status() const { return _status; } 
+	inline const char* headerValue(Header h) const { return _headers[(int) h]; }
+	inline const char* body() const { return _body; }
+	inline int contentLength() const { return _contentLength; }
 
 private:
 	friend HttpMessageReader;	
@@ -51,7 +51,8 @@ struct HttpMessageReader
 	};
 
 	HttpMessageReader(int socket, HttpMessage& message);
-	void readMessage(bool request = true);
+	void readRequest();
+	void readResponse();
 	void readRequestLine();
 	void readStatusLine();
 	void readHeaderLines();
@@ -60,6 +61,7 @@ struct HttpMessageReader
 	char nextChar();
 	void receive();
 
+	void clear();
 	void assert(bool condition, Error error = Error::InvalidFormat);
 
 

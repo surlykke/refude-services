@@ -9,50 +9,96 @@
 
 #include "abstractresource.h"
 
-AbstractResource::AbstractResource()
+GenericResource::GenericResource(const char* json) : 
+	AbstractResource(), 
+//	_response({'\0'}),
+	_respPtr(_response),
+	_responseLength(0)
+{
+	if (pthread_rwlock_init(&_lock, NULL) < 0)
+	{
+		throw errno;
+	}
+	update(json);
+}
+
+GenericResource::~GenericResource()
 {
 }
 
-AbstractResource::~AbstractResource()
+void GenericResource::handleRequest(int socket, const HttpMessage& request)
 {
+	if (request.method() == Method::GET)	
+	{
+		if (request.headerValue(Header::connection) != 0 &&
+			strcasecmp(request.headerValue(Header::connection), "upgrade") == 0 &&
+			request.headerValue(Header::upgrade) != 0 &&
+			strcasecmp(request.headerValue(Header::upgrade), "websocket") == 0)
+		{
+			doWebsocketUpgrade(socket, request);
+		}
+		else 
+		{
+			doGet(socket, request);	
+		}
+	}
+	else if (request.method() == Method::PATCH)
+	{
+		doPatch(socket, request);
+	}
+	else
+	{
+		throw Status::Http406;
+	}
 }
 
-void StaticResource::doRequest(int socket, const HttpMessage& request)
+void GenericResource::doGet(int socket, const HttpMessage& request)
 {
-	printf("Into doGET\nabout to write\n%s\n", content);
-	int pos = 0; 
+	pthread_rwlock_rdlock(&_lock);
+	int bytesWritten = 0;
+
 	do
 	{
-		pos += write(socket, content + pos, size - pos);
-		printf("wrote, pos now: %d", pos);
+		int nbytes = write(socket, _response + bytesWritten, _responseLength - bytesWritten);
+		if (nbytes < 0)
+		{
+			throw errno;
+		}
+		bytesWritten += nbytes;
 	}
-	while (pos < size);
+
+	while (bytesWritten < _responseLength);
 }
 
-StaticResource::StaticResource(const char* content) : content(0)
+void GenericResource::doWebsocketUpgrade(int socket, const HttpMessage& request)
 {
-	buildResource(content);
+	throw Status::Http406;
 }
 
-void StaticResource::buildResource(const char* content)
+void GenericResource::doPatch(int socket, const HttpMessage& request)
 {
-	const char* header =
+	throw Status::Http406;
+}
+
+
+void GenericResource::update(const char* data)
+{
+	static const char* responseTemplate =
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: application/json; charset=UTF-8\r\n"
 		"Content-Length: %d\r\n"
-		"\r\n";
+		"\r\n"
+		"%s";
 
-	int contentLength = strlen(content);
+	int contentLength = strlen(data);
 	
-	this->content = new char[strlen(header) + 6 + strlen(content)];
-	sprintf(this->content, header, contentLength);
-	char* contentStart = this->content + strlen(this->content);
-	strcpy(contentStart, content);
-	size = strlen(this->content);
-
-	printf("Build resource:\n%s\n", this->content);
-	printf("size: %d\n", size);
+	pthread_rwlock_wrlock(&_lock);
+	sprintf(_response, responseTemplate, contentLength, data);
+	_responseLength = strlen(_response);
+	pthread_rwlock_unlock(&_lock);
 }
+
+
 
 
 struct ResourceMapping

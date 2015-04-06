@@ -36,7 +36,7 @@ void RequestHandler::run()
         _requestSocket = mRequestQueue->dequeue();
 		try
         {
-			HttpMessageReader(_requestSocket, _request).readMessage();
+			HttpMessageReader(_requestSocket, _request).readRequest();
 			printf("Incoming, path: %s, queryString: %s, body:\n%s\n", _request.path(), _request.queryString(), _request.body());
 			AbstractResource* resource = mResourceMap->resource(_request.path());
 		
@@ -46,8 +46,7 @@ void RequestHandler::run()
 			}
 	
 			printf("_requestSocket: %d\n", _requestSocket);
-			resource->doRequest(_requestSocket, _request);
-			close(_requestSocket); 
+			resource->handleRequest(_requestSocket, _request);
         }
         catch (Status status)
         {

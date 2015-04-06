@@ -53,6 +53,8 @@ enum class Header : int {
 	proxy_authorization,
 	range,
 	referer,
+	sec_websocket_accept,
+	sec_websocket_key,
 	sec_websocket_protocol,
 	te,
 	user_agent,

@@ -11,33 +11,45 @@
 #include <pthread.h>
 #include <map>
 #include <string.h>
+#include <vector>
 
 #include "../../common/httpprotocol.h"
 #include "../../common/httpmessage.h"
+#include "../../common/websocket.h"
+
+
 
 class AbstractResource
 {
 public:
-	AbstractResource();
-	virtual ~AbstractResource();
-
-	virtual void doRequest(int socket, const HttpMessage& request) = 0;
-	virtual void doWebsocketRequest(int socket, const char* path, const char* queryString, const char *subprotocol) { } // FIXME
+	AbstractResource() {};
+	virtual ~AbstractResource() {};
+	virtual void handleRequest(int socket, const HttpMessage& request) = 0;
 };
 
-class StaticResource : public AbstractResource
+class GenericResource : public AbstractResource
 {
 public:
-	StaticResource(const char* content);
-	~StaticResource() { delete this->content; }
+	GenericResource(const char* json = "{}");
+	virtual ~GenericResource();
 
-	virtual void doRequest(int socket, const HttpMessage& request);
+	virtual void handleRequest(int socket, const HttpMessage& request);
+	virtual void doGet(int socket, const HttpMessage& request);
+	virtual void doWebsocketUpgrade(int socket, const HttpMessage& request);
+	virtual void doPatch(int socket, const HttpMessage& request);
+
+protected:
+	void update(const char* data);
 
 private:
-	void buildResource(const char* content);
-	char* content;
-	int size;
+	char _response[8192];
+	char* _respPtr;
+	int _responseLength;
+	pthread_rwlock_t _lock;	
+
+	std::vector<WebSocket> _webSockets;
 };
+
 
 struct ResourceMappings;
 

@@ -62,26 +62,23 @@ HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message) :
 {
 }
 
-void HttpMessageReader::readMessage(bool request)
+void HttpMessageReader::readRequest()
 {
-	_message.clear();	
-	
-	_bufferEnd = 0;
-	_currentPos = -1;	
-
-
-	if (request)
-	{
-		readRequestLine();
-	}
-	else 
-	{
-		readStatusLine();
-	}
-	
+	clear();
+	readRequestLine();
 	readHeaderLines();
 	readBody();
 }
+
+void HttpMessageReader::readResponse()
+{
+	clear();
+	readStatusLine();
+	readHeaderLines();
+	readBody();
+}
+
+
 
 void HttpMessageReader::readRequestLine()
 {
@@ -246,6 +243,16 @@ void HttpMessageReader::receive()
 	}
 	_bufferEnd += bytesRead;
 }
+
+void HttpMessageReader::clear()
+{
+	_message.clear();	
+	
+	_bufferEnd = 0;
+	_currentPos = -1;	
+}
+
+
 
 void HttpMessageReader::assert(bool condition, Error error)
 {

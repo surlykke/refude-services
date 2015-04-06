@@ -59,6 +59,8 @@ const char* header_str_value[] =
 	"proxy-authorization",
 	"range",
 	"referer",
+	"sec-websocket-accept",
+	"sec-websocket-key",
 	"sec-websocket-protocol",
 	"te",
 	"user-agent",

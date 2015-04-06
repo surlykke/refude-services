@@ -14,6 +14,6 @@ int main(int argc, char *argv[])
 		"  \"version\" : \"0.01\",\n"
 		"  \"author\" : \"Christian Surlyke\"\n"
 		"}\n";
-	serviceListener.map(new StaticResource(versionInfo), "/Version");
+	serviceListener.map(new GenericResource(versionInfo), "/Version");
 	return app.exec();
 }
