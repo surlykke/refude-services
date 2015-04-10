@@ -72,7 +72,16 @@ void GenericResource::doGet(int socket, const HttpMessage& request)
 
 void GenericResource::doWebsocketUpgrade(int socket, const HttpMessage& request)
 {
-	throw Status::Http406;
+	const char* handshakeResponse = 
+        "HTTP/1.1 101 Switching Protocols\r\n"
+        "Upgrade: websocket\r\n"
+        "Connection: Upgrade\r\n"
+        "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n" // FIXME
+        "Sec-WebSocket-Protocol: chat\r\n"
+		"\r\n";
+
+	writeData(socket, handshakeResponse, strlen(handshakeResponse));
+	_webSockets.push_back(socket);
 }
 
 void GenericResource::doPatch(int socket, const HttpMessage& request)
@@ -98,7 +107,17 @@ void GenericResource::update(const char* data)
 	pthread_rwlock_unlock(&_lock);
 }
 
+void GenericResource::writeData(int socket, const char* data, int nBytes)
+{
+	for (int i = 0; i < nBytes; i += writeHelper(socket, data, nBytes - i));
+}
 
+int GenericResource::writeHelper(int socket, const char* data, int nBytes)
+{
+	int bytesWritten = write(socket, data, nBytes);
+	if (bytesWritten == 0) throw errno;
+	return bytesWritten;
+}
 
 
 struct ResourceMapping

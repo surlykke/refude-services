@@ -42,6 +42,10 @@ protected:
 	void update(const char* data);
 
 private:
+	void writeData(int socket, const char *data, int nBytes);
+	int writeHelper(int socket, const char *data, int nBytes);
+
+
 	char _response[8192];
 	char* _respPtr;
 	int _responseLength;
