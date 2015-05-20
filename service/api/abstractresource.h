@@ -35,7 +35,7 @@ public:
 
 	virtual void handleRequest(int socket, const HttpMessage& request);
 	virtual void doGet(int socket, const HttpMessage& request);
-	virtual void doWebsocketUpgrade(int socket, const HttpMessage& request);
+	virtual void doSocketUpgrade(int socket, const HttpMessage& request);
 	virtual void doPatch(int socket, const HttpMessage& request);
 
 protected:

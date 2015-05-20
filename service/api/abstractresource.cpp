@@ -33,9 +33,9 @@ void GenericResource::handleRequest(int socket, const HttpMessage& request)
 		if (request.headerValue(Header::connection) != 0 &&
 			strcasecmp(request.headerValue(Header::connection), "upgrade") == 0 &&
 			request.headerValue(Header::upgrade) != 0 &&
-			strcasecmp(request.headerValue(Header::upgrade), "websocket") == 0)
+			strcasecmp(request.headerValue(Header::upgrade), "socketstream") == 0)
 		{
-			doWebsocketUpgrade(socket, request);
+			doSocketUpgrade(socket, request);
 		}
 		else 
 		{
@@ -66,21 +66,21 @@ void GenericResource::doGet(int socket, const HttpMessage& request)
 		}
 		bytesWritten += nbytes;
 	}
-
 	while (bytesWritten < _responseLength);
+
+	pthread_rwlock_unlock(&_lock);
 }
 
-void GenericResource::doWebsocketUpgrade(int socket, const HttpMessage& request)
+void GenericResource::doSocketUpgrade(int socket, const HttpMessage& request)
 {
-	const char* handshakeResponse = 
+
+	const char openStreamResponse[] = 
         "HTTP/1.1 101 Switching Protocols\r\n"
-        "Upgrade: websocket\r\n"
+        "Upgrade: socketstream\r\n"
         "Connection: Upgrade\r\n"
-        "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n" // FIXME
-        "Sec-WebSocket-Protocol: chat\r\n"
 		"\r\n";
 
-	writeData(socket, handshakeResponse, strlen(handshakeResponse));
+	writeData(socket, openStreamResponse, sizeof(openStreamResponse));
 	_webSockets.push_back(socket);
 }
 

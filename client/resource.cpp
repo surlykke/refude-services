@@ -52,31 +52,23 @@ int Resource::createConnection(const char* address)
 	return sock;
 }
 
-WebSocket Resource::createWebsocket(const char* protocol)
+int Resource::createSocket(const char* protocol)
 {
-	static const char* openHandshakeRequestTemplate =  
+	static const char openStreamRequest[] =  
 		"GET %s HTTP/1.1\r\n"
-		"Upgrade: websocket\r\n"
+		"Upgrade: socketstream\r\n"
 		"Connection: Upgrade\r\n"
-		"Sec-WebSocket-Protocol: %s\r\n"
-		"Sec-WebSocket-Version: 13\r\n"
-		"Sec-WebSocket-Key: %s\r\n"
 		"Host: localhost\r\n"
 		"\r\n"; 
 
 	int websocket = createConnection(_address);
-	const char* clientKey = "dGhlIHNhbXBsZSBub25jZQ=="; // FIXME
-	char request[strlen(openHandshakeRequestTemplate) + strlen(_path) - 1];
-	sprintf(request, openHandshakeRequestTemplate, _path, protocol, clientKey);
-	writeMessage(websocket, request, strlen(request));
+	writeMessage(websocket, openStreamRequest, sizeof(openStreamRequest));
 
 	HttpMessage handshakeResponse;
 	HttpMessageReader(websocket, handshakeResponse).readResponse();
 	assert(strcmp(handshakeResponse.headerValue(Header::connection), "Upgrade") == 0);
-	assert(strcmp(handshakeResponse.headerValue(Header::upgrade), "websocket") == 0);
-	assert(strcmp(handshakeResponse.headerValue(Header::sec_websocket_accept), "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=") == 0); //FIXME
-	assert(strcmp(handshakeResponse.headerValue(Header::sec_websocket_protocol), protocol) == 0);
-	return WebSocket(websocket);
+	assert(strcmp(handshakeResponse.headerValue(Header::upgrade), "socketstream") == 0);
+	return websocket;
 }
 
 void Resource::writeMessage(int socket, const char* data, int nbytes)
