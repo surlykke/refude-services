@@ -10,7 +10,6 @@
 
 #include <curl/curl.h>
 #include "../common/httpmessage.h"
-#include "../common/websocket.h"
 
 class Resource
 {

@@ -61,14 +61,14 @@ int Resource::createSocket(const char* protocol)
 		"Host: localhost\r\n"
 		"\r\n"; 
 
-	int websocket = createConnection(_address);
-	writeMessage(websocket, openStreamRequest, sizeof(openStreamRequest));
+	int socket = createConnection(_address);
+	writeMessage(socket, openStreamRequest, sizeof(openStreamRequest));
 
 	HttpMessage handshakeResponse;
-	HttpMessageReader(websocket, handshakeResponse).readResponse();
+	HttpMessageReader(socket, handshakeResponse).readResponse();
 	assert(strcmp(handshakeResponse.headerValue(Header::connection), "Upgrade") == 0);
 	assert(strcmp(handshakeResponse.headerValue(Header::upgrade), "socketstream") == 0);
-	return websocket;
+	return socket;
 }
 
 void Resource::writeMessage(int socket, const char* data, int nbytes)

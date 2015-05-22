@@ -15,9 +15,6 @@
 
 #include "../../common/httpprotocol.h"
 #include "../../common/httpmessage.h"
-#include "../../common/websocket.h"
-
-
 
 class AbstractResource
 {
@@ -35,15 +32,15 @@ public:
 
 	virtual void handleRequest(int socket, const HttpMessage& request);
 	virtual void doGet(int socket, const HttpMessage& request);
-	virtual void doSocketUpgrade(int socket, const HttpMessage& request);
+	virtual void doStreamUpgrade(int socket, const HttpMessage& request);
 	virtual void doPatch(int socket, const HttpMessage& request);
 
 protected:
 	void update(const char* data);
 
 private:
+	void notifyClients();	
 	void writeData(int socket, const char *data, int nBytes);
-	int writeHelper(int socket, const char *data, int nBytes);
 
 
 	char _response[8192];
@@ -51,7 +48,7 @@ private:
 	int _responseLength;
 	pthread_rwlock_t _lock;	
 
-	std::vector<WebSocket> _webSockets;
+	std::vector<int> _webSockets;
 };
 
 

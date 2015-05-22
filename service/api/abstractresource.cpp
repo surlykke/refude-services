@@ -35,7 +35,7 @@ void GenericResource::handleRequest(int socket, const HttpMessage& request)
 			request.headerValue(Header::upgrade) != 0 &&
 			strcasecmp(request.headerValue(Header::upgrade), "socketstream") == 0)
 		{
-			doSocketUpgrade(socket, request);
+			doStreamUpgrade(socket, request);
 		}
 		else 
 		{
@@ -71,16 +71,16 @@ void GenericResource::doGet(int socket, const HttpMessage& request)
 	pthread_rwlock_unlock(&_lock);
 }
 
-void GenericResource::doSocketUpgrade(int socket, const HttpMessage& request)
+void GenericResource::doStreamUpgrade(int socket, const HttpMessage& request)
 {
 
-	const char openStreamResponse[] = 
+	const char streamUpgradeResponse[] = 
         "HTTP/1.1 101 Switching Protocols\r\n"
         "Upgrade: socketstream\r\n"
         "Connection: Upgrade\r\n"
 		"\r\n";
 
-	writeData(socket, openStreamResponse, sizeof(openStreamResponse));
+	writeData(socket, streamUpgradeResponse, sizeof(streamUpgradeResponse));
 	_webSockets.push_back(socket);
 }
 
@@ -104,21 +104,42 @@ void GenericResource::update(const char* data)
 	pthread_rwlock_wrlock(&_lock);
 	sprintf(_response, responseTemplate, contentLength, data);
 	_responseLength = strlen(_response);
+	notifyClients();
 	pthread_rwlock_unlock(&_lock);
 }
 
+void GenericResource::notifyClients()
+{
+	std::vector<int>::iterator it = _webSockets.begin();
+
+	/* AFAIBATG write to a socket will only block - or in the case of a nonblocking, 
+	 * return EAGAIN - if there's no room in the kernel buffer.
+	 * In that case there are waiting 'u'`s for the client to read, so no nead to send more
+	 */
+	if (write(*it, "u", 1) < 0 && errno != EAGAIN) {
+		while (close(*it) < 0 && errno == EINTR);
+		it = _webSockets.erase(it);
+	}
+	else {
+		it++;
+	}
+}
+
+
 void GenericResource::writeData(int socket, const char* data, int nBytes)
 {
-	for (int i = 0; i < nBytes; i += writeHelper(socket, data, nBytes - i));
+	int n = 0;
+	
+	do 
+	{	
+		int m = write(socket, data + n, nBytes - n);
+		if (m < 0) {
+			throw errno;
+		}
+		n += m;
+	}
+	while (n < nBytes);
 }
-
-int GenericResource::writeHelper(int socket, const char* data, int nBytes)
-{
-	int bytesWritten = write(socket, data, nBytes);
-	if (bytesWritten == 0) throw errno;
-	return bytesWritten;
-}
-
 
 struct ResourceMapping
 {
