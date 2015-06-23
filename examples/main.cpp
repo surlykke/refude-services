@@ -2,6 +2,7 @@
 
 #include "service.h"
 #include "power.h"
+#include "genericresource.h"
 
 int main(int argc, char *argv[])
 {

@@ -28,6 +28,8 @@ ServiceListener::~ServiceListener()
 
 void ServiceListener::setup(const char* socketPath)
 {
+	std::cout << "ServiceListener::setup" << std::endl;
+
 	if (strlen(socketPath) >= UNIX_PATH_MAX - 1)
 	{
 		error(1, errno, "socketPath to long");
@@ -81,7 +83,7 @@ void* ServiceListener::startListenThread(void* serviceListenerPtr)
 
 void ServiceListener::run()
 {
-	printf("ServiceListener::run.. \n");
+	std::cout << "ServiceListener::run.." << std::endl;
 	for(;;)	
 	{
 		int requestSocket;

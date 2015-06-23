@@ -11,6 +11,8 @@
 
 #include "httpmessage.h"
 
+using namespace std;
+
 HttpMessage::HttpMessage()
 {
 }
@@ -66,16 +68,21 @@ void HttpMessageReader::readRequest()
 {
 	clear();
 	readRequestLine();
-	readHeaderLines();
+	//readHeaderLines();
+	readHeaders();
 	readBody();
 }
 
 void HttpMessageReader::readResponse()
 {
 	clear();
+	cout << "clear done\n";
 	readStatusLine();
+	cout << "readStatusLine done\n" ;
 	readHeaderLines();
+	cout << "readHeaderLines done\n"; 
 	readBody();
+	cout << "readBody done\n";
 }
 
 
@@ -138,8 +145,62 @@ void HttpMessageReader::readStatusLine()
 	}
 
 	assert(nextChar() == '\n');
+
+	cout << "Status line:" << _message._buffer;
 }
 
+
+void HttpMessageReader::readHeaders() 
+{
+	while (true) 
+	{
+		if (nextChar() == '\r')	
+		{
+			assert(nextChar() == '\n');
+			return;
+		}
+		
+		readHeaderLine();
+	}
+}
+
+// On entry - _currentPos points to first character of line
+bool HttpMessageReader::readHeaderLine()
+{
+	int startOfHeaderLine = _currentPos;
+	int startOfHeaderValue = -1;
+	int endOfHeaderValue = -1;
+
+	while (isTChar(currentChar())) nextChar();
+	assert(currentChar() == ':');
+	assert(_currentPos > startOfHeaderLine);
+	_message._buffer[_currentPos] = '\0';
+
+	while (isblank(nextChar()));
+	endOfHeaderValue = startOfHeaderValue = _currentPos;
+
+	while (currentChar() != '\r')
+	{
+		if (!isblank(currentChar()))
+		{
+			endOfHeaderValue = _currentPos + 1;
+		}
+	}
+
+	assert(nextChar() == '\n');
+	_message._buffer[endOfHeaderValue] = '\0';
+	Header h = string2Header(_message._buffer + startOfHeaderLine);
+
+	if (h != Header::unknown)
+	{
+		_message._headers[(int) h] = _message._buffer + startOfHeaderValue;
+	}
+}
+
+bool HttpMessageReader::isTChar(char c)
+{
+	return c != ':'; // FIXME
+}
 
 
 /* TODO: Full implementation of spec
@@ -194,6 +255,7 @@ void HttpMessageReader::readHeaderLines()
 
 void HttpMessageReader::readBody()
 {
+	cout << "_message._method: " << (int)_message._method << "\n";
 	if (_message._method == Method::GET || _message._method == Method::HEAD)	// Others?
 	{
 		return;
@@ -230,6 +292,7 @@ char HttpMessageReader::nextChar()
 		receive();
 	}
 
+	
 	return _message._buffer[_currentPos];
 }
 
@@ -241,6 +304,11 @@ void HttpMessageReader::receive()
 		printf("Brokent pipe\n");
 		throw Status::Http403; // FIXME Broken pipe thing	
 	}
+	
+	_message._buffer[_bufferEnd + bytesRead] = '\0';
+	cout << "Received:\n" << _message._buffer + _bufferEnd;
+	
+
 	_bufferEnd += bytesRead;
 }
 

@@ -8,13 +8,17 @@
 #ifndef POWER_H
 #define	POWER_H
 
-#include "abstractresource.h"
+#include "genericresource.h"
 
 class Power : public GenericResource
 {
 public:
 	Power();
 	virtual ~Power();
+
+private:
+	
+
 };
 
 #endif	/* POWER_H */

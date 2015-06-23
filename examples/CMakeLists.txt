@@ -1,6 +1,7 @@
 set(PROJECT "rfds-power")
 project(${PROJECT})
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 

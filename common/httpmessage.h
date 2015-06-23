@@ -56,9 +56,13 @@ struct HttpMessageReader
 	void readRequestLine();
 	void readStatusLine();
 	void readHeaderLines();
+	bool readHeaderLine();
+	void readHeaders();
 	void readBody();
 	char currentChar();
 	char nextChar();
+	bool isTChar(char c);
+	bool isFChar(char c);
 	void receive();
 
 	void clear();

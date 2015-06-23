@@ -18,10 +18,10 @@ public:
 	virtual ~Resource();
 
 	void update();	
+	int createSocket(const char* protocol);
 	
 
 private:
-	int createSocket(const char* protocol);
 	int createConnection(const char* address);
 	inline void writeMessage(int socket, const char* data, int nbytes);
 	inline int writeSome(int socket, const char* data, int nbytes);
