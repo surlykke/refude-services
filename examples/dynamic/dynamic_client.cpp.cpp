@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 	try {
 		cout << "Hello world!" << std::endl;
 
-		Resource resource("org.restfulipc.examples.Power", "/Version");	
+		Resource resource("org.restfulipc.examples.Dynamic", "/res");	
 		cout << "Resource created" << std::endl;
 
 		resource.update();

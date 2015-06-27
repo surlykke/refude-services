@@ -86,6 +86,7 @@ void ServiceListener::run()
 	std::cout << "ServiceListener::run.." << std::endl;
 	for(;;)	
 	{
+		std::cout << "ServiceListener loop\n";
 		int requestSocket;
 		if ((requestSocket = accept(listenSocket, NULL, 0)) < 0)
 		{

@@ -10,7 +10,8 @@
 
 #include "requestqueue.h"
 #include "abstractresource.h"
-#include "../../common/httpmessage.h"
+#include "resourcemap.h"
+#include "httpmessage.h"
 
 class RequestHandler 
 {

@@ -20,8 +20,6 @@ public:
 	virtual void doGet(int socket, const HttpMessage& request);
 	virtual void doStreamUpgrade(int socket, const HttpMessage& request);
 	virtual void doPatch(int socket, const HttpMessage& request);
-
-protected:
 	void update(const char* data);
 
 private:

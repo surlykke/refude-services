@@ -12,7 +12,7 @@
 #include <linux/un.h>
 
 #include "requestqueue.h"
-#include "abstractresource.h"
+#include "resourcemap.h"
 
 class ServiceListener {
 public:

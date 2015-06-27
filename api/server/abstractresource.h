@@ -13,8 +13,8 @@
 #include <string.h>
 #include <vector>
 
-#include "../../common/httpprotocol.h"
-#include "../../common/httpmessage.h"
+#include "httpprotocol.h"
+#include "httpmessage.h"
 
 class AbstractResource
 {
@@ -24,24 +24,6 @@ public:
 	virtual void handleRequest(int socket, const HttpMessage& request) = 0;
 };
 
-
-
-struct ResourceMappings;
-
-class ResourceMap
-{
-public:
-	ResourceMap();
-	virtual ~ResourceMap();
-
-	void map(const char* path, AbstractResource* resource);
-	void unMap(AbstractResource* resource);
-	AbstractResource* resource(const char* path);
-
-private:
-	pthread_rwlock_t mLock;
-	ResourceMappings* mResourceMappings;
-};
 
 
 #endif	/* ABSTRACTRESOURCE_H */

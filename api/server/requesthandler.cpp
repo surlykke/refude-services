@@ -11,6 +11,7 @@
 
 #include "requesthandler.h"
 #include "requestqueue.h"
+#include "resourcemap.h"
 
 RequestHandler::RequestHandler(RequestQueue *requestQueue, ResourceMap* resourceMap) :
 mRequestQueue(requestQueue),
@@ -33,11 +34,13 @@ void RequestHandler::run()
 {
     for (;;)
     {
+		std::cout << "RequestHandler::run loop\n";
         _requestSocket = mRequestQueue->dequeue();
+		std::cout << "Got _requestSocket\n";
 		try
         {
 			HttpMessageReader(_requestSocket, _request).readRequest();
-			printf("Incoming, path: %s, queryString: %s, body:\n%s\n", _request.path(), _request.queryString(), _request.body());
+			std::cout << "HttpMessageReader.readRequest done\n";
 			AbstractResource* resource = mResourceMap->resource(_request.path());
 		
 			if (resource == 0)

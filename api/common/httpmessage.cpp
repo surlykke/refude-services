@@ -66,11 +66,15 @@ HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message) :
 
 void HttpMessageReader::readRequest()
 {
+	cout << "Into readRequest\n";
 	clear();
 	readRequestLine();
+	cout << "request line read\n";
 	//readHeaderLines();
 	readHeaders();
+	cout << "headers read\n";
 	readBody();
+	cout << "body read\n";
 }
 
 void HttpMessageReader::readResponse()
@@ -152,6 +156,7 @@ void HttpMessageReader::readStatusLine()
 
 void HttpMessageReader::readHeaders() 
 {
+	cout << "Into readHeaders\n";	
 	while (true) 
 	{
 		if (nextChar() == '\r')	
@@ -185,6 +190,7 @@ bool HttpMessageReader::readHeaderLine()
 		{
 			endOfHeaderValue = _currentPos + 1;
 		}
+		nextChar();
 	}
 
 	assert(nextChar() == '\n');
