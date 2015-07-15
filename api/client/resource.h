@@ -11,7 +11,7 @@
 #include <curl/curl.h>
 #include "../common/httpmessage.h"
 
-class Resource
+/*class Resource
 {
 public:
 	Resource(const char* address, const char *path);
@@ -34,7 +34,14 @@ private:
 	HttpMessage _response;
 	char _getRequest[128];
 	int _getRequestLength;
-};
+};*/
+
+namespace org_restfulipc
+{
+	void assert(bool condition);
+
+	int connectToSocket(const char* service, const char* path, const char* protocol);
+}
 
 #endif	/* RESOURCE_H */
 

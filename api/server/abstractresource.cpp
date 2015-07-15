@@ -10,3 +10,6 @@
 
 #include "abstractresource.h"
 
+namespace org_restfulipc
+{
+}

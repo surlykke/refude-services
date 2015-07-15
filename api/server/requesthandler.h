@@ -13,31 +13,35 @@
 #include "resourcemap.h"
 #include "httpmessage.h"
 
-class RequestHandler 
+namespace org_restfulipc
 {
-public:
-    RequestHandler(RequestQueue* requestQueue, ResourceMap* resourceMap);
-	virtual ~RequestHandler();
+	class RequestHandler 
+	{
+	public:
+		RequestHandler(RequestQueue* requestQueue, ResourceMap* resourceMap);
+		virtual ~RequestHandler();
 
-	void start();
-	
-	static void* launch(void* requestHandlerPtr);
+		void start();
+		
+		static void* launch(void* requestHandlerPtr);
 
-private:
-	void run();
-	
-	void readRequestLine();
-	void readHeaderLine();
-	void readBody();
+	private:
+		void run();
+		
+		void readRequestLine();
+		void readHeaderLine();
+		void readBody();
 
-	char _buffer[8192];
+		char _buffer[8192];
 
-	int _requestSocket;
-	HttpMessage _request;
+		int _requestSocket;
+		HttpMessage _request;
 
-	RequestQueue *mRequestQueue;
-	ResourceMap* mResourceMap;
-};
+		RequestQueue *mRequestQueue;
+		ResourceMap* mResourceMap;
+	};
+
+}
 
 
 

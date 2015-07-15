@@ -12,13 +12,13 @@
 
 #include "resource.h"
 using namespace std;
-
+using namespace org_restfulipc;
 /*
  * 
  */
 int main(int argc, char** argv)
 {
-	try {
+/*	try {
 		cout << "Hello world!" << std::endl;
 
 		Resource resource("org.restfulipc.examples.Dynamic", "/res");	
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 	}
 	catch (...) {
 		cout << "Error: " <<  strerror(errno) << std::endl;
-	}
+	}*/
     return 0;
 }
 

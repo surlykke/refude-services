@@ -11,23 +11,25 @@
 #include "resourcemap.h"
 #include "abstractresource.h"
 
-struct ResourceMappings;
-
-class ResourceMap
+namespace org_restfulipc
 {
-public:
-	ResourceMap();
-	virtual ~ResourceMap();
+	struct ResourceMappings;
 
-	void map(const char* path, AbstractResource* resource);
-	void unMap(AbstractResource* resource);
-	AbstractResource* resource(const char* path);
+	class ResourceMap
+	{
+	public:
+		ResourceMap();
+		virtual ~ResourceMap();
 
-private:
-	pthread_rwlock_t mLock;
-	ResourceMappings* mResourceMappings;
-};
+		void map(const char* path, AbstractResource* resource);
+		void unMap(AbstractResource* resource);
+		AbstractResource* resource(const char* path);
 
+	private:
+		pthread_rwlock_t mLock;
+		ResourceMappings* mResourceMappings;
+	};
+}
 
 
 

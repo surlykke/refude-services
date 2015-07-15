@@ -14,7 +14,7 @@
 
 using namespace std;
 
-Resource::Resource(const char* address, const char* path) : _address(address), _path(path)
+/*Resource::Resource(const char* address, const char* path) : _address(address), _path(path)
 {
 	// We will probably use the same get over and over again, so lets build it 
 	// now	
@@ -107,5 +107,64 @@ void Resource::assert(bool condition)
 		std::cerr << "Throwing error: " << errorNumber << ", " << strerror(errorNumber) << std::endl;
 		throw errorNumber;
 	}
+}
+*/
+namespace org_restfulipc
+{
+	int writeSome(int socket, const char* data, int nbytes)
+	{
+		int written = write(socket, data, nbytes);
+		assert(written > -1);
+		return written;
+	}
+
+
+	void writeMessage(int socket, const char* data, int nbytes)
+	{
+		for (int i = 0; i < nbytes; i += writeSome(socket, data + i, nbytes - i));
+	}
+
+
+	int connectToSocket(const char* service, const char* path, const char* protocol)
+	{
+
+		cout << "Into createConnection:" << service << path << "\n";
+		int sock = socket(AF_UNIX, SOCK_STREAM, 0); // FIXME
+		assert(sock > -1);
+		struct sockaddr_un addr;
+		memset(&addr, 0, sizeof(struct sockaddr_un));
+		addr.sun_family = AF_UNIX;
+		strncpy(addr.sun_path, service, sizeof(addr.sun_path) - 1);
+		assert(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);
+		
+
+		cout << "Into createSocket\n";	
+		static const char openStreamRequestTemplate[] =  
+			"GET %s HTTP/1.1\r\n"
+			"Upgrade: socketstream\r\n"
+			"Connection: Upgrade\r\n"
+			"Host: localhost\r\n"
+			"\r\n"; 
+
+		char openStreamRequest[256];
+		sprintf(openStreamRequest, openStreamRequestTemplate, path);
+		writeMessage(sock, openStreamRequest, sizeof(openStreamRequest));
+		HttpMessage handshakeResponse;
+		HttpMessageReader(sock, handshakeResponse).readResponse();
+		
+		if (handshakeResponse.headerValue(Header::connection) == 0 || 
+			strcmp(handshakeResponse.headerValue(Header::connection), "Upgrade") != 0) {
+			return -1;
+		}
+		
+		if (handshakeResponse.headerValue(Header::upgrade) == 0 || 
+			strcmp(handshakeResponse.headerValue(Header::upgrade), "socketstream") != 0) /*FIXME*/{
+			return -1;
+		}
+		
+		return sock;
+
+	}
+
 }
 

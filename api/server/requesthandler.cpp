@@ -13,54 +13,57 @@
 #include "requestqueue.h"
 #include "resourcemap.h"
 
-RequestHandler::RequestHandler(RequestQueue *requestQueue, ResourceMap* resourceMap) :
-mRequestQueue(requestQueue),
-mResourceMap(resourceMap)
-{
-}
-
-RequestHandler::~RequestHandler()
+namespace org_restfulipc
 {
 
-}
+	RequestHandler::RequestHandler(RequestQueue *requestQueue, ResourceMap* resourceMap) :
+	mRequestQueue(requestQueue),
+	mResourceMap(resourceMap)
+	{
+	}
 
-void* RequestHandler::launch(void* requestHandlerPtr)
-{
-    ((RequestHandler*) requestHandlerPtr)->run();
-    return NULL;
-}
+	RequestHandler::~RequestHandler()
+	{
 
-void RequestHandler::run()
-{
-    for (;;)
-    {
-		std::cout << "RequestHandler::run loop\n";
-        _requestSocket = mRequestQueue->dequeue();
-		std::cout << "Got _requestSocket\n";
-		try
-        {
-			HttpMessageReader(_requestSocket, _request).readRequest();
-			std::cout << "HttpMessageReader.readRequest done\n";
-			AbstractResource* resource = mResourceMap->resource(_request.path());
+	}
+
+	void* RequestHandler::launch(void* requestHandlerPtr)
+	{
+		((RequestHandler*) requestHandlerPtr)->run();
+		return NULL;
+	}
+
+	void RequestHandler::run()
+	{
+		for (;;)
+		{
+			std::cout << "RequestHandler::run loop\n";
+			_requestSocket = mRequestQueue->dequeue();
+			std::cout << "Got _requestSocket\n";
+			try
+			{
+				HttpMessageReader(_requestSocket, _request).readRequest();
+				std::cout << "HttpMessageReader.readRequest done\n";
+				AbstractResource* resource = mResourceMap->resource(_request.path());
+			
+				if (resource == 0)
+				{		
+					throw Status::Http404;	
+				}
 		
-			if (resource == 0)
-			{		
-				throw Status::Http404;	
+				printf("_requestSocket: %d\n", _requestSocket);
+				resource->handleRequest(_requestSocket, _request);
 			}
-	
-			printf("_requestSocket: %d\n", _requestSocket);
-			resource->handleRequest(_requestSocket, _request);
-        }
-        catch (Status status)
-        {
-            printf("Error\n");
-            write(_requestSocket, statusLine(status), strlen(statusLine(status)));
-            write(_requestSocket, "\r\n", 2);
-            close(_requestSocket);
-        }
-    }
+			catch (Status status)
+			{
+				printf("Error\n");
+				write(_requestSocket, statusLine(status), strlen(statusLine(status)));
+				write(_requestSocket, "\r\n", 2);
+				close(_requestSocket);
+			}
+		}
+	}
 }
-
 /*const char* RequestHandler::handshakeResponseTemplate =
 	"HTTP/1.1 101 Switching Protocols"
 	"Upgrade: websocket"

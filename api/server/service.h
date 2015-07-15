@@ -14,26 +14,28 @@
 #include "requestqueue.h"
 #include "resourcemap.h"
 
-class ServiceListener {
-public:
-    ServiceListener();
-    virtual ~ServiceListener();
+namespace org_restfulipc
+{
+	class ServiceListener 
+	{
+	public:
+		ServiceListener();
+		virtual ~ServiceListener();
 
-	void setup(const char* socketPath);
-	void map(AbstractResource* resource, const char* path);
-	void unmap(AbstractResource* resource);
+		void setup(const char* socketPath);
+		void map(AbstractResource* resource, const char* path);
+		void unmap(AbstractResource* resource);
 
-private:
-	
-	static void* startListenThread(void* serviceListenerPtr);
-	void run();
-	
-	int listenSocket;
-	RequestQueue requestQueue;
-	ResourceMap mResourceMap;
-};
-
-
+	private:
+		
+		static void* startListenThread(void* serviceListenerPtr);
+		void run();
+		
+		int listenSocket;
+		RequestQueue requestQueue;
+		ResourceMap mResourceMap;
+	};
+}
 
 #endif	/* SERVICELISTENER_H */
 

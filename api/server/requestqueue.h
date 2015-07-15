@@ -10,26 +10,29 @@
 
 #include <pthread.h>
 
-class RequestQueue {
-public:
-	RequestQueue();
-	virtual ~RequestQueue();
-	
-	void enqueue(int requestSocket);
-	int dequeue();
-	
-private:
-	static const int mask = 7;	
-	void increment(int& index) { index = (index + 1) & 7; }
+namespace org_restfulipc 
+{
+	class RequestQueue {
+	public:
+		RequestQueue();
+		virtual ~RequestQueue();
 		
-	int mQueue[8];
-	pthread_mutex_t mLock;
-	pthread_cond_t mNotFull;	
-	pthread_cond_t mNotEmpty;
-	int queueStart;
-	int	queueEnd; 
+		void enqueue(int requestSocket);
+		int dequeue();
+		
+	private:
+		static const int mask = 7;	
+		void increment(int& index) { index = (index + 1) & 7; }
+			
+		int mQueue[8];
+		pthread_mutex_t mLock;
+		pthread_cond_t mNotFull;	
+		pthread_cond_t mNotEmpty;
+		int queueStart;
+		int	queueEnd; 
 
-};
+	};
+}
 
 #endif	/* REQUESTQUEUE_H */
 

@@ -6,6 +6,8 @@
 #include "service.h"
 #include "genericresource.h"
 
+using namespace org_restfulipc;
+
 int main(int argc, char *argv[])
 {
 	char json[256];

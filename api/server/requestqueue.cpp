@@ -10,56 +10,58 @@
 
 #include "requestqueue.h"
 
-RequestQueue::RequestQueue() 
+namespace org_restfulipc
 {
-	mLock = PTHREAD_MUTEX_INITIALIZER;
-	mNotEmpty = PTHREAD_COND_INITIALIZER;
-	mNotFull = PTHREAD_COND_INITIALIZER;
-
-	for (int i = 0; i < 8; i++) mQueue[i] = 0;
-	
-	queueStart = 0;
-	queueEnd = 0;
-}
-
-RequestQueue::~RequestQueue()
-{
-}
-
-void RequestQueue::enqueue(int requestSocket)
-{	
-	pthread_mutex_lock(&mLock);
-	while (mQueue[queueEnd] != 0)	
+	RequestQueue::RequestQueue() 
 	{
-		pthread_cond_wait(&mNotFull, &mLock);
+		mLock = PTHREAD_MUTEX_INITIALIZER;
+		mNotEmpty = PTHREAD_COND_INITIALIZER;
+		mNotFull = PTHREAD_COND_INITIALIZER;
+
+		for (int i = 0; i < 8; i++) mQueue[i] = 0;
+		
+		queueStart = 0;
+		queueEnd = 0;
 	}
 
-	mQueue[queueEnd] = requestSocket;
-	increment(queueEnd);
-	printf("enqueue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
-	pthread_cond_signal(&mNotEmpty);
-	pthread_mutex_unlock(&mLock);
-	printf("enqueue done\n");
-}
-
-int RequestQueue::dequeue()
-{
-	pthread_mutex_lock(&mLock);
-
-	while (mQueue[queueStart] == 0)
+	RequestQueue::~RequestQueue()
 	{
-		pthread_cond_wait(&mNotEmpty, &mLock);
 	}
 
-	int dequeuedSocket = mQueue[queueStart];
-	mQueue[queueStart] = 0;
-	increment(queueStart);
+	void RequestQueue::enqueue(int requestSocket)
+	{	
+		pthread_mutex_lock(&mLock);
+		while (mQueue[queueEnd] != 0)	
+		{
+			pthread_cond_wait(&mNotFull, &mLock);
+		}
 
-	printf("dequeue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
-	pthread_cond_signal(&mNotFull);
-	pthread_mutex_unlock(&mLock);
+		mQueue[queueEnd] = requestSocket;
+		increment(queueEnd);
+		printf("enqueue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
+		pthread_cond_signal(&mNotEmpty);
+		pthread_mutex_unlock(&mLock);
+		printf("enqueue done\n");
+	}
 
-	printf("dequeue done\n");
-	return dequeuedSocket;
+	int RequestQueue::dequeue()
+	{
+		pthread_mutex_lock(&mLock);
+
+		while (mQueue[queueStart] == 0)
+		{
+			pthread_cond_wait(&mNotEmpty, &mLock);
+		}
+
+		int dequeuedSocket = mQueue[queueStart];
+		mQueue[queueStart] = 0;
+		increment(queueStart);
+
+		printf("dequeue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
+		pthread_cond_signal(&mNotFull);
+		pthread_mutex_unlock(&mLock);
+
+		printf("dequeue done\n");
+		return dequeuedSocket;
+	}
 }
-

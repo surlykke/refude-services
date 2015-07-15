@@ -16,14 +16,19 @@
 #include "httpprotocol.h"
 #include "httpmessage.h"
 
-class AbstractResource
+namespace org_restfulipc
 {
-public:
-	AbstractResource() {};
-	virtual ~AbstractResource() {};
-	virtual void handleRequest(int socket, const HttpMessage& request) = 0;
-};
 
+	class AbstractResource
+	{
+	public:
+		AbstractResource() {};
+		virtual ~AbstractResource() {};
+		virtual void handleRequest(int socket, const HttpMessage& request) = 0;
+	};
+
+
+}
 
 
 #endif	/* ABSTRACTRESOURCE_H */
