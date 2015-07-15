@@ -21,6 +21,6 @@ int main(int argc, char *argv[])
 		sprintf(json, "{time: %d}", time(NULL));
 		std::cout << "Updating to " << json << "\n";
 		resource.update(json);	
-		sleep(100);	
+		sleep(3);	
 	}
 }

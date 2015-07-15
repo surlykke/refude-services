@@ -38,7 +38,11 @@ private:
 
 namespace org_restfulipc
 {
-	void assert(bool condition);
+	void httpGet(const char* url, HttpMessage& message);
+	void httpGet(int socket, const char* path, HttpMessage& message);	
+
+	//http://host:port/path
+	//http://host:{udspath}/path
 
 	int connectToSocket(const char* service, const char* path, const char* protocol);
 }

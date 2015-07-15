@@ -10,6 +10,7 @@
 #include <iosfwd>
 
 #include "httpmessage.h"
+#include "errorhandling.h"
 
 using namespace std;
 
@@ -100,7 +101,7 @@ namespace org_restfulipc
 		while (nextChar() != ' ');
 		
 		_message._method = string2Method(_message._buffer);
-		assert(_message._method != Method::UNKNOWN);
+		assert<Status::Http406>(_message._method != Method::UNKNOWN);
 		_message._path = _message._buffer + _currentPos + 1;
 
 		while (! isspace(nextChar()))
@@ -123,21 +124,21 @@ namespace org_restfulipc
 
 		while (! isspace(nextChar()));
 		
-		assert(_message._buffer[_currentPos] == '\r' && nextChar() == '\n');
+		assert<Status::Http400>(_message._buffer[_currentPos] == '\r' && nextChar() == '\n');
 	}
 
 	void HttpMessageReader::readStatusLine()
 	{
 		while (!isspace(nextChar()));
-		assert(_currentPos > 0);
-		assert(strncmp("HTTP/1.1", _message._buffer, 8) == 0);
+		assert<Status::Http400>(_currentPos > 0);
+		assert<Status::Http400>(strncmp("HTTP/1.1", _message._buffer, 8) == 0);
 		while (isspace(nextChar()));
 		int statuscodeStart = _currentPos;
-		assert(isdigit(currentChar()));
+		assert<Status::Http400>(isdigit(currentChar()));
 		while (isdigit(nextChar()));
 		errno = 0;
 		long int status = strtol(_message._buffer + statuscodeStart, 0, 10);
-		assert(status > 100 && status < 600);
+		assert<Status::Http400>(status > 100 && status < 600);
 		_message._status = (int) status;
 
 		// We ignore what follows the status code. This means that a message like
@@ -146,11 +147,11 @@ namespace org_restfulipc
 		// (Why does the http protocol specify that both the code and the text is sent?)
 		while (currentChar() != '\r')
 		{
-			assert(currentChar() != '\n');
+			assert<Status::Http400>(currentChar() != '\n');
 			nextChar();
 		}
 
-		assert(nextChar() == '\n');
+		assert<Status::Http400>(nextChar() == '\n');
 
 		cout << "Status line:" << _message._buffer;
 	}
@@ -163,7 +164,7 @@ namespace org_restfulipc
 		{
 			if (nextChar() == '\r')	
 			{
-				assert(nextChar() == '\n');
+				assert<Status::Http400>(nextChar() == '\n');
 				return;
 			}
 			
@@ -179,8 +180,8 @@ namespace org_restfulipc
 		int endOfHeaderValue = -1;
 
 		while (isTChar(currentChar())) nextChar();
-		assert(currentChar() == ':');
-		assert(_currentPos > startOfHeaderLine);
+		assert<Status::Http400>(currentChar() == ':');
+		assert<Status::Http400>(_currentPos > startOfHeaderLine);
 		_message._buffer[_currentPos] = '\0';
 
 		while (isblank(nextChar()));
@@ -195,7 +196,7 @@ namespace org_restfulipc
 			nextChar();
 		}
 
-		assert(nextChar() == '\n');
+		assert<Status::Http400>(nextChar() == '\n');
 		_message._buffer[endOfHeaderValue] = '\0';
 		Header h = string2Header(_message._buffer + startOfHeaderLine);
 
@@ -226,7 +227,7 @@ namespace org_restfulipc
 			for (;;)	
 			{
 				nextChar();
-				assert(_message._buffer[_currentPos] != '\n');
+				assert<Status::Http400>(_message._buffer[_currentPos] != '\n');
 				
 				if (_message._buffer[_currentPos] == '\r')
 				{
@@ -238,7 +239,7 @@ namespace org_restfulipc
 				}
 			}
 			
-			assert(nextChar() == '\n');
+			assert<Status::Http400>(nextChar() == '\n');
 			
 			if (_currentPos == lineStart + 1)
 			{
@@ -247,7 +248,7 @@ namespace org_restfulipc
 			}
 			else 
 			{	
-				assert(colonPos > lineStart); // None or empty header name
+				assert<Status::Http400>(colonPos > lineStart); // None or empty header name
 				_message._buffer[colonPos] = '\0';
 				_message._buffer[_currentPos - 1] = '\0';
 				Header h = string2Header(_message._buffer + lineStart);
@@ -270,13 +271,14 @@ namespace org_restfulipc
 		}
 		else 
 		{
-			assert(_message.headerValue(Header::content_length) != 0, Error::MissingContentLength);
+			assert<Status::Http411>(_message.headerValue(Header::content_length) != 0);
+
 			errno = 0;
 			_message._contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
 			assert(errno == 0);
 		
-			int bodyStart = _currentPos;	
-
+			int bodyStart = _currentPos + 1;	
+			cout << "body: " << _message._buffer + bodyStart << "\n";
 			while (bodyStart + _message._contentLength > _bufferEnd)	
 			{
 				receive();
@@ -330,13 +332,7 @@ namespace org_restfulipc
 
 
 
-	void HttpMessageReader::assert(bool condition, Error error)
-	{
-		if (! condition)
-		{
-			throw error;
-		}
-	}
+	
 
 }
 

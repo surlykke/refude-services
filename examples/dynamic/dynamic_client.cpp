@@ -6,11 +6,11 @@
  */
 
 #include <iostream>
-#include <curl/curl.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "resource.h"
+#include "methods.h"
+
 using namespace std;
 using namespace org_restfulipc;
 /*
@@ -18,38 +18,19 @@ using namespace org_restfulipc;
  */
 int main(int argc, char** argv)
 {
-/*	try {
-		cout << "Hello world!" << std::endl;
-
-		Resource resource("org.restfulipc.examples.Dynamic", "/res");	
-		cout << "Resource created" << std::endl;
-
-		resource.update();
-		int updateStream = resource.createSocket("");
-		if (updateStream < 0) {
-			cout << "No update\n";
-			return 1;
+	try { 
+		while (true) {
+			HttpMessage message;
+			httpGet("http://{org.restfulipc.examples.Dynamic}/res", message);
+			cout << "Got:<" << message.body() << ">\n";
+			sleep(5);
 		}
-		else { 
-			char ch[1];
-			while (true)  {
-				if (read(updateStream, ch, 1) < 0) {
-					cout << strerror(errno) << std::endl;
-					return 1;
-				}
-					
-				cout << ch[0] << std::endl;
-			}; 
-		}
-
 	}
-	catch (int errno) {
-		cout << "Into catch..."	<< std::endl;
-		return 1;
+	catch (const char* errMsg) {
+		cout << "Error: " << errMsg;
 	}
-	catch (...) {
-		cout << "Error: " <<  strerror(errno) << std::endl;
-	}*/
-    return 0;
+	catch (int errornumber) {
+		cout << "Errno: " << errornumber << " - " << strerror(errornumber) << "\n";
+	}
 }
 

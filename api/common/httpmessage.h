@@ -45,13 +45,6 @@ namespace org_restfulipc
 
 	struct HttpMessageReader
 	{
-		enum Error
-		{
-			InvalidFormat,
-			MissingContentLength,
-			ConnectionBroken
-		};
-
 		HttpMessageReader(int socket, HttpMessage& message);
 		void readRequest();
 		void readResponse();
@@ -68,8 +61,6 @@ namespace org_restfulipc
 		void receive();
 
 		void clear();
-		void assert(bool condition, Error error = Error::InvalidFormat);
-
 
 		int _socket;
 		HttpMessage& _message;
