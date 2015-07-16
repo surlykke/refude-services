@@ -19,7 +19,6 @@ namespace org_restfulipc
 		
 		void addMapping(const char* path, AbstractResource* resource)
 		{
-			printf("AddMapping, capacity: %d, numElements: %d", capacity, numElements);
 			while (capacity <= numElements)
 			{
 				capacity += 8;

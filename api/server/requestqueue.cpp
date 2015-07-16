@@ -38,10 +38,8 @@ namespace org_restfulipc
 
 		mQueue[queueEnd] = requestSocket;
 		increment(queueEnd);
-		printf("enqueue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
 		pthread_cond_signal(&mNotEmpty);
 		pthread_mutex_unlock(&mLock);
-		printf("enqueue done\n");
 	}
 
 	int RequestQueue::dequeue()
@@ -57,11 +55,9 @@ namespace org_restfulipc
 		mQueue[queueStart] = 0;
 		increment(queueStart);
 
-		printf("dequeue, about to signal, queueStart: %d, queueEnd: %d\n", queueStart, queueEnd);
 		pthread_cond_signal(&mNotFull);
 		pthread_mutex_unlock(&mLock);
 
-		printf("dequeue done\n");
 		return dequeuedSocket;
 	}
 }

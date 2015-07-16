@@ -29,8 +29,6 @@ namespace org_restfulipc
 
 	void ServiceListener::setup(const char* socketPath)
 	{
-		std::cout << "ServiceListener::setup" << std::endl;
-
 		if (strlen(socketPath) >= UNIX_PATH_MAX - 1)
 		{
 			error(1, errno, "socketPath to long");
@@ -45,7 +43,6 @@ namespace org_restfulipc
 		{
 			error(1, errno, "creation of listen socket failed");
 		}
-
 
 		unlink(socketPath);
 
@@ -84,20 +81,15 @@ namespace org_restfulipc
 
 	void ServiceListener::run()
 	{
-		std::cout << "ServiceListener::run.." << std::endl;
 		for(;;)	
 		{
-			std::cout << "ServiceListener loop\n";
 			int requestSocket;
 			if ((requestSocket = accept(listenSocket, NULL, 0)) < 0)
 			{
 				error(0, errno, "accept");
 			}
 
-			printf("Incoming...\n");
-
 			requestQueue.enqueue(requestSocket);
-			printf("enqueued..");
 		}
 	}
 

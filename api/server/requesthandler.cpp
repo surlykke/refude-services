@@ -37,13 +37,10 @@ namespace org_restfulipc
 	{
 		for (;;)
 		{
-			std::cout << "RequestHandler::run loop\n";
 			_requestSocket = mRequestQueue->dequeue();
-			std::cout << "Got _requestSocket\n";
 			try
 			{
 				HttpMessageReader(_requestSocket, _request).readRequest();
-				std::cout << "HttpMessageReader.readRequest done\n";
 				AbstractResource* resource = mResourceMap->resource(_request.path());
 			
 				if (resource == 0)
@@ -51,12 +48,10 @@ namespace org_restfulipc
 					throw Status::Http404;	
 				}
 		
-				printf("_requestSocket: %d\n", _requestSocket);
 				resource->handleRequest(_requestSocket, _request);
 			}
 			catch (Status status)
 			{
-				printf("Error\n");
 				write(_requestSocket, statusLine(status), strlen(statusLine(status)));
 				write(_requestSocket, "\r\n", 2);
 				close(_requestSocket);

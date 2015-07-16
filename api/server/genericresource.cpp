@@ -25,21 +25,17 @@ namespace org_restfulipc
 
 	void GenericResource::handleRequest(int socket, const HttpMessage& request)
 	{
-		std::cout << ">>>>>>>>>>>>>>>>>>>>>>handleRequest\n";
 		if (request.method() == Method::GET)	
 		{
-			printf("connection: <%s>\n", request.headerValue(Header::connection));	
 			if (request.headerValue(Header::connection) != 0 &&
 				strcasecmp(request.headerValue(Header::connection), "upgrade") == 0 &&
 				request.headerValue(Header::upgrade) != 0 &&
 				strcasecmp(request.headerValue(Header::upgrade), "socketstream") == 0)
 			{
-				std::cout << "Doing stream upgrade\n";
 				doStreamUpgrade(socket, request);
 			}
 			else 
 			{
-				std::cout << "Doing get\n" << std::flush;
 				doGet(socket, request);	
 			}
 		}
