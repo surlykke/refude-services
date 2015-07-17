@@ -16,10 +16,8 @@ namespace org_restfulipc
 	void httpGet(const char* url, HttpMessage& message);
 	void httpGet(int socket, const char* path, HttpMessage& message);	
 
-	//http://host:port/path
-	//http://host:{udspath}/path
-
-	int connectToSocket(const char* service, const char* path, const char* protocol);
+	int connectToNotifications(const char* url, const char* protocol);
+	char waitForNotifications(int sock);
 }
 
 #endif	/* RESOURCE_H */

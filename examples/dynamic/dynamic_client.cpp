@@ -16,15 +16,20 @@ using namespace org_restfulipc;
 /*
  * 
  */
+#define URL "http://{org.restfulipc.examples.Dynamic}/res"
 int main(int argc, char** argv)
 {
 	try { 
+		int sock = connectToNotifications(URL, "");
 		while (true) {
+			char ch = waitForNotifications(sock);
+			cout << "Got:<" << ch << ">\n";
 			HttpMessage message;
-			httpGet("http://{org.restfulipc.examples.Dynamic}/res", message);
-			cout << "Got:<" << message.body() << ">\n";
-			sleep(5);
+			httpGet(URL, message);
 		}
+	}
+	catch (Status status) {
+		cout << "Http status:" << statusLine(status) << "\n";
 	}
 	catch (const char* errMsg) {
 		cout << "Error: " << errMsg;

@@ -134,16 +134,10 @@ namespace org_restfulipc
 		close(sock);
 	}
 
-	int connectToSocket(const char* service, const char* path, const char* protocol)
+	int connectToNotifications(const char* url, const char* protocol)
 	{
-		int sock = socket(AF_UNIX, SOCK_STREAM, 0); // FIXME
-		assert(sock > -1);
-		struct sockaddr_un addr;
-		memset(&addr, 0, sizeof(struct sockaddr_un));
-		addr.sun_family = AF_UNIX;
-		strncpy(addr.sun_path, service, sizeof(addr.sun_path) - 1);
-		assert(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);
-		
+		HttpUrl httpUrl(url);
+		int sock = openConnection(httpUrl);
 
 		static const char openStreamRequestTemplate[] =  
 			"GET %s HTTP/1.1\r\n"
@@ -153,8 +147,9 @@ namespace org_restfulipc
 			"\r\n"; 
 
 		char openStreamRequest[256];
-		sprintf(openStreamRequest, openStreamRequestTemplate, path);
-		writeMessage(sock, openStreamRequest, sizeof(openStreamRequest));
+		sprintf(openStreamRequest, openStreamRequestTemplate, httpUrl.requestPath);
+		writeMessage(sock, openStreamRequest, strlen(openStreamRequest));
+
 		HttpMessage handshakeResponse;
 		HttpMessageReader(sock, handshakeResponse).readResponse();
 		
@@ -171,5 +166,12 @@ namespace org_restfulipc
 		return sock;
 	}
 
-}
+	char waitForNotifications(int sock)
+	{
+		char ch; 
+		
+		assert(read(sock, &ch, 1) > 0);
 
+		return ch;
+	}
+}

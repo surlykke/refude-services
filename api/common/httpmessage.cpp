@@ -72,7 +72,9 @@ namespace org_restfulipc
 		clear();
 		readRequestLine();
 		readHeaders();
-		readBody();
+		if (_message._headers[(int) Header::content_length]) {
+			readBody();
+		}
 	}
 
 	void HttpMessageReader::readResponse()
@@ -80,7 +82,13 @@ namespace org_restfulipc
 		clear();
 		readStatusLine();
 		readHeaders();
-		readBody();
+		if (_message._status >= 200 && 
+		    _message._status != 204 && 
+		    _message._status != 304) {
+			if (_message._headers[(int) Header::content_length]) {
+				readBody();
+			}
+		}
 	}
 
 
@@ -206,18 +214,10 @@ namespace org_restfulipc
 
 	void HttpMessageReader::readBody()
 	{
-		if (_message._method == Method::GET || _message._method == Method::HEAD)	// Others?
-		{
-			_message._contentLength = 0;
-		}
-		else 
-		{
-			assert<Status::Http411>(_message.headerValue(Header::content_length) != 0);
 
-			errno = 0;
-			_message._contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
-			assert(errno == 0);
-		}	
+		errno = 0;
+		_message._contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
+		assert(errno == 0);
 
 		int bodyStart = _currentPos + 1;	
 		while (bodyStart + _message._contentLength > _bufferEnd)	
@@ -258,6 +258,7 @@ namespace org_restfulipc
 		
 		_message._buffer[_bufferEnd + bytesRead] = '\0';
 		
+		cout << _message._buffer + _bufferEnd;
 
 		_bufferEnd += bytesRead;
 	}

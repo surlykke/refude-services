@@ -2,6 +2,8 @@
 
 #include "genericresource.h"
 
+using namespace std;
+
 namespace org_restfulipc
 {
 
@@ -115,7 +117,11 @@ namespace org_restfulipc
 		//	In that case there are waiting 'u'`s for the client to read, so no nead to send more
 			
 		while (it != _webSockets.end()) {
-			if (write(*it, "u", 1) < 0 && errno != EAGAIN) {
+			cout << "writing to \n" << *it << "\n";
+			int res = write(*it, "u", 1);
+			int errorNumber = errno;
+			cout << "Got " << errorNumber << " : " << strerror(errorNumber) << "\n";
+			if ( res < 0 && errorNumber != EAGAIN) {
 				while (close(*it) < 0 && errno == EINTR);
 				it = _webSockets.erase(it);
 			}
