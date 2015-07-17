@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/socket.h>
 
 #include "requesthandler.h"
 #include "requestqueue.h"
@@ -52,8 +53,8 @@ namespace org_restfulipc
 			}
 			catch (Status status)
 			{
-				write(_requestSocket, statusLine(status), strlen(statusLine(status)));
-				write(_requestSocket, "\r\n", 2);
+				send(_requestSocket, statusLine(status), strlen(statusLine(status)), MSG_NOSIGNAL);
+				send(_requestSocket, "\r\n", 2, MSG_NOSIGNAL);
 				close(_requestSocket);
 			}
 		}

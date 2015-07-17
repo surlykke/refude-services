@@ -88,7 +88,7 @@ namespace org_restfulipc
 
 	int writeSome(int socket, const char* data, int nbytes)
 	{
-		int written = write(socket, data, nbytes);
+		int written = send(socket, data, nbytes, MSG_NOSIGNAL);
 		assert(written > -1);
 		return written;
 	}

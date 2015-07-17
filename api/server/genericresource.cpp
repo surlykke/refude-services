@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <sys/socket.h>
 
 #include "genericresource.h"
 
@@ -58,7 +59,7 @@ namespace org_restfulipc
 
 		do
 		{
-			int nbytes = write(socket, _response + bytesWritten, _responseLength - bytesWritten);
+			int nbytes = send(socket, _response + bytesWritten, _responseLength - bytesWritten, MSG_NOSIGNAL);
 			if (nbytes < 0)
 			{
 				throw errno;
@@ -112,17 +113,20 @@ namespace org_restfulipc
 		
 		 std::vector<int>::iterator it = _webSockets.begin();
 		
-		//	AFAIBATG write to a socket will only block - or in the case of a nonblocking, 
+		//	AFAIBATG send to a socket will only block - or in the case of a nonblocking, 
 		//	return EAGAIN - if there's no room in the kernel buffer.
 		//	In that case there are waiting 'u'`s for the client to read, so no nead to send more
 			
 		while (it != _webSockets.end()) {
 			cout << "writing to \n" << *it << "\n";
-			int res = write(*it, "u", 1);
+			int res = send(*it, "u", 1, MSG_NOSIGNAL);
 			int errorNumber = errno;
 			cout << "Got " << errorNumber << " : " << strerror(errorNumber) << "\n";
 			if ( res < 0 && errorNumber != EAGAIN) {
-				while (close(*it) < 0 && errno == EINTR);
+				cout << "Closing: "	 << *it << "\n";
+				while (close(*it) < 0 && errno == EINTR) {
+					cout << "Got:" << errno << " : " << strerror(errno) << "\n";
+				};
 				it = _webSockets.erase(it);
 			}
 			else {
@@ -138,7 +142,7 @@ namespace org_restfulipc
 		
 		do 
 		{	
-			int m = write(socket, data + n, nBytes - n);
+			int m = send(socket, data + n, nBytes - n, MSG_NOSIGNAL);
 			if (m < 0) {
 				throw errno;
 			}

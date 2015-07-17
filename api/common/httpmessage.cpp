@@ -36,29 +36,6 @@ namespace org_restfulipc
 		_contentLength = 0;
 	}
 
-
-	/*void HttpMessage::handleUpgrade(AbstractResource* resource)
-	{
-		// We only handle websocket upgrades
-		assert(strcasecmp(_request.headerValue(Header::upgrade), "websocket") == 0, Status::Http406);
-		const char* subprotocol = _request.headerValue(Header::sec_websocket_protocol);
-		assert(subprotocol != 0);
-		assert(resource->canHandleWebsocket(_request.path, _request.queryString, subprotocol), Status::Http404);
-		char handshakeResponse[strlen(handshakeResponseTemplate) + 20];
-		sprintf(handshakeResponse, handshakeResponseTemplate, subprotocol);
-		write(_requestSocket, handshakeResponse, strlen(handshakeResponse));
-		resource->addWebsocket(_requestSocket, _request.path, _request.queryString, _request.headerValue(Header::sec_websocket_protocol));
-	}
-
-	const char* HttpMessage::handshakeResponseTemplate =
-		"HTTP/1.1 101 Switching Protocols"
-		"Upgrade: websocket"
-		"Connection: Upgrade"
-		"Sec-WebSocket-Protocol: %s";
-	*/
-
-
-
 	HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message) : 
 		_socket(socket), 
 		_message(message),
