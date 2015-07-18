@@ -81,8 +81,7 @@ namespace org_restfulipc
 
 	void ServiceListener::run()
 	{
-				for(;;)	
-		{
+		for(;;)	{
 			int requestSocket;
 			if ((requestSocket = accept(listenSocket, NULL, 0)) < 0) {
 				error(0, errno, "accept");

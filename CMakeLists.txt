@@ -10,4 +10,5 @@ set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(lib)
 add_subdirectory(examples/dynamic)
+add_subdirectory(test)
 add_subdirectory(qt)

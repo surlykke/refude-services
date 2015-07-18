@@ -68,13 +68,13 @@ namespace org_restfulipc
 	int openConnection(const HttpUrl& url)
 	{
 		if (url.domain == AF_UNIX) {
-			int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+		int sock = socket(AF_UNIX, SOCK_STREAM, 0);
 			assert(sock > -1);
 			struct sockaddr_un addr;
 			memset(&addr, 0, sizeof(struct sockaddr_un));
 			addr.sun_family = AF_UNIX;
 			strncpy(addr.sun_path, url.socketPath, sizeof(addr.sun_path) - 1);
-			assert(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);
+			assert(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);	
 			return sock;
 		}
 		else {
