@@ -9,7 +9,7 @@
 #define	RESOURCE_H
 
 #include <curl/curl.h>
-#include "../common/httpmessage.h"
+#include "httpmessage.h"
 
 namespace org_restfulipc
 {
