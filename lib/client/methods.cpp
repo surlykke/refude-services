@@ -111,7 +111,7 @@ namespace org_restfulipc
      * @param path
      * @param message
      */
-	void httpGet(int sock, const char* path, HttpMessage& message)
+	void httpGet(int sock, const HttpUrl& url, HttpMessage& message)
 	{
 		static const char* getRequestTemplate = 
 			"GET %s HTTP/1.1\r\n"
@@ -119,7 +119,7 @@ namespace org_restfulipc
 			"\r\n";
 	
 		char request[128];		
-		sprintf(request, getRequestTemplate, path);
+		sprintf(request, getRequestTemplate, url.requestPath);
 		writeMessage(sock, request, strlen(request));
 
 		HttpMessageReader httpMessageReader(sock, message);

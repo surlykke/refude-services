@@ -11,7 +11,6 @@
 
 #include "methods.h"
 #include "httpmessage.h"
-
 using namespace std;
 using namespace org_restfulipc;
 /*
@@ -33,7 +32,7 @@ int main(int argc, char** argv)
 		int sock = openConnection(url);
 		for (int i = 0; i < 100000; i++) {
 			HttpMessage message;
-			httpGet(sock, url.requestPath, message);
+			httpGet(sock, url, message);
 		}
 		close(sock);
 		cout << "Ending\n";
