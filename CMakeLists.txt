@@ -8,6 +8,6 @@ set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-add_subdirectory(api)
+add_subdirectory(lib)
 add_subdirectory(examples/dynamic)
 add_subdirectory(qt)
