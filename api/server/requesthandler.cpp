@@ -9,10 +9,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <error.h>
 
 #include "requesthandler.h"
 #include "requestqueue.h"
 #include "resourcemap.h"
+
+using namespace std;
 
 namespace org_restfulipc
 {
@@ -39,29 +42,39 @@ namespace org_restfulipc
 		for (;;)
 		{
 			_requestSocket = mRequestQueue->dequeue();
-			try
-			{
-				HttpMessageReader(_requestSocket, _request).readRequest();
-				AbstractResource* resource = mResourceMap->resource(_request.path());
-			
-				if (resource == 0)
-				{		
-					throw Status::Http404;	
+			bool done = false;	
+			while(!done) {
+				try
+				{
+					HttpMessageReader(_requestSocket, _request).readRequest();
+					if (_request.headerValue(Header::connection) != 0 &&
+					    strcasecmp("close", _request.headerValue(Header::connection)) == 0) {
+						done = true;
+					}
+					AbstractResource* resource = mResourceMap->resource(_request.path());
+				
+					if (resource == 0)
+					{		
+						throw Status::Http404;	
+					}
+					
+					resource->handleRequest(_requestSocket, _request);
 				}
-		
-				resource->handleRequest(_requestSocket, _request);
+				catch (int errorNumber) {
+					if (errorNumber != 0) {
+						// 0 is a 'benign' error, eg. peer closed connection
+						error(0, errorNumber, "readRequest");
+					}
+					done = true;
+				}
+				catch (Status status) {
+					send(_requestSocket, statusLine(status), strlen(statusLine(status)), MSG_NOSIGNAL);
+					send(_requestSocket, "\r\n", 2, MSG_NOSIGNAL);
+					done = true;
+				}
 			}
-			catch (Status status)
-			{
-				send(_requestSocket, statusLine(status), strlen(statusLine(status)), MSG_NOSIGNAL);
-				send(_requestSocket, "\r\n", 2, MSG_NOSIGNAL);
-				close(_requestSocket);
-			}
+				
+			close(_requestSocket);
 		}
 	}
 }
-/*const char* RequestHandler::handshakeResponseTemplate =
-	"HTTP/1.1 101 Switching Protocols"
-	"Upgrade: websocket"
-	"Connection: Upgrade"
-	"Sec-WebSocket-Protocol: %s";*/

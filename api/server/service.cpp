@@ -81,15 +81,24 @@ namespace org_restfulipc
 
 	void ServiceListener::run()
 	{
-		for(;;)	
+				for(;;)	
 		{
 			int requestSocket;
-			if ((requestSocket = accept(listenSocket, NULL, 0)) < 0)
-			{
+			if ((requestSocket = accept(listenSocket, NULL, 0)) < 0) {
 				error(0, errno, "accept");
 			}
+			else {
+				struct timeval tv;
+				tv.tv_sec = 0;
+				tv.tv_usec = 200000;
 
-			requestQueue.enqueue(requestSocket);
+				if (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) < 0) {
+					error(0, errno, "setsockopt");
+				}
+				else {
+					requestQueue.enqueue(requestSocket);
+				}
+			}		
 		}
 	}
 

@@ -18,73 +18,39 @@ using namespace std;
 namespace org_restfulipc
 {
 
-	// http[s]://host[:port][/path]
-	// http[s]://{socketpath}[/path]
-	struct HttpUrl
-	{
-		int domain; // AF_UNIX or AF_INET
-		const char* hostname;
-		int port;
-		const char* socketPath;
-		const char* requestPath;
 
-		void readAfUnixUrl(char* pos)
-		{
+
+	HttpUrl::HttpUrl(const char* url)
+	{
+		if (strlen(url) > 127) {
+			throw "Url too long!";
+		}
+
+		strcpy(this->url, url);
+		
+		char* pos = this->url;
+		if (strncmp("http://", url, 7)) {
+			throw "Unknown protocol";
+		}
+
+		pos += 7;
+			
+		if (*pos = '{')	{
 			domain = AF_UNIX;	
 			socketPath = pos + 1;
-			pos++;
-			while (*pos != '}' && *pos != '\0') {
-				pos++;
-			}
+			pos = index(pos, '}');	
 		
-			if (*pos == '\0') {
+			if (!pos) {
 				throw "Invalid url";
 			}
 
 			*pos = '\0';
-			requestPath = pos + 1;
+			requestPath = pos + 1;		
 		}
-
-		void readAfInetUrl(char* pos)
-		{
+		else {
 			throw "Not implemented yet";
 		}
-
-		void readUrl()
-		{
-			char* pos = url;
-			if (strncmp("http://", url, 7)) {
-				throw "Unknown protocol";
-			}
-
-			pos += 7;
-				
-			if (*pos = '{')	{
-				readAfUnixUrl(pos);
-			}
-			else {
-				readAfInetUrl(pos);
-			}
-	
-		}
-
-		HttpUrl(const char* url)
-		{
-			if (strlen(url) > 127) {
-				throw "Url too long!";
-			}
-
-			strcpy(this->url, url);
-			
-			readUrl();	
-		}
-
-	private:
-		char url[128];
-	};
-
-
-
+	}
 
 	int writeSome(int socket, const char* data, int nbytes)
 	{
@@ -116,11 +82,17 @@ namespace org_restfulipc
 		}
 	}
 
+	/**
+	 * For one-off requests. Tells the server to close the connection when the request is served.
+     * @param url
+     * @param message
+     */	
 	void httpGet(const char* url, HttpMessage& message)
 	{
 		static const char* getRequestTemplate = 
 			"GET %s HTTP/1.1\r\n"
 			"Host: localhost\r\n"
+			"Connection: close\r\n"
 			"\r\n";
 	
 		HttpUrl httpUrl(url);
@@ -134,10 +106,29 @@ namespace org_restfulipc
 		close(sock);
 	}
 
-	int connectToNotifications(const char* url, const char* protocol)
+	/**
+     * @param socket
+     * @param path
+     * @param message
+     */
+	void httpGet(int sock, const char* path, HttpMessage& message)
 	{
-		HttpUrl httpUrl(url);
-		int sock = openConnection(httpUrl);
+		static const char* getRequestTemplate = 
+			"GET %s HTTP/1.1\r\n"
+			"Host: localhost\r\n"
+			"\r\n";
+	
+		char request[128];		
+		sprintf(request, getRequestTemplate, path);
+		writeMessage(sock, request, strlen(request));
+
+		HttpMessageReader httpMessageReader(sock, message);
+		httpMessageReader.readResponse();
+	}
+
+	int connectToNotifications(const HttpUrl& url, const char* protocol)
+	{
+		int sock = openConnection(url);
 
 		static const char openStreamRequestTemplate[] =  
 			"GET %s HTTP/1.1\r\n"
@@ -147,7 +138,7 @@ namespace org_restfulipc
 			"\r\n"; 
 
 		char openStreamRequest[256];
-		sprintf(openStreamRequest, openStreamRequestTemplate, httpUrl.requestPath);
+		sprintf(openStreamRequest, openStreamRequestTemplate, url.requestPath);
 		writeMessage(sock, openStreamRequest, strlen(openStreamRequest));
 
 		HttpMessage handshakeResponse;

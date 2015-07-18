@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "methods.h"
+#include "httpmessage.h"
 
 using namespace std;
 using namespace org_restfulipc;
@@ -20,13 +21,22 @@ using namespace org_restfulipc;
 int main(int argc, char** argv)
 {
 	try { 
-		int sock = connectToNotifications(URL, "");
+		/*int sock = connectToNotifications(URL, "");
 		while (true) {
 			char ch = waitForNotifications(sock);
 			cout << "Got:<" << ch << ">\n";
 			HttpMessage message;
 			httpGet(URL, message);
+		}*/
+		cout << "Starting\n";
+		HttpUrl url(URL);
+		int sock = openConnection(url);
+		for (int i = 0; i < 100000; i++) {
+			HttpMessage message;
+			httpGet(sock, url.requestPath, message);
 		}
+		close(sock);
+		cout << "Ending\n";
 	}
 	catch (Status status) {
 		cout << "Http status:" << statusLine(status) << "\n";

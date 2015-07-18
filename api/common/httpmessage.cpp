@@ -228,16 +228,15 @@ namespace org_restfulipc
 	void HttpMessageReader::receive()
 	{
 		int bytesRead = read(_socket, _message._buffer + _bufferEnd, 8190 - _bufferEnd);
-		if (bytesRead < 0)	
+		if (bytesRead > 0) {
+			_message._buffer[_bufferEnd + bytesRead] = '\0';
+			_bufferEnd += bytesRead;
+		}
+		else 
 		{
-			throw Status::Http403; // FIXME Broken pipe thing	
+			throw errno;
 		}
 		
-		_message._buffer[_bufferEnd + bytesRead] = '\0';
-		
-		cout << _message._buffer + _bufferEnd;
-
-		_bufferEnd += bytesRead;
 	}
 
 	void HttpMessageReader::clear()
