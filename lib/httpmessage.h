@@ -13,41 +13,33 @@
 
 namespace org_restfulipc
 {
-	struct HttpMessageReader;
-
 	struct HttpMessage
 	{
 		HttpMessage();
 		virtual ~HttpMessage();
 		void clear();
 
-		inline Method method() const { return _method; }
-		inline const char* path() const { return _path; }
-		inline const char* queryString() const { return _queryString; }
-		inline int status() const { return _status; } 
-		inline const char* headerValue(Header h) const { return _headers[(int) h]; }
-		inline const char* body() const { return _body; }
-		inline int contentLength() const { return _contentLength; }
+		Method method;
+		char* path;
+		char* queryString;
+		int status;
+		const char* headers[(int) Header::unknown];
+		char* body;
+		int contentLength;
+		
+		char buffer[8192];
 
-	private:
-		friend HttpMessageReader;	
-		
-		Method _method;
-		char* _path;
-		char* _queryString;
-		int _status;
-		const char* _headers[(int) Header::unknown];
-		char* _body;
-		int _contentLength;
-		
-		char _buffer[8192];
+		inline const char* headerValue(Header h) const { return headers[(int) h]; }
 	};
 
-	struct HttpMessageReader
+	class HttpMessageReader
 	{
+	public:
 		HttpMessageReader(int socket, HttpMessage& message);
 		void readRequest();
 		void readResponse();
+	
+	private:
 		void readRequestLine();
 		void readStatusLine();
 		void readHeaderLines();
@@ -57,7 +49,6 @@ namespace org_restfulipc
 		char currentChar();
 		char nextChar();
 		bool isTChar(char c);
-		bool isFChar(char c);
 		void receive();
 
 		void clear();

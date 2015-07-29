@@ -27,13 +27,13 @@ namespace org_restfulipc
 
 	void HttpMessage::clear()
 	{
-		_method = Method::UNKNOWN;
-		_path = 0;
-		_queryString = 0;
+		method = Method::UNKNOWN;
+		path = 0;
+		queryString = 0;
 		for (int i = 0; i < (int) Header::unknown; i++)
-			_headers[i] = 0;
-		_body = 0;
-		_contentLength = 0;
+			headers[i] = 0;
+		body = 0;
+		contentLength = 0;
 	}
 
 	HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message) : 
@@ -49,7 +49,7 @@ namespace org_restfulipc
 		clear();
 		readRequestLine();
 		readHeaders();
-		if (_message._headers[(int) Header::content_length]) {
+		if (_message.headers[(int) Header::content_length]) {
 			readBody();
 		}
 	}
@@ -59,10 +59,10 @@ namespace org_restfulipc
 		clear();
 		readStatusLine();
 		readHeaders();
-		if (_message._status >= 200 && 
-		    _message._status != 204 && 
-		    _message._status != 304) {
-			if (_message._headers[(int) Header::content_length]) {
+		if (_message.status >= 200 && 
+		    _message.status != 204 && 
+		    _message.status != 304) {
+			if (_message.headers[(int) Header::content_length]) {
 				readBody();
 			}
 		}
@@ -74,46 +74,46 @@ namespace org_restfulipc
 	{
 		while (nextChar() != ' ');
 		
-		_message._method = string2Method(_message._buffer);
-		assert<Status::Http406>(_message._method != Method::UNKNOWN);
-		_message._path = _message._buffer + _currentPos + 1;
+		_message.method = string2Method(_message.buffer);
+		assert<Status::Http406>(_message.method != Method::UNKNOWN);
+		_message.path = _message.buffer + _currentPos + 1;
 
 		while (! isspace(nextChar()))
 		{
-			if (_message._buffer[_currentPos] == '?')
+			if (_message.buffer[_currentPos] == '?')
 			{
-				_message._queryString = _message._buffer + _currentPos + 1;
-				_message._buffer[_currentPos] = '\0';
+				_message.queryString = _message.buffer + _currentPos + 1;
+				_message.buffer[_currentPos] = '\0';
 			}
 		};
 
-		_message._buffer[_currentPos] = '\0';
+		_message.buffer[_currentPos] = '\0';
 
-		if (_message._queryString == 0)
+		if (_message.queryString == 0)
 		{
-			_message._queryString = _message._buffer + _currentPos;
+			_message.queryString = _message.buffer + _currentPos;
 		}
 
 		int protocolStart = _currentPos + 1;
 
 		while (! isspace(nextChar()));
 		
-		assert<Status::Http400>(_message._buffer[_currentPos] == '\r' && nextChar() == '\n');
+		assert<Status::Http400>(_message.buffer[_currentPos] == '\r' && nextChar() == '\n');
 	}
 
 	void HttpMessageReader::readStatusLine()
 	{
 		while (!isspace(nextChar()));
 		assert<Status::Http400>(_currentPos > 0);
-		assert<Status::Http400>(strncmp("HTTP/1.1", _message._buffer, 8) == 0);
+		assert<Status::Http400>(strncmp("HTTP/1.1", _message.buffer, 8) == 0);
 		while (isspace(nextChar()));
 		int statuscodeStart = _currentPos;
 		assert<Status::Http400>(isdigit(currentChar()));
 		while (isdigit(nextChar()));
 		errno = 0;
-		long int status = strtol(_message._buffer + statuscodeStart, 0, 10);
+		long int status = strtol(_message.buffer + statuscodeStart, 0, 10);
 		assert<Status::Http400>(status > 100 && status < 600);
-		_message._status = (int) status;
+		_message.status = (int) status;
 
 		// We ignore what follows the status code. This means that a message like
 		// 'HTTP/1.1 200 Completely f**cked up' will be interpreted as 
@@ -159,7 +159,7 @@ namespace org_restfulipc
 		while (isTChar(currentChar())) nextChar();
 		assert<Status::Http400>(currentChar() == ':');
 		assert<Status::Http400>(_currentPos > startOfHeaderLine);
-		_message._buffer[_currentPos] = '\0';
+		_message.buffer[_currentPos] = '\0';
 
 		while (isblank(nextChar()));
 		endOfHeaderValue = startOfHeaderValue = _currentPos;
@@ -174,12 +174,12 @@ namespace org_restfulipc
 		}
 
 		assert<Status::Http400>(nextChar() == '\n');
-		_message._buffer[endOfHeaderValue] = '\0';
-		Header h = string2Header(_message._buffer + startOfHeaderLine);
+		_message.buffer[endOfHeaderValue] = '\0';
+		Header h = string2Header(_message.buffer + startOfHeaderLine);
 
 		if (h != Header::unknown)
 		{
-			_message._headers[(int) h] = _message._buffer + startOfHeaderValue;
+			_message.headers[(int) h] = _message.buffer + startOfHeaderValue;
 		}
 
 	}
@@ -193,22 +193,22 @@ namespace org_restfulipc
 	{
 
 		errno = 0;
-		_message._contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
+		_message.contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
 		assert(errno == 0);
 
 		int bodyStart = _currentPos + 1;	
-		while (bodyStart + _message._contentLength > _bufferEnd)	
+		while (bodyStart + _message.contentLength > _bufferEnd)	
 		{
 			receive();
 		}
 		
-		_message._buffer[bodyStart + _message._contentLength] = '\0';
-		_message._body = _message._buffer + bodyStart;
+		_message.buffer[bodyStart + _message.contentLength] = '\0';
+		_message.body = _message.buffer + bodyStart;
 	}
 
 	char HttpMessageReader::currentChar()
 	{
-		return _message._buffer[_currentPos];
+		return _message.buffer[_currentPos];
 	}
 
 
@@ -222,14 +222,14 @@ namespace org_restfulipc
 		}
 
 		
-		return _message._buffer[_currentPos];
+		return _message.buffer[_currentPos];
 	}
 
 	void HttpMessageReader::receive()
 	{
-		int bytesRead = read(_socket, _message._buffer + _bufferEnd, 8190 - _bufferEnd);
+		int bytesRead = read(_socket, _message.buffer + _bufferEnd, 8190 - _bufferEnd);
 		if (bytesRead > 0) {
-			_message._buffer[_bufferEnd + bytesRead] = '\0';
+			_message.buffer[_bufferEnd + bytesRead] = '\0';
 			_bufferEnd += bytesRead;
 		}
 		else 

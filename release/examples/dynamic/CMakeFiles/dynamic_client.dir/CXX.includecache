@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../lib/httpmessage.h
+iostream
+-
+httpprotocol.h
+../lib/httpprotocol.h
+
+../lib/httpprotocol.h
+
+../lib/methods.h
+curl/curl.h
+-
+httpmessage.h
+../lib/httpmessage.h
+
+/home/christian/projekter/Aktive/RestFulIpc/examples/dynamic/dynamic_client.cpp
+iostream
+-
+unistd.h
+-
+string.h
+-
+methods.h
+/home/christian/projekter/Aktive/RestFulIpc/examples/dynamic/methods.h
+httpmessage.h
+/home/christian/projekter/Aktive/RestFulIpc/examples/dynamic/httpmessage.h
+

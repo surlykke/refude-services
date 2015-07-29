@@ -51,7 +51,7 @@ namespace org_restfulipc
 					    strcasecmp("close", _request.headerValue(Header::connection)) == 0) {
 						done = true;
 					}
-					AbstractResource* resource = mResourceMap->resource(_request.path());
+					AbstractResource* resource = mResourceMap->resource(_request.path);
 				
 					if (resource == 0)
 					{		

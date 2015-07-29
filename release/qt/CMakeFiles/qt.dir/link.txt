@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++14  -O3 -DNDEBUG   CMakeFiles/qt.dir/main.cpp.o CMakeFiles/qt.dir/resource.cpp.o CMakeFiles/qt.dir/qt_automoc.cpp.o  -o qt -rdynamic /usr/lib/libQt5Network.so.5.5.0 /usr/lib/libQt5Core.so.5.5.0 

@@ -28,7 +28,7 @@ namespace org_restfulipc
 
 	void GenericResource::handleRequest(int socket, const HttpMessage& request)
 	{
-		if (request.method() == Method::GET)	
+		if (request.method == Method::GET)	
 		{
 			if (request.headerValue(Header::connection) != 0 &&
 				strcasecmp(request.headerValue(Header::connection), "upgrade") == 0 &&
@@ -42,7 +42,7 @@ namespace org_restfulipc
 				doGet(socket, request);	
 			}
 		}
-		else if (request.method() == Method::PATCH)
+		else if (request.method == Method::PATCH)
 		{
 			doPatch(socket, request);
 		}

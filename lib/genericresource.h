@@ -29,7 +29,7 @@ namespace org_restfulipc
 		void writeData(int socket, const char *data, int nBytes);
 
 
-		char _response[8192];
+		char _response[8192]; // FIXME
 		char* _respPtr;
 		int _responseLength;
 		pthread_rwlock_t _lock;	

@@ -29,7 +29,7 @@ void runAsClient()
 		
 	char c = 'a';
 	cout << "client loop start\n";
-	for (int i = 0; i < 1000000; i++) {
+	for (int i = 0; i < 100000; i++) {
 		assert(write(sock, &c, 1) > 0);
 		assert(read(sock, &c, 1) > 0);
 	}
