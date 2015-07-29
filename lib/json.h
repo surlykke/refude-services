@@ -159,7 +159,14 @@ namespace org_restfulipc
 
 		int serialize(char* dest) 
 		{
-			return sprintf(dest, "%s", boolean ? "true" : "false");
+			if (boolean) {
+				strcpy(dest, "true");
+				return 4;
+			}
+			else {
+				strcpy(dest, "false");
+				return 5;
+			}
 		};
 	};
 
