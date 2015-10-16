@@ -61,11 +61,13 @@ namespace org_restfulipc
 					resource->handleRequest(_requestSocket, _request);
 				}
 				catch (int errorNumber) {
-					if (errorNumber != 0) {
-						// 0 is a 'benign' error, eg. peer closed connection
-						error(0, errorNumber, "readRequest");
-					}
-					done = true;
+                    // 0 is a 'benign' error, eg. peer closed connection
+                    if (errorNumber == 0) {
+                        done = true;
+                    }
+                    else {
+                        throw;
+                    }
 				}
 				catch (Status status) {
 					send(_requestSocket, statusLine(status), strlen(statusLine(status)), MSG_NOSIGNAL);

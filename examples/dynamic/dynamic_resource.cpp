@@ -31,6 +31,6 @@ int main(int argc, char *argv[])
 		}
 	}
 	catch (int errorNumber) {
-		cout << "Caught" << errorNumber << " : " << strerror(errorNumber) << "\n";
+        cout << strerror(errorNumber) << "\n";
 	}
 }

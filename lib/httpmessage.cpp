@@ -75,7 +75,7 @@ namespace org_restfulipc
 		while (nextChar() != ' ');
 		
 		_message.method = string2Method(_message.buffer);
-		assert<Status::Http406>(_message.method != Method::UNKNOWN);
+        throwHttpStatusUnless(Status::Http406, _message.method != Method::UNKNOWN);
 		_message.path = _message.buffer + _currentPos + 1;
 
 		while (! isspace(nextChar()))
@@ -98,21 +98,21 @@ namespace org_restfulipc
 
 		while (! isspace(nextChar()));
 		
-		assert<Status::Http400>(_message.buffer[_currentPos] == '\r' && nextChar() == '\n');
+        throwHttpStatusUnless(Status::Http400, _message.buffer[_currentPos] == '\r' && nextChar() == '\n');
 	}
 
 	void HttpMessageReader::readStatusLine()
 	{
 		while (!isspace(nextChar()));
-		assert<Status::Http400>(_currentPos > 0);
-		assert<Status::Http400>(strncmp("HTTP/1.1", _message.buffer, 8) == 0);
+        throwHttpStatusUnless(Status::Http400, _currentPos > 0);
+        throwHttpStatusUnless(Status::Http400, strncmp("HTTP/1.1", _message.buffer, 8) == 0);
 		while (isspace(nextChar()));
 		int statuscodeStart = _currentPos;
-		assert<Status::Http400>(isdigit(currentChar()));
+        throwHttpStatusUnless(Status::Http400, isdigit(currentChar()));
 		while (isdigit(nextChar()));
 		errno = 0;
 		long int status = strtol(_message.buffer + statuscodeStart, 0, 10);
-		assert<Status::Http400>(status > 100 && status < 600);
+        throwHttpStatusUnless(Status::Http400, status > 100 && status < 600);
 		_message.status = (int) status;
 
 		// We ignore what follows the status code. This means that a message like
@@ -121,11 +121,11 @@ namespace org_restfulipc
 		// (Why does the http protocol specify that both the code and the text is sent?)
 		while (currentChar() != '\r')
 		{
-			assert<Status::Http400>(currentChar() != '\n');
+            throwHttpStatusUnless(Status::Http400, currentChar() != '\n');
 			nextChar();
 		}
 
-		assert<Status::Http400>(nextChar() == '\n');
+        throwHttpStatusUnless(Status::Http400, nextChar() == '\n');
 
 	}
 
@@ -136,7 +136,7 @@ namespace org_restfulipc
 		{
 			if (nextChar() == '\r')	
 			{
-				assert<Status::Http400>(nextChar() == '\n');
+                throwHttpStatusUnless(Status::Http400, nextChar() == '\n');
 				return;
 			}
 			
@@ -157,8 +157,8 @@ namespace org_restfulipc
 		int endOfHeaderValue = -1;
 
 		while (isTChar(currentChar())) nextChar();
-		assert<Status::Http400>(currentChar() == ':');
-		assert<Status::Http400>(_currentPos > startOfHeaderLine);
+        throwHttpStatusUnless(Status::Http400, currentChar() == ':');
+        throwHttpStatusUnless(Status::Http400, _currentPos > startOfHeaderLine);
 		_message.buffer[_currentPos] = '\0';
 
 		while (isblank(nextChar()));
@@ -173,7 +173,7 @@ namespace org_restfulipc
 			nextChar();
 		}
 
-		assert<Status::Http400>(nextChar() == '\n');
+        throwHttpStatusUnless(Status::Http400, nextChar() == '\n');
 		_message.buffer[endOfHeaderValue] = '\0';
 		Header h = string2Header(_message.buffer + startOfHeaderLine);
 

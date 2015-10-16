@@ -15,6 +15,7 @@
 
 #include "service.h"
 #include "requesthandler.h"
+#include "errorhandling.h"
 
 namespace org_restfulipc
 {
@@ -31,45 +32,26 @@ namespace org_restfulipc
 	{
 		if (strlen(socketPath) >= UNIX_PATH_MAX - 1)
 		{
-			error(1, errno, "socketPath to long");
+            throw std::runtime_error("Socket path too long");
 		}
 
 		struct sockaddr_un sockaddr;
 		memset(&sockaddr, 0, sizeof(struct sockaddr_un));
 		sockaddr.sun_family = AF_UNIX; 
 		strncpy(&sockaddr.sun_path[0], socketPath, strlen(socketPath)); 
-
-		if ((listenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)	
-		{
-			error(1, errno, "creation of listen socket failed");
-		}
-
+		assert((listenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0);
 		unlink(socketPath);
-
-		if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) < 0)
-		{
-			error(1, errno, "binding to listen socket failed");
-		}
-
-		if (listen(listenSocket, 8) < 0)
-		{
-			error(1, errno, "Listen failed");
-		}
+		assert(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) >= 0);
+		assert(listen(listenSocket, 8) >= 0);
 
 		pthread_t threads[5];	
 		for (int i = 0; i < 5; i++)
 		{
-			if (pthread_create(threads + i, 0, RequestHandler::launch, new RequestHandler(&requestQueue, &mResourceMap)) < 0)
-			{
-				error(1, errno, "Thread creation failed");
-			}
+			assert(pthread_create(threads + i, 0, RequestHandler::launch, new RequestHandler(&requestQueue, &mResourceMap)) >= 0);
 		}
 		
 		pthread_t thread;
-		if (pthread_create(&thread, 0, &ServiceListener::startListenThread, this) < 0)
-		{
-			error(1, errno, "Thread creation failed");
-		}
+		assert(pthread_create(&thread, 0, &ServiceListener::startListenThread, this) <= 0);
 	}
 
 	void* ServiceListener::startListenThread(void* serviceListenerPtr)
@@ -83,21 +65,13 @@ namespace org_restfulipc
 	{
 		for(;;)	{
 			int requestSocket;
-			if ((requestSocket = accept(listenSocket, NULL, 0)) < 0) {
-				error(0, errno, "accept");
-			}
-			else {
-				struct timeval tv;
-				tv.tv_sec = 0;
-				tv.tv_usec = 200000;
+			assert ((requestSocket = accept(listenSocket, NULL, 0)) >= 0);
 
-				if (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) < 0) {
-					error(0, errno, "setsockopt");
-				}
-				else {
-					requestQueue.enqueue(requestSocket);
-				}
-			}		
+			struct timeval tv;
+			tv.tv_sec = 0;
+			tv.tv_usec = 200000;
+			assert (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) >= 0);
+			requestQueue.enqueue(requestSocket);
 		}
 	}
 
@@ -110,6 +84,4 @@ namespace org_restfulipc
 	{
 		mResourceMap.unMap(resource);
 	}
-
-
 }
