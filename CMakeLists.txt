@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0)
-set(PROJECT "rfds")
+set(PROJECT "RestfulIpc")
 project(${PROJECT})
 
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}") 
