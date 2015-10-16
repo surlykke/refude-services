@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++14  -O3 -DNDEBUG   CMakeFiles/dynamic_resource.dir/dynamic_resource.cpp.o  -o dynamic_resource -rdynamic -lpthread ../../lib/librestfulipc.a 

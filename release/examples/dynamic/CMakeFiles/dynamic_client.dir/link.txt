@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++14  -O3 -DNDEBUG   CMakeFiles/dynamic_client.dir/dynamic_client.cpp.o  -o dynamic_client -rdynamic -lpthread ../../lib/librestfulipc.a 
