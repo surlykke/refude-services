@@ -10,32 +10,58 @@
 
 #include <pthread.h>
 #include <linux/un.h>
+#include <boost/lockfree/queue.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/atomic.hpp>
+#include <boost/circular_buffer.hpp>
 
-#include "requestqueue.h"
 #include "resourcemap.h"
 
 namespace org_restfulipc
 {
-	class ServiceListener 
-	{
+    class Service
+    {
 	public:
-		ServiceListener();
-		virtual ~ServiceListener();
+        Service(const char *socketPath);
+        virtual ~Service();
 
-		void setup(const char* socketPath);
-		void map(AbstractResource* resource, const char* path);
-		void unmap(AbstractResource* resource);
+        void start(int workers = 5);
+        void stop();
 
-	private:
-		
-		static void* startListenThread(void* serviceListenerPtr);
-		void run();
-		
-		int listenSocket;
-		RequestQueue requestQueue;
-		ResourceMap mResourceMap;
-	};
+        ResourceMap resourceMap;
+
+    private:
+        boost::thread_group *threads;
+        boost::circular_buffer<int> buffer;
+        boost::mutex bufferLock;
+        boost::condition_variable bufferNotFull;
+        boost::condition_variable bufferNotEmpty;
+        boost::atomic<bool> shuttingDown;
+        int listenSocket;
+
+        class Listener
+        {
+        public:
+            Listener(Service *service) : service(service) {}
+            void operator()();
+
+        private:
+            Service *service;
+        };
+
+        class Worker
+        {
+        public:
+            Worker(Service *service) : service(service) {}
+            void operator()();
+
+        private:
+            Service *service;
+        };
+    };
 }
+
+
 
 #endif	/* SERVICELISTENER_H */
 

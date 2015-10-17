@@ -55,7 +55,7 @@ namespace org_restfulipc
 	int writeSome(int socket, const char* data, int nbytes)
 	{
 		int written = send(socket, data, nbytes, MSG_NOSIGNAL);
-		assert(written > -1);
+		throwErrnoUnless(written > -1);
 		return written;
 	}
 
@@ -69,12 +69,12 @@ namespace org_restfulipc
 	{
 		if (url.domain == AF_UNIX) {
 		int sock = socket(AF_UNIX, SOCK_STREAM, 0);
-			assert(sock > -1);
+			throwErrnoUnless(sock > -1);
 			struct sockaddr_un addr;
 			memset(&addr, 0, sizeof(struct sockaddr_un));
 			addr.sun_family = AF_UNIX;
 			strncpy(addr.sun_path, url.socketPath, sizeof(addr.sun_path) - 1);
-			assert(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);	
+			throwErrnoUnless(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);	
 			return sock;
 		}
 		else {
@@ -161,7 +161,7 @@ namespace org_restfulipc
 	{
 		char ch; 
 		
-		assert(read(sock, &ch, 1) > 0);
+		throwErrnoUnless(read(sock, &ch, 1) > 0);
 
 		return ch;
 	}

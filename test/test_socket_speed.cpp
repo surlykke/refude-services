@@ -20,18 +20,18 @@ using namespace org_restfulipc;
 void runAsClient() 
 {
 	int sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	assert(sock > -1);
+	throwErrnoUnless(sock > -1);
 	struct sockaddr_un addr;
 	memset(&addr, 0, sizeof(struct sockaddr_un));
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, SOCK_PATH, strlen(SOCK_PATH));
-	assert(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);
+	throwErrnoUnless(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);
 		
 	char c = 'a';
 	cout << "client loop start\n";
 	for (int i = 0; i < 100000; i++) {
-		assert(write(sock, &c, 1) > 0);
-		assert(read(sock, &c, 1) > 0);
+		throwErrnoUnless(write(sock, &c, 1) > 0);
+		throwErrnoUnless(read(sock, &c, 1) > 0);
 	}
 	cout << "client loop end\n";
 
@@ -49,12 +49,12 @@ void runAsServer()
 
 
 		int listenSocket = socket(AF_UNIX, SOCK_STREAM, 0);
-		assert(listenSocket > 0);
+		throwErrnoUnless(listenSocket > 0);
 		unlink(SOCK_PATH);
-		assert(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(SOCK_PATH) + 1) >= 0);
-		assert(listen(listenSocket, 8) >= 0);
+		throwErrnoUnless(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(SOCK_PATH) + 1) >= 0);
+		throwErrnoUnless(listen(listenSocket, 8) >= 0);
 		int connectionSocket = accept(listenSocket, NULL, 0);
-		assert(connectionSocket > 0);
+		throwErrnoUnless(connectionSocket > 0);
 
 		while (true) {
 			char c;

@@ -15,10 +15,10 @@ int main(int argc, char *argv[])
 		char json[256];
 		GenericResource resource("{}");
 	
-		ServiceListener serviceListener;
-		serviceListener.setup("org.restfulipc.examples.Dynamic");
-		serviceListener.map(&resource, "/res");
-	
+        Service service("org.restfulipc.examples.Dynamic");
+        service.start();
+        service.resourceMap.map("/res", &resource);
+
 		while (true) {
 			sprintf(json, 
 				    "{\n"

@@ -194,7 +194,7 @@ namespace org_restfulipc
 
 		errno = 0;
 		_message.contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
-		assert(errno == 0);
+		throwErrnoUnless(errno == 0);
 
 		int bodyStart = _currentPos + 1;	
 		while (bodyStart + _message.contentLength > _bufferEnd)	
