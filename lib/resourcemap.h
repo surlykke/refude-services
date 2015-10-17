@@ -6,32 +6,32 @@
  */
 
 #ifndef RESOURCEMAP_H
-#define	RESOURCEMAP_H
+#define    RESOURCEMAP_H
 
 #include "resourcemap.h"
 #include "abstractresource.h"
 
 namespace org_restfulipc
 {
-	struct ResourceMappings;
+    struct ResourceMappings;
 
-	class ResourceMap
-	{
-	public:
-		ResourceMap();
-		virtual ~ResourceMap();
+    class ResourceMap
+    {
+    public:
+        ResourceMap();
+        virtual ~ResourceMap();
 
-		void map(const char* path, AbstractResource* resource);
-		void unMap(AbstractResource* resource);
-		AbstractResource* resource(const char* path);
+        void map(const char* path, AbstractResource* resource);
+        void unMap(AbstractResource* resource);
+        AbstractResource* resource(const char* path);
 
-	private:
-		pthread_rwlock_t mLock;
-		ResourceMappings* mResourceMappings;
-	};
+    private:
+        pthread_rwlock_t mLock;
+        ResourceMappings* mResourceMappings;
+    };
 }
 
 
 
-#endif	/* RESOURCEMAP_H */
+#endif    /* RESOURCEMAP_H */
 

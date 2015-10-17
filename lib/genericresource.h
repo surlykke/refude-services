@@ -6,38 +6,38 @@
  */
 
 #ifndef GENERICRESOURCE_H
-#define	GENERICRESOURCE_H
+#define    GENERICRESOURCE_H
 
 #include "abstractresource.h"
 
 namespace org_restfulipc
 {
-	class GenericResource : public AbstractResource
-	{
-	public:
-		GenericResource(const char* json = "{}");
-		virtual ~GenericResource();
+    class GenericResource : public AbstractResource
+    {
+    public:
+        GenericResource(const char* json = "{}");
+        virtual ~GenericResource();
 
-		virtual void handleRequest(int socket, const HttpMessage& request);
-		virtual void doGet(int socket, const HttpMessage& request);
-		virtual void doStreamUpgrade(int socket, const HttpMessage& request);
-		virtual void doPatch(int socket, const HttpMessage& request);
-		void update(const char* data);
+        virtual void handleRequest(int socket, const HttpMessage& request);
+        virtual void doGet(int socket, const HttpMessage& request);
+        virtual void doStreamUpgrade(int socket, const HttpMessage& request);
+        virtual void doPatch(int socket, const HttpMessage& request);
+        void update(const char* data);
 
-	private:
-		void notifyClients();	
-		void writeData(int socket, const char *data, int nBytes);
+    private:
+        void notifyClients();    
+        void writeData(int socket, const char *data, int nBytes);
 
 
-		char _response[8192]; // FIXME
-		char* _respPtr;
-		int _responseLength;
-		pthread_rwlock_t _lock;	
+        char _response[8192]; // FIXME
+        char* _respPtr;
+        int _responseLength;
+        pthread_rwlock_t _lock;    
 
-		std::vector<int> _webSockets;
-	};
+        std::vector<int> _webSockets;
+    };
 }
 
 
-#endif	/* GENERICRESOURCE_H */
+#endif    /* GENERICRESOURCE_H */
 

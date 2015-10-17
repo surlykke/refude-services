@@ -6,7 +6,7 @@
  */
 
 #ifndef RESOURCE_H
-#define	RESOURCE_H
+#define    RESOURCE_H
 
 #include <QReadWriteLock>
 #include <QJsonObject>
@@ -15,30 +15,30 @@ class AbstractResource
 {
 
 public: 
-	AbstractResource();	
-	virtual ~AbstractResource() {};	
+    AbstractResource();    
+    virtual ~AbstractResource() {};    
 
-	void lockForRead();
-	void lockForWrite();
-	void unlock();
+    void lockForRead();
+    void lockForWrite();
+    void unlock();
 
-	char *json;
-	virtual bool patch(char* jsonPatch) { return false; }
+    char *json;
+    virtual bool patch(char* jsonPatch) { return false; }
 
 protected:
-	QReadWriteLock lock;
+    QReadWriteLock lock;
 };
 
 class JSonObjectResource : public AbstractResource
 {
 public:
-	JSonObjectResource();
-	void update(const QJsonObject& other);
+    JSonObjectResource();
+    void update(const QJsonObject& other);
 
 private:
-	QJsonObject jsonObject;
+    QJsonObject jsonObject;
 };
 
 
-#endif	/* RESOURCE_H */
+#endif    /* RESOURCE_H */
 

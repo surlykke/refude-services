@@ -6,61 +6,61 @@
  */
 
 #ifndef HTTPMESSAGE_H
-#define	HTTPMESSAGE_H
+#define    HTTPMESSAGE_H
 #include <iostream>
 
 #include "httpprotocol.h"
 
 namespace org_restfulipc
 {
-	struct HttpMessage
-	{
-		HttpMessage();
-		virtual ~HttpMessage();
-		void clear();
+    struct HttpMessage
+    {
+        HttpMessage();
+        virtual ~HttpMessage();
+        void clear();
 
-		Method method;
-		char* path;
-		char* queryString;
-		int status;
-		const char* headers[(int) Header::unknown];
-		char* body;
-		int contentLength;
-		
-		char buffer[8192];
+        Method method;
+        char* path;
+        char* queryString;
+        int status;
+        const char* headers[(int) Header::unknown];
+        char* body;
+        int contentLength;
+        
+        char buffer[8192];
 
-		inline const char* headerValue(Header h) const { return headers[(int) h]; }
-	};
+        inline const char* headerValue(Header h) const { return headers[(int) h]; }
+    };
 
-	class HttpMessageReader
-	{
-	public:
-		HttpMessageReader(int socket, HttpMessage& message);
-		void readRequest();
-		void readResponse();
-	
-	private:
-		void readRequestLine();
-		void readStatusLine();
-		void readHeaderLines();
-		bool readHeaderLine();
-		void readHeaders();
-		void readBody();
-		char currentChar();
-		char nextChar();
-		bool isTChar(char c);
-		void receive();
+    class HttpMessageReader
+    {
+    public:
+        HttpMessageReader(int socket, HttpMessage& message);
+        void readRequest();
+        void readResponse();
+    
+    private:
+        void readRequestLine();
+        void readStatusLine();
+        void readHeaderLines();
+        bool readHeaderLine();
+        void readHeaders();
+        void readBody();
+        char currentChar();
+        char nextChar();
+        bool isTChar(char c);
+        void receive();
 
-		void clear();
+        void clear();
 
-		int _socket;
-		HttpMessage& _message;
-		int _bufferEnd;
-		int _currentPos;
-	};
+        int _socket;
+        HttpMessage& _message;
+        int _bufferEnd;
+        int _currentPos;
+    };
 }
 
 //std::ostream& operator<<(std::ostream& out, const HttpMessage& httpRequest);
 
-#endif	/* HTTPMESSAGE_H */
+#endif    /* HTTPMESSAGE_H */
 

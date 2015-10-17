@@ -6,7 +6,7 @@
  */
 
 #ifndef TEST_H
-#define	TEST_H
+#define    TEST_H
 
 template <int I, int J>
 struct Foo;
@@ -14,5 +14,5 @@ struct Foo;
 template <int I>
 struct Foo<I, 7> {};
 
-#endif	/* TEST_H */
+#endif    /* TEST_H */
 

@@ -6,7 +6,7 @@
  */
 
 #ifndef SERVICELISTENER_H
-#define	SERVICELISTENER_H
+#define    SERVICELISTENER_H
 
 #include <pthread.h>
 #include <linux/un.h>
@@ -21,7 +21,7 @@ namespace org_restfulipc
 {
     class Service
     {
-	public:
+    public:
         Service(const char *socketPath);
         virtual ~Service();
 
@@ -63,5 +63,5 @@ namespace org_restfulipc
 
 
 
-#endif	/* SERVICELISTENER_H */
+#endif    /* SERVICELISTENER_H */
 

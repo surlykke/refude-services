@@ -6,7 +6,7 @@
  */
 
 #ifndef HEAP_H
-#define	HEAP_H
+#define    HEAP_H
 
 #include <memory>
 
@@ -16,39 +16,39 @@ using namespace std;
 
 namespace org_restfulipc 
 {
-	class Heap
-	{
-	public:
-		Heap() : buffer((char*) malloc(CHUNK)), p(buffer), bufferSize(CHUNK), freeSize(CHUNK) {}
-		virtual ~Heap() { free(buffer); }
+    class Heap
+    {
+    public:
+        Heap() : buffer((char*) malloc(CHUNK)), p(buffer), bufferSize(CHUNK), freeSize(CHUNK) {}
+        virtual ~Heap() { free(buffer); }
 
-			
-		template<typename T>
-		void* allocate()
-		{
-			if (! std::align(alignof(T), sizeof(T), p, freeSize)) {
-				bufferSize += CHUNK;
-				freeSize += CHUNK;
-				buffer = realloc(buffer, bufferSize);
-				if (! std::align(alignof(T), sizeof(T), p, freeSize)) {	
-					throw "Allocation failed";
-				}
-			}
-		
-			void *result = p;
-			p = (char*)p + sizeof(T);
-			freeSize -= sizeof(T);
-			return result;
-		}
-	
+            
+        template<typename T>
+        void* allocate()
+        {
+            if (! std::align(alignof(T), sizeof(T), p, freeSize)) {
+                bufferSize += CHUNK;
+                freeSize += CHUNK;
+                buffer = realloc(buffer, bufferSize);
+                if (! std::align(alignof(T), sizeof(T), p, freeSize)) {    
+                    throw "Allocation failed";
+                }
+            }
+        
+            void *result = p;
+            p = (char*)p + sizeof(T);
+            freeSize -= sizeof(T);
+            return result;
+        }
+    
 
-	private:
-		void* buffer;
-		void* p;
-		size_t bufferSize;
-		size_t freeSize;
+    private:
+        void* buffer;
+        void* p;
+        size_t bufferSize;
+        size_t freeSize;
 
-	};
+    };
 }
-#endif	/* HEAP_H */
+#endif    /* HEAP_H */
 

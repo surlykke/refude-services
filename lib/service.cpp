@@ -41,9 +41,9 @@ namespace org_restfulipc
         unlink(socketPath);
         assert(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) >= 0);
         assert(listen(listenSocket, 8) >= 0);
-	}
+    }
 
-	Service::~Service()
+    Service::~Service()
     {
     }
 

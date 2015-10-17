@@ -6,7 +6,7 @@
  */
 
 #ifndef ERRORHANDLING_H
-#define	ERRORHANDLING_H
+#define    ERRORHANDLING_H
 
 #include "httpprotocol.h"
 #include <errno.h>
@@ -39,5 +39,5 @@ namespace org_restfulipc
 }
 
 
-#endif	/* ERRORHANDLING_H */
+#endif    /* ERRORHANDLING_H */
 

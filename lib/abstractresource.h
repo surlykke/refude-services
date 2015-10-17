@@ -6,7 +6,7 @@
  */
 
 #ifndef ABSTRACTRESOURCE_H
-#define	ABSTRACTRESOURCE_H
+#define    ABSTRACTRESOURCE_H
 
 #include <pthread.h>
 #include <map>
@@ -19,9 +19,9 @@
 namespace org_restfulipc
 {
 
-	class AbstractResource
-	{
-	public:
+    class AbstractResource
+    {
+    public:
         AbstractResource() {}
         virtual ~AbstractResource() {}
         virtual void handleRequest(int socket, const HttpMessage& request) = 0;
@@ -30,5 +30,5 @@ namespace org_restfulipc
 }
 
 
-#endif	/* ABSTRACTRESOURCE_H */
+#endif    /* ABSTRACTRESOURCE_H */
 
