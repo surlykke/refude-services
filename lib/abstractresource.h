@@ -24,7 +24,7 @@ namespace org_restfulipc
     public:
         AbstractResource() {}
         virtual ~AbstractResource() {}
-        virtual void handleRequest(int socket, const HttpMessage& request) = 0;
+        virtual void handleRequest(int &socket, const HttpMessage& request) = 0;
     };
 
 }

@@ -6,7 +6,10 @@
  */
 
 #ifndef GENERICRESOURCE_H
-#define    GENERICRESOURCE_H
+#define GENERICRESOURCE_H
+
+#include <boost/thread/locks.hpp>
+#include <boost/thread/shared_mutex.hpp>
 
 #include "abstractresource.h"
 
@@ -18,7 +21,7 @@ namespace org_restfulipc
         GenericResource(const char* json = "{}");
         virtual ~GenericResource();
 
-        virtual void handleRequest(int socket, const HttpMessage& request);
+        virtual void handleRequest(int &socket, const HttpMessage& request);
         virtual void doGet(int socket, const HttpMessage& request);
         virtual void doStreamUpgrade(int socket, const HttpMessage& request);
         virtual void doPatch(int socket, const HttpMessage& request);
@@ -32,12 +35,13 @@ namespace org_restfulipc
         char _response[8192]; // FIXME
         char* _respPtr;
         int _responseLength;
-        pthread_rwlock_t _lock;    
+        boost::shared_mutex responseAccess;
 
         std::vector<int> _webSockets;
+        boost::mutex websocketsAccess;
     };
 }
 
 
-#endif    /* GENERICRESOURCE_H */
+#endif /* GENERICRESOURCE_H */
 

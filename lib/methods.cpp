@@ -68,7 +68,7 @@ namespace org_restfulipc
     int openConnection(const HttpUrl& url)
     {
         if (url.domain == AF_UNIX) {
-        int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+            int sock = socket(AF_UNIX, SOCK_STREAM, 0);
             throwErrnoUnless(sock > -1);
             struct sockaddr_un addr;
             memset(&addr, 0, sizeof(struct sockaddr_un));
@@ -160,8 +160,9 @@ namespace org_restfulipc
     char waitForNotifications(int sock)
     {
         char ch; 
-        
-        throwErrnoUnless(read(sock, &ch, 1) > 0);
+        int bytesRead;
+        bytesRead = read(sock, &ch, 1);
+        throwErrnoUnless(bytesRead > 0);
 
         return ch;
     }

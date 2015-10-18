@@ -32,7 +32,7 @@ namespace org_restfulipc
 
     private:
         boost::thread_group *threads;
-        boost::circular_buffer<int> buffer;
+        boost::circular_buffer<int> requestSockets;
         boost::mutex bufferLock;
         boost::condition_variable bufferNotFull;
         boost::condition_variable bufferNotEmpty;

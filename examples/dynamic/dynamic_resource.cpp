@@ -16,21 +16,25 @@ int main(int argc, char *argv[])
         GenericResource resource("{}");
     
         Service service("org.restfulipc.examples.Dynamic");
-        service.start();
         service.resourceMap.map("/res", &resource);
-
-        while (true) {
-            sprintf(json, 
+        cout << "Starting\n";
+        service.start();
+        for (int i = 0; i < 5; i++) {
+            sprintf(json,
                     "{\n"
                     "    time: %d\n"
-                    "}\n", 
+                    "}\n",
                     time(NULL));
-            std::cout << "Updating to " << json << "\n";
-            resource.update(json);    
-            sleep(3);    
+            cout << "Updating\n";
+            resource.update(json);
+            sleep(3);
         }
-    }
+        service.stop();
+        
+   }
     catch (int errorNumber) {
-        cout << strerror(errorNumber) << "\n";
+        if (errorNumber) {
+            cout << strerror(errorNumber) << "\n";
+        }
     }
 }

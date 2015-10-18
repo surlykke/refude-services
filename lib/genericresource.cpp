@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
+#include "errorhandling.h"
 #include "genericresource.h"
 
 using namespace std;
@@ -9,16 +10,14 @@ namespace org_restfulipc
 {
 
     GenericResource::GenericResource(const char* json) : 
-        AbstractResource(), 
-    //    _response({'\0'}),
+        AbstractResource(),
+        _response(""),
         _respPtr(_response),
-        _responseLength(0)
+        _responseLength(0),
+        responseAccess(),
+        _webSockets(),
+        websocketsAccess()
     {
-
-        if (pthread_rwlock_init(&_lock, NULL) < 0)
-        {
-            throw errno;
-        }
         update(json);
     }
 
@@ -26,7 +25,7 @@ namespace org_restfulipc
     {
     }
 
-    void GenericResource::handleRequest(int socket, const HttpMessage& request)
+    void GenericResource::handleRequest(int &socket, const HttpMessage& request)
     {
         if (request.method == Method::GET)    
         {
@@ -36,6 +35,7 @@ namespace org_restfulipc
                 strcasecmp(request.headerValue(Header::upgrade), "socketstream") == 0)
             {
                 doStreamUpgrade(socket, request);
+                socket = -1;
             }
             else 
             {
@@ -54,21 +54,15 @@ namespace org_restfulipc
 
     void GenericResource::doGet(int socket, const HttpMessage& request)
     {
-        pthread_rwlock_rdlock(&_lock);
+        boost::shared_lock<boost::shared_mutex> readLock(responseAccess);
         int bytesWritten = 0;
-
         do
         {
             int nbytes = send(socket, _response + bytesWritten, _responseLength - bytesWritten, MSG_NOSIGNAL);
-            if (nbytes < 0)
-            {
-                throw errno;
-            }
+            throwErrnoUnless(nbytes >= 0);
             bytesWritten += nbytes;
         }
         while (bytesWritten < _responseLength);
-
-        pthread_rwlock_unlock(&_lock);
     }
 
     void GenericResource::doStreamUpgrade(int socket, const HttpMessage& request)
@@ -81,7 +75,11 @@ namespace org_restfulipc
             "\r\n";
 
         writeData(socket, streamUpgradeResponse, sizeof(streamUpgradeResponse));
-        _webSockets.push_back(socket);
+
+        {
+            boost::mutex::scoped_lock writeLock(websocketsAccess);
+            _webSockets.push_back(socket);
+        }
     }
 
     void GenericResource::doPatch(int socket, const HttpMessage& request)
@@ -101,32 +99,30 @@ namespace org_restfulipc
 
         int contentLength = strlen(data);
         
-        pthread_rwlock_wrlock(&_lock);
-        sprintf(_response, responseTemplate, contentLength, data);
-        _responseLength = strlen(_response);
+        {
+            boost::unique_lock<boost::shared_mutex> writeLock(responseAccess);
+            sprintf(_response, responseTemplate, contentLength, data);
+            _responseLength = strlen(_response);
+        }
+
         notifyClients();
-        pthread_rwlock_unlock(&_lock);
     }
 
     void GenericResource::notifyClients()
     {
-        
-         std::vector<int>::iterator it = _webSockets.begin();
+
+        boost::mutex::scoped_lock lock(websocketsAccess);
+        std::vector<int>::iterator it = _webSockets.begin();
         
         //    AFAIBATG send to a socket will only block - or in the case of a nonblocking, 
         //    return EAGAIN - if there's no room in the kernel buffer.
         //    In that case there are waiting 'u'`s for the client to read, so no nead to send more
             
         while (it != _webSockets.end()) {
-            cout << "writing to \n" << *it << "\n";
             int res = send(*it, "u", 1, MSG_NOSIGNAL);
             int errorNumber = errno;
-            cout << "Got " << errorNumber << " : " << strerror(errorNumber) << "\n";
             if ( res < 0 && errorNumber != EAGAIN) {
-                cout << "Closing: "     << *it << "\n";
-                while (close(*it) < 0 && errno == EINTR) {
-                    cout << "Got:" << errno << " : " << strerror(errno) << "\n";
-                };
+                while (close(*it) < 0 && errno == EINTR);
                 it = _webSockets.erase(it);
             }
             else {

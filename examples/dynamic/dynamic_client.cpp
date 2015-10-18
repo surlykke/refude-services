@@ -20,28 +20,16 @@ using namespace org_restfulipc;
 int main(int argc, char** argv)
 {
     try { 
-        /*int sock = connectToNotifications(URL, "");
+        int sock = connectToNotifications(URL, "");
         while (true) {
             char ch = waitForNotifications(sock);
-            cout << "Got:<" << ch << ">\n";
             HttpMessage message;
             httpGet(URL, message);
-        }*/
-        cout << "Starting\n";
-        HttpUrl url(URL);
-        int sock = openConnection(url);
-        for (int i = 0; i < 1000000; i++) {
-            HttpMessage message;
-            httpGet(sock, url, message);
+            std::cout << "Got: " << message.body << "\n";
         }
-        close(sock);
-        cout << "Ending\n";
     }
     catch (Status status) {
         cout << "Http status:" << statusLine(status) << "\n";
-    }
-    catch (const char* errMsg) {
-        cout << "Error: " << errMsg;
     }
     catch (int errornumber) {
         cout << "Errno: " << errornumber << " - " << strerror(errornumber) << "\n";

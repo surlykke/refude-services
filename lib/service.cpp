@@ -21,7 +21,7 @@ namespace org_restfulipc
 {
     Service::Service(const char *socketPath) :
         threads(0),
-        buffer(128),
+        requestSockets(128),
         bufferLock(),
         bufferNotFull(),
         bufferNotEmpty(),
@@ -65,9 +65,11 @@ namespace org_restfulipc
     void Service::stop()
     {
         shuttingDown = true;
-        std::cout << "joining\n";
+        bufferNotEmpty.notify_all();
+        bufferNotFull.notify_all();
+        std::cout << "join_all\n";
         threads->join_all();
-        std::cout << "joined\n";
+        std::cout << "all joined\n";
         delete threads;
         threads = 0;
     }
@@ -89,10 +91,13 @@ namespace org_restfulipc
 
                 {
                     boost::mutex::scoped_lock scope_lock(service->bufferLock);
-                    while (service->buffer.full()) {
+                    while (service->requestSockets.full()) {
                         service->bufferNotFull.wait(scope_lock);
+                        if (service->shuttingDown) {
+                            return;
+                        }
                     }
-                    service->buffer.push_back(requestSocket);
+                    service->requestSockets.push_back(requestSocket);
                 }
 
                 service->bufferNotEmpty.notify_one();
@@ -106,54 +111,48 @@ namespace org_restfulipc
         int requestSocket;
         HttpMessage request;
         while (! service->shuttingDown) {
-            std::cout << "Worker main loop\n";
-            bool closeSocket = false;
-
             {
                 boost::mutex::scoped_lock scope_lock(service->bufferLock);
-                while (service->buffer.empty()) {
+                while (service->requestSockets.empty()) {
                     service->bufferNotEmpty.wait(scope_lock);
+                    if (service->shuttingDown) {
+                        return;
+                    }
                 }
-                requestSocket = service->buffer[0];
-                service->buffer.pop_front();
+                requestSocket = service->requestSockets[0];
+                service->requestSockets.pop_front();
             }
 
             service->bufferNotFull.notify_one();
 
-
-            std::cout << "Worker got socket\n";
-            do {
+            while (requestSocket > -1) {
                 try {
                     HttpMessageReader(requestSocket, request).readRequest();
 
-                    if (request.headerValue(Header::connection) != 0 &&
-                        strcasecmp("close", request.headerValue(Header::connection)) == 0) {
-                        closeSocket = true;
-                    }
                     AbstractResource *resource = service->resourceMap.resource(request.path);
                     if (! resource) {
                         throw Status::Http404;
                     }
+
                     resource->handleRequest(requestSocket, request);
+
+                    if (request.headerValue(Header::connection) != 0 &&
+                        strcasecmp("close", request.headerValue(Header::connection)) == 0) {
+                        close(requestSocket);
+                        requestSocket = -1;
+                    }
                 }
                 catch (Status status) {
-                    std::cout << "Worker caught status: " << statusLine(status) << "\n";
                     send(requestSocket, statusLine(status), strlen(statusLine(status)), MSG_NOSIGNAL);
                     send(requestSocket, "\r\n", 2, MSG_NOSIGNAL);
-                    closeSocket = true;
+                    close(requestSocket);
+                    requestSocket = -1;
                 }
                 catch (int errorNumber) {
-                    std::cout << "Worker caught errorNumber: " << errorNumber << "\n";
-                    if (errorNumber != 0) {
-                        dprintf(2, strerror(errorNumber));
-                        writeBacktrace();
-                    }
-                    closeSocket = true;
+                    close(requestSocket);
+                    requestSocket = -1;
                 }
-
-            } while(! closeSocket);
-
-            close(requestSocket); // We don't really care about errors here..
+            }
         }
     }
 

@@ -33,9 +33,9 @@
 
 namespace org_restfulipc
 {
-    inline void throwErrnoUnless(bool condition) { if (!condition) throw errno; }
-    inline void throwHttpStatusUnless(Status status, bool condition) { if (!condition) throw status; }
     void writeBacktrace(int fd = 2);
+    inline void throwErrnoUnless(bool condition) { if (!condition) { writeBacktrace(); throw errno;} }
+    inline void throwHttpStatusUnless(Status status, bool condition) { if (!condition) throw status; }
 }
 
 
