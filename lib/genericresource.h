@@ -8,8 +8,7 @@
 #ifndef GENERICRESOURCE_H
 #define GENERICRESOURCE_H
 
-#include <boost/thread/locks.hpp>
-#include <boost/thread/shared_mutex.hpp>
+#include <shared_mutex>
 
 #include "abstractresource.h"
 
@@ -35,10 +34,10 @@ namespace org_restfulipc
         char _response[8192]; // FIXME
         char* _respPtr;
         int _responseLength;
-        boost::shared_mutex responseAccess;
+        std::shared_timed_mutex responseMutex;
 
         std::vector<int> _webSockets;
-        boost::mutex websocketsAccess;
+        std::mutex websocketsMutex;
     };
 }
 

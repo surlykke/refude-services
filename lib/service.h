@@ -8,11 +8,7 @@
 #ifndef SERVICELISTENER_H
 #define    SERVICELISTENER_H
 
-#include <pthread.h>
 #include <linux/un.h>
-#include <boost/lockfree/queue.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/atomic.hpp>
 #include <thread>
 #include <mutex>
 #include <condition_variable>

@@ -38,10 +38,10 @@ namespace org_restfulipc
         memset(&sockaddr, 0, sizeof(struct sockaddr_un));
         sockaddr.sun_family = AF_UNIX;
         strncpy(&sockaddr.sun_path[0], socketPath, strlen(socketPath));
-        assert((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) >= 0);
+        throwErrnoUnless((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) >= 0);
         unlink(socketPath);
-        assert(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) >= 0);
-        assert(listen(listenSocket, 8) >= 0);
+        throwErrnoUnless(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) >= 0);
+        throwErrnoUnless(listen(listenSocket, 8) >= 0);
 
         threads.push_back(std::thread(&Service::listenForIncoming, this));
         for (int i = 0; i < workers; i++) {

@@ -8,6 +8,8 @@
 #ifndef RESOURCEMAP_H
 #define    RESOURCEMAP_H
 
+#include <shared_mutex>
+
 #include "resourcemap.h"
 #include "abstractresource.h"
 
@@ -26,7 +28,7 @@ namespace org_restfulipc
         AbstractResource* resource(const char* path);
 
     private:
-        pthread_rwlock_t mLock;
+        std::shared_timed_mutex m;
         ResourceMappings* mResourceMappings;
     };
 }

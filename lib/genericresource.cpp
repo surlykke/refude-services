@@ -14,9 +14,9 @@ namespace org_restfulipc
         _response(""),
         _respPtr(_response),
         _responseLength(0),
-        responseAccess(),
+        responseMutex(),
         _webSockets(),
-        websocketsAccess()
+        websocketsMutex()
     {
         update(json);
     }
@@ -54,7 +54,7 @@ namespace org_restfulipc
 
     void GenericResource::doGet(int socket, const HttpMessage& request)
     {
-        boost::shared_lock<boost::shared_mutex> readLock(responseAccess);
+        std::shared_lock<std::shared_timed_mutex> lock(responseMutex);
         int bytesWritten = 0;
         do
         {
@@ -77,7 +77,7 @@ namespace org_restfulipc
         writeData(socket, streamUpgradeResponse, sizeof(streamUpgradeResponse));
 
         {
-            boost::mutex::scoped_lock writeLock(websocketsAccess);
+            std::unique_lock<std::mutex> lock(websocketsMutex);
             _webSockets.push_back(socket);
         }
     }
@@ -100,7 +100,7 @@ namespace org_restfulipc
         int contentLength = strlen(data);
         
         {
-            boost::unique_lock<boost::shared_mutex> writeLock(responseAccess);
+            std::unique_lock<std::shared_timed_mutex> lock(responseMutex);
             sprintf(_response, responseTemplate, contentLength, data);
             _responseLength = strlen(_response);
         }
@@ -111,7 +111,7 @@ namespace org_restfulipc
     void GenericResource::notifyClients()
     {
 
-        boost::mutex::scoped_lock lock(websocketsAccess);
+        std::unique_lock<std::mutex> lock(websocketsMutex);
         std::vector<int>::iterator it = _webSockets.begin();
         
         //    AFAIBATG send to a socket will only block - or in the case of a nonblocking, 

@@ -11,7 +11,7 @@ namespace org_restfulipc
 
     struct ResourceMappings
     {
-        ResourceMappings(): mappings(NULL), capacity(0), numElements(0) {};
+        ResourceMappings(): mappings(NULL), capacity(0), numElements(0) {}
 
         ResourceMapping* mappings;
         int capacity;
@@ -57,38 +57,32 @@ namespace org_restfulipc
         }
     };
 
-    ResourceMap::ResourceMap()
+    ResourceMap::ResourceMap() : m(), mResourceMappings(new ResourceMappings)
     {
-        mLock = PTHREAD_RWLOCK_INITIALIZER;
-        mResourceMappings = new ResourceMappings;
     }
 
     ResourceMap::~ResourceMap()
     {
+        delete mResourceMappings;
     }
 
     void ResourceMap::map(const char* path, AbstractResource* resource)
     {
-        pthread_rwlock_wrlock(&mLock);
-        mResourceMappings->addMapping(path, resource);        
-        pthread_rwlock_unlock(&mLock);
+        std::unique_lock<std::shared_timed_mutex> lock(m);
+        mResourceMappings->addMapping(path, resource);
     }
 
     void ResourceMap::unMap(AbstractResource* resource)
     {
-        pthread_rwlock_wrlock(&mLock);
+        std::unique_lock<std::shared_timed_mutex> lock(m);
         mResourceMappings->remove(resource);
-        pthread_rwlock_unlock(&mLock);
     }
 
 
     AbstractResource* ResourceMap::resource(const char* path)
     {
-        pthread_rwlock_rdlock(&mLock);
-        AbstractResource* resource = mResourceMappings->resource(path);
-        pthread_rwlock_unlock(&mLock);
-
-        return resource;
+        std::shared_lock<std::shared_timed_mutex> lock(m);
+        return mResourceMappings->resource(path);
     }
 
 }
