@@ -5,8 +5,9 @@
  * Created on 14. februar 2015, 19:10
  */
 
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <signal.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <error.h>
@@ -20,8 +21,8 @@
 namespace org_restfulipc
 {
     Service::Service(const char *socketPath) :
-        threads(0),
-        requestSockets(128),
+        threads(),
+        requestSockets(),
         bufferLock(),
         bufferNotFull(),
         bufferNotEmpty(),
@@ -49,87 +50,71 @@ namespace org_restfulipc
 
     void Service::start(int workers)
     {
-        if (threads) {
+        shuttingDown = false;
+        if (! threads.empty()) {
             std::cerr << "Already started..";
             return;
         }
 
-        shuttingDown = false;
-        threads = new boost::thread_group();
-        threads->create_thread(Listener(this));
+        threads.push_back(std::thread(&Service::listenForIncoming, this));
         for (int i = 0; i < workers; i++) {
-            threads->create_thread(Worker(this));
+            threads.push_back(std::thread(&Service::serveIncoming, this));
         }
     }
 
     void Service::stop()
     {
         shuttingDown = true;
-        bufferNotEmpty.notify_all();
-        bufferNotFull.notify_all();
-        std::cout << "join_all\n";
+        std::cout << "closing: " << close(listenSocket) << "\n";
+        for (int i = 0; i < threads.size(); i++) {
+            threads[i].join();
+        }
+        /*threads->interrupt_all();
         threads->join_all();
         std::cout << "all joined\n";
         delete threads;
-        threads = 0;
+        threads = 0;*/
     }
 
-
-
-    void Service::Listener::operator ()()
+    void Service::listenForIncoming()
     {
-        while (! service->shuttingDown) {
-            int requestSocket = accept(service->listenSocket, NULL, 0);
-            if (requestSocket >= 0) {
-                struct timeval tv;
-                tv.tv_sec = 0;
-                tv.tv_usec = 200000;
-                if (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) < 0) {
-                    close(requestSocket);
-                    continue;
-                }
-
-                {
-                    boost::mutex::scoped_lock scope_lock(service->bufferLock);
-                    while (service->requestSockets.full()) {
-                        service->bufferNotFull.wait(scope_lock);
-                        if (service->shuttingDown) {
-                            return;
-                        }
-                    }
-                    service->requestSockets.push_back(requestSocket);
-                }
-
-                service->bufferNotEmpty.notify_one();
-
+       for (;;) {
+            int requestSocket = accept(listenSocket, NULL, 0);
+            std::cout << "Got requestSocket: " << requestSocket << "\n";
+            if (requestSocket < 0) {
+                continue;
             }
+            std::cout << "Listener, got requestSocket: " << requestSocket << "\n";
+            struct timeval tv;
+            tv.tv_sec = 0;
+            tv.tv_usec = 200000;
+            if (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) < 0) {
+                close(requestSocket);
+                continue;
+            }
+
+            requestSockets.enqueue(requestSocket);
         }
+
     }
 
-    void Service::Worker::operator ()()
+    void Service::serveIncoming()
     {
-        int requestSocket;
+       int requestSocket;
         HttpMessage request;
-        while (! service->shuttingDown) {
-            {
-                boost::mutex::scoped_lock scope_lock(service->bufferLock);
-                while (service->requestSockets.empty()) {
-                    service->bufferNotEmpty.wait(scope_lock);
-                    if (service->shuttingDown) {
-                        return;
-                    }
-                }
-                requestSocket = service->requestSockets[0];
-                service->requestSockets.pop_front();
+
+        for (;;) {
+            requestSocket = requestSockets.dequeue();
+
+            if (requestSocket < 0) {
+                return;
             }
 
-            service->bufferNotFull.notify_one();
-
-            while (requestSocket > -1) {
+            do {
                 try {
                     HttpMessageReader(requestSocket, request).readRequest();
 
-                    AbstractResource *resource = service->resourceMap.resource(request.path);
+                    AbstractResource *resource = resourceMap.resource(request.path);
                     if (! resource) {
                         throw Status::Http404;
                     }
@@ -152,8 +137,7 @@ namespace org_restfulipc
                     close(requestSocket);
                     requestSocket = -1;
                 }
-            }
+            }  while (requestSocket > -1);
         }
     }
-
 }

@@ -13,8 +13,11 @@
 #include <boost/lockfree/queue.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/atomic.hpp>
-#include <boost/circular_buffer.hpp>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
+#include "shortmtqueue.h"
 #include "resourcemap.h"
 
 namespace org_restfulipc
@@ -31,34 +34,18 @@ namespace org_restfulipc
         ResourceMap resourceMap;
 
     private:
-        boost::thread_group *threads;
-        boost::circular_buffer<int> requestSockets;
-        boost::mutex bufferLock;
-        boost::condition_variable bufferNotFull;
-        boost::condition_variable bufferNotEmpty;
-        boost::atomic<bool> shuttingDown;
+        std::vector<std::thread> threads;
+        ShortMtQueue<16> requestSockets;
+        std::mutex bufferLock;
+        std::condition_variable bufferNotFull;
+        std::condition_variable bufferNotEmpty;
+        bool shuttingDown;
         int listenSocket;
 
-        class Listener
-        {
-        public:
-            Listener(Service *service) : service(service) {}
-            void operator()();
-
-        private:
-            Service *service;
-        };
-
-        class Worker
-        {
-        public:
-            Worker(Service *service) : service(service) {}
-            void operator()();
-
-        private:
-            Service *service;
-        };
+        void listenForIncoming();
+        void serveIncoming();
     };
+
 }
 
 

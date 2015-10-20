@@ -11,30 +11,24 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    try {
-        char json[256];
-        GenericResource resource("{}");
-    
-        Service service("org.restfulipc.examples.Dynamic");
-        service.resourceMap.map("/res", &resource);
-        cout << "Starting\n";
-        service.start();
-        for (int i = 0; i < 5; i++) {
-            sprintf(json,
-                    "{\n"
-                    "    time: %d\n"
-                    "}\n",
-                    time(NULL));
-            cout << "Updating\n";
-            resource.update(json);
-            sleep(3);
-        }
-        service.stop();
-        
-   }
-    catch (int errorNumber) {
-        if (errorNumber) {
-            cout << strerror(errorNumber) << "\n";
-        }
+    char json[256];
+    GenericResource resource("{}");
+
+    Service service("org.restfulipc.examples.Dynamic");
+    service.resourceMap.map("/res", &resource);
+    cout << "Starting\n";
+    service.start();
+    for (int i = 0; i < 15; i++) {
+        sprintf(json,
+                "{\n"
+                "    time: %d\n"
+                "}\n",
+                time(NULL));
+        cout << "Updating\n";
+        resource.update(json);
+        sleep(1);
     }
+    service.stop();
+    sleep(4);
+
 }

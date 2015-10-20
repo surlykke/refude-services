@@ -1,8 +1,7 @@
 set(PROJECT "restfulipc")
 project(${PROJECT})
 
-file(GLOB SOURCE_FILES *.cpp)
-
+file(GLOB SOURCE_FILES *.cpp shortmtqueue.h)
 find_package(Boost REQUIRED COMPONENTS system thread)
 message(STATUS "Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
 message(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
