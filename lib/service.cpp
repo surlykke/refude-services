@@ -5,8 +5,8 @@
  * Created on 14. februar 2015, 19:10
  */
 
+#include <poll.h>
 #include <sys/socket.h>
-#include <signal.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -38,7 +38,7 @@ namespace org_restfulipc
         memset(&sockaddr, 0, sizeof(struct sockaddr_un));
         sockaddr.sun_family = AF_UNIX;
         strncpy(&sockaddr.sun_path[0], socketPath, strlen(socketPath));
-        assert((listenSocket = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0);
+        assert((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) >= 0);
         unlink(socketPath);
         assert(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) >= 0);
         assert(listen(listenSocket, 8) >= 0);
@@ -52,30 +52,48 @@ namespace org_restfulipc
     Service::~Service()
     {
         shuttingDown = true;
-        close(listenSocket);
         for (int i = 0; i < threads.size(); i++) {
             threads.at(i).join();
         }
+
+        close(listenSocket);
     }
 
     void Service::listenForIncoming()
     {
-       for (;;) {
-            int requestSocket = accept(listenSocket, NULL, 0);
-            std::cout << "Got requestSocket: " << requestSocket << "\n";
-            if (requestSocket < 0) {
-                continue;
-            }
-            std::cout << "Listener, got requestSocket: " << requestSocket << "\n";
-            struct timeval tv;
-            tv.tv_sec = 0;
-            tv.tv_usec = 200000;
-            if (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) < 0) {
-                close(requestSocket);
-                continue;
+        struct pollfd pollfd;
+        pollfd.fd = listenSocket;
+        pollfd.events = POLLIN;
+
+        for (;;) {
+            int pollRes = poll(&pollfd, 1, 250);
+
+            if (shuttingDown) {
+                for (int i = 1; i < threads.size(); i++) {
+                    requestSockets.enqueue(-1); // Tell workers to quit
+                }
+
+                return;
             }
 
-            requestSockets.enqueue(requestSocket);
+            if (pollRes > 0) {
+                int requestSocket = accept(listenSocket, NULL, 0);
+                if (requestSocket < 0) {
+                    continue;
+                }
+
+                struct timeval tv;
+                tv.tv_sec = 0;
+                tv.tv_usec = 200000;
+                if (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) < 0) {
+                    close(requestSocket);
+                    continue;
+                }
+
+                requestSockets.enqueue(requestSocket);
+            }
+
+
         }
 
     }

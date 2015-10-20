@@ -4,7 +4,7 @@ namespace org_restfulipc
 {
     struct ResourceMapping
     {
-        ResourceMapping(const char* path, AbstractResource* resource): path(path), resource(resource) {};
+        ResourceMapping(const char* path, AbstractResource* resource): path(path), resource(resource) {}
         const char* path;
         AbstractResource *resource;
     };
