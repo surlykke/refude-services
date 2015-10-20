@@ -25,11 +25,9 @@ namespace org_restfulipc
     class Service
     {
     public:
-        Service(const char *socketPath);
+        Service(const char *socketPath, int workers = 5);
         virtual ~Service();
 
-        void start(int workers = 5);
-        void stop();
 
         ResourceMap resourceMap;
 

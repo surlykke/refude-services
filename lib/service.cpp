@@ -20,7 +20,7 @@
 
 namespace org_restfulipc
 {
-    Service::Service(const char *socketPath) :
+    Service::Service(const char *socketPath, int workers) :
         threads(),
         requestSockets(),
         bufferLock(),
@@ -42,19 +42,6 @@ namespace org_restfulipc
         unlink(socketPath);
         assert(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) >= 0);
         assert(listen(listenSocket, 8) >= 0);
-    }
-
-    Service::~Service()
-    {
-    }
-
-    void Service::start(int workers)
-    {
-        shuttingDown = false;
-        if (! threads.empty()) {
-            std::cerr << "Already started..";
-            return;
-        }
 
         threads.push_back(std::thread(&Service::listenForIncoming, this));
         for (int i = 0; i < workers; i++) {
@@ -62,18 +49,13 @@ namespace org_restfulipc
         }
     }
 
-    void Service::stop()
+    Service::~Service()
     {
         shuttingDown = true;
-        std::cout << "closing: " << close(listenSocket) << "\n";
+        close(listenSocket);
         for (int i = 0; i < threads.size(); i++) {
-            threads[i].join();
+            threads.at(i).join();
         }
-        /*threads->interrupt_all();
-        threads->join_all();
-        std::cout << "all joined\n";
-        delete threads;
-        threads = 0;*/
     }
 
     void Service::listenForIncoming()

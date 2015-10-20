@@ -16,8 +16,7 @@ int main(int argc, char *argv[])
 
     Service service("org.restfulipc.examples.Dynamic");
     service.resourceMap.map("/res", &resource);
-    cout << "Starting\n";
-    service.start();
+
     for (int i = 0; i < 15; i++) {
         sprintf(json,
                 "{\n"
@@ -28,7 +27,6 @@ int main(int argc, char *argv[])
         resource.update(json);
         sleep(1);
     }
-    service.stop();
     sleep(4);
 
 }
