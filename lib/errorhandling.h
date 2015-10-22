@@ -8,34 +8,61 @@
 #ifndef ERRORHANDLING_H
 #define    ERRORHANDLING_H
 
-#include "httpprotocol.h"
 #include <errno.h>
 #include <string.h>
-#include <exception>
 
+#include <stdexcept>
+#include <string>
+#include <list>
+#include <iostream>
+
+#include "httpprotocol.h"
 #include "httpprotocol.h"
 
 /**
  * We throw 3 types of exceptions:
  *
- *    int:
- *      this is always the value of errno, and it is thrown when a c-function
- *      fails ('open', 'read' and such). Usually it is thrown from assert (below).
+ *    C_Error
+ *      this is a thin wrapper around C's errno, and it is thrown when a c-function
+ *      fails ('open', 'read' and such).
  *
  *    Status:
- *      A Http code (4xx and 5xx). This is not necessarily an error, but used when the code figures
+ *      A Http code (4xx, 5xx, ..). This is not necessarily an error, but used when the code figures
  *      out that a http request cannot be served. The status will be catched somewhere
  *      and the corresponding Http response is then sent to the client.
  *
- *    std::runtime_error:
+ *    RuntimeError
  *      We use this for pretty much everything else.
  */
 
 namespace org_restfulipc
 {
-    void writeBacktrace(int fd = 2);
-    inline void throwErrnoUnless(bool condition) { if (!condition) { writeBacktrace(); throw errno;} }
-    inline void throwHttpStatusUnless(Status status, bool condition) { if (!condition) throw status; }
+    struct Backtrace
+    {
+        Backtrace();
+        void saveStackTrace();
+        void printStackTrace(std::ostream& os = std::cerr);
+        std::list<std::string> callStack;
+    };
+
+    struct RuntimeError : std::runtime_error, Backtrace
+    {
+        RuntimeError(const char *what) : std::runtime_error(what), Backtrace() {
+            saveStackTrace();
+        }
+
+        virtual ~RuntimeError() {}
+    };
+
+    struct C_Error : public RuntimeError
+    {
+        C_Error() : RuntimeError(strerror(errno)), errorNumber(errno) {
+            saveStackTrace();
+        }
+
+        int errorNumber;
+    };
+
 }
 
 

@@ -11,6 +11,8 @@
 
 #include "methods.h"
 #include "httpmessage.h"
+#include "errorhandling.h"
+
 using namespace std;
 using namespace org_restfulipc;
 /*
@@ -19,7 +21,7 @@ using namespace org_restfulipc;
 #define URL "http://{org.restfulipc.examples.Dynamic}/res"
 int main(int argc, char** argv)
 {
-    try { 
+    try {
         int sock = connectToNotifications(URL, "");
         while (true) {
             char ch = waitForNotifications(sock);
@@ -28,11 +30,8 @@ int main(int argc, char** argv)
             std::cout << "Got: " << message.body << "\n";
         }
     }
-    catch (Status status) {
-        cout << "Http status:" << statusLine(status) << "\n";
-    }
-    catch (int errornumber) {
-        cout << "Errno: " << errornumber << " - " << strerror(errornumber) << "\n";
+    catch (C_Error c_e) {
+        cout << "Caught: " << c_e.what() << "\n";
     }
 }
 

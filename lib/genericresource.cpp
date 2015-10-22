@@ -59,7 +59,7 @@ namespace org_restfulipc
         do
         {
             int nbytes = send(socket, _response + bytesWritten, _responseLength - bytesWritten, MSG_NOSIGNAL);
-            throwErrnoUnless(nbytes >= 0);
+            if (nbytes < 0) throw C_Error();
             bytesWritten += nbytes;
         }
         while (bytesWritten < _responseLength);

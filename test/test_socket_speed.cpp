@@ -20,18 +20,18 @@ using namespace org_restfulipc;
 void runAsClient() 
 {
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
-    throwErrnoUnless(sock > -1);
+    if (sock < 0) throw C_Error();
     struct sockaddr_un addr;
     memset(&addr, 0, sizeof(struct sockaddr_un));
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, SOCK_PATH, strlen(SOCK_PATH));
-    throwErrnoUnless(connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) == 0);
+    if (connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) != 0) throw C_Error();
         
     char c = 'a';
     cout << "client loop start\n";
     for (int i = 0; i < 100000; i++) {
-        throwErrnoUnless(write(sock, &c, 1) > 0);
-        throwErrnoUnless(read(sock, &c, 1) > 0);
+        if (write(sock, &c, 1) <= 0) throw C_Error();
+        if (read(sock, &c, 1) <= 0) throw C_Error();
     }
     cout << "client loop end\n";
 
@@ -49,12 +49,12 @@ void runAsServer()
 
 
         int listenSocket = socket(AF_UNIX, SOCK_STREAM, 0);
-        throwErrnoUnless(listenSocket > 0);
+        if (listenSocket < 0) throw C_Error();
         unlink(SOCK_PATH);
-        throwErrnoUnless(bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(SOCK_PATH) + 1) >= 0);
-        throwErrnoUnless(listen(listenSocket, 8) >= 0);
+        if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(SOCK_PATH) + 1) < 0) throw C_Error();
+        if (listen(listenSocket, 8) < 0) throw C_Error();
         int connectionSocket = accept(listenSocket, NULL, 0);
-        throwErrnoUnless(connectionSocket > 0);
+        if (connectionSocket < 0) throw C_Error();
 
         while (true) {
             char c;
