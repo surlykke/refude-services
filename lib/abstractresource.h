@@ -8,7 +8,6 @@
 #ifndef ABSTRACTRESOURCE_H
 #define    ABSTRACTRESOURCE_H
 
-#include <pthread.h>
 #include <map>
 #include <string.h>
 #include <vector>
