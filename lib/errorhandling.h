@@ -51,7 +51,11 @@ namespace org_restfulipc
             saveStackTrace();
         }
 
-        virtual ~RuntimeError() {}
+        RuntimeError(std::string what) : std::runtime_error(what), Backtrace() {
+            saveStackTrace();
+        }
+
+       virtual ~RuntimeError() {}
     };
 
     struct C_Error : public RuntimeError
