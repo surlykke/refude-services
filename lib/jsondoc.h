@@ -8,65 +8,29 @@
 #ifndef JSON_H
 #define    JSON_H
 
-#include "heap.h"
-#include <iostream>
 #include <string.h>
 
-#include "jsontypes.h"
+#include <iostream>
+#include <memory>
+#include <cstddef>
+#include <algorithm>
+#include <climits>
+
+#include "errorhandling.h"
 
 namespace org_restfulipc 
 {
-    // We don't have a dedicated type for NULL, but use a null
-    // string-pointer for that.
 
-    class JsonDoc 
+    class Pimpl;
+
+    class JsonDoc
     {
     public:
-        JsonDoc() : pRoot(0), pHeap() { }
+        JsonDoc(char* buf);
         virtual ~JsonDoc() {}
-
-
-        template<typename JsonType>
-        JsonType* add(JsonArray* arr, const JsonType& value) {
-            JsonType* valueCopy = new(pHeap.allocate<JsonType>()) JsonType(value);
-            JsonArrayEntry* newEntry = new(pHeap.allocate<JsonArrayEntry>()) JsonArrayEntry();
-            newEntry->element = valueCopy;
-
-            if (arr->last) {
-                arr->last->next = newEntry;
-            }
-            else {
-                arr->first = newEntry;
-            }
-
-            arr->last = newEntry;
-            return valueCopy;
-        }
-
-        template<typename JsonType>
-        JsonType* add(JsonObject* obj, const char* key, const JsonType& value) {
-            JsonType* valueCopy = new(pHeap.allocate<JsonType>()) JsonType(value);
-            JsonObjectEntry* newEntry = new(pHeap.allocate<JsonObjectEntry>()) JsonObjectEntry();
-            newEntry->key = key;
-            newEntry->value = valueCopy;
-
-            if (obj->last) {
-                obj->last->next = newEntry;
-            }
-            else {
-                obj->first = newEntry;
-            }
-
-            obj->last = newEntry;
-            return valueCopy;
-        }
-
-        AbstractJson* root() { return pRoot; }
-
+        void serialize(char* dest);
     private:
-        
-        AbstractJson* pRoot;
-        Heap pHeap;        
+        Pimpl *pimpl;
     };
 
 
@@ -78,7 +42,7 @@ namespace org_restfulipc
     class HalJsonDoc: public JsonDoc
     {
     public:
-        HalJsonDoc() : JsonDoc() {}
+        HalJsonDoc(char* buf) : JsonDoc(buf) {}
 
         void setSelfLink(char* selfuri);
         void addRelatedLink(char* href,
@@ -106,7 +70,6 @@ namespace org_restfulipc
         //href, templated, type, deprecation, name, profile, title, hreflang
 */        
     
-
 
 #endif    /* JSON_H */
 

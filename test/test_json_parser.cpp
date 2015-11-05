@@ -1,8 +1,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "jsonparser.h"
+#include "jsondoc.h"
 
 using namespace org_restfulipc;
 
@@ -21,13 +20,9 @@ int main()
         printf("Read %d bytes\n", bufsize);
         printf("buf: %s\n", buf);
         buf[bufsize] = 0;
-        Heap heap;
-        JsonParser parser(buf, &heap);
-        AbstractJson* json = parser.read();
-        json->serialize();
-        char *dest = buf2;
-        json->serialize(dest);
-        printf("buf2: %s\n", buf2);
+        JsonDoc doc(buf);
+        doc.serialize(buf2);
+        std::cout << "buf2:\n" << buf2 << "\n";
     }
     catch (int errorNumber) {
         printf("Caught errorNumber: %s\n", strerror(errorNumber));
