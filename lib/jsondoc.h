@@ -5,10 +5,11 @@
  * Created on 23. juli 2015, 10:32
  */
 
-#ifndef JSON_H
-#define    JSON_H
+#ifndef JSONDOC_H
+#define JSONDOC_H
 
 #include <string.h>
+#include <stdint.h>
 
 #include <iostream>
 #include <memory>
@@ -17,59 +18,32 @@
 #include <climits>
 
 #include "errorhandling.h"
+#include "json.h"
 
-namespace org_restfulipc 
+namespace org_restfulipc
 {
-
-    class Pimpl;
 
     class JsonDoc
     {
     public:
+        JsonDoc();
         JsonDoc(char* buf);
         virtual ~JsonDoc() {}
-        void serialize(char* dest);
+
+        JsonReference operator[](const char* index);
+        JsonReference operator[](uint32_t index);
+
+        JsonReference root();
+
+        void write();
+
     private:
-        Pimpl *pimpl;
+        JsonStruct* jsonStruct;
     };
 
-
-    /**
-     * Specialized JsonDoc to a Hal document, meaning:
-     *    - the root element is an object
-     *  - knows about links
-     */
-    class HalJsonDoc: public JsonDoc
-    {
-    public:
-        HalJsonDoc(char* buf) : JsonDoc(buf) {}
-
-        void setSelfLink(char* selfuri);
-        void addRelatedLink(char* href,
-                            char* profile,
-                            char* name = 0);
-        void addLink(char* relation, 
-                     char* href,
-                     char* profile = 0, 
-                     char* name = 0);
-    
-        void addLink(char* relation,
-                     char* href,
-                     bool  templated,
-                     char* type,
-                     char* profile,
-                     char* name,
-                     char* title,
-                     char* deprecation);
-    };
 
 
 }
 
-/*        // Some support for HAL api 
-        //href, templated, type, deprecation, name, profile, title, hreflang
-*/        
-    
-
-#endif    /* JSON_H */
+#endif /* JSONDOC_H */
 
