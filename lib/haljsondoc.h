@@ -1,16 +1,16 @@
 #ifndef HALJSONDOC_H
 #define HALJSONDOC_H
 
-#include "jsondoc.h"
+#include "json.h"
 
 namespace org_restfulipc
 {
     /**
-     * JsonDoc specialized to a Hal document, meaning:
-     *  - the root element is an object
+     * Json specialized to a Hal document, meaning:
+     *  - it's an json-object
      *  - knows about links
      */
-    class HalJsonDoc: public JsonDoc
+    class HalJsonDoc: public Json
     {
     public:
         HalJsonDoc();

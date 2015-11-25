@@ -8,12 +8,12 @@ namespace org_restfulipc
     class JsonWriter
     {
     public:
-        JsonWriter(JsonStruct* jsonStruct, int bufferSize = 1024, int fd = 1);
+        JsonWriter(Json* json, int bufferSize = 1024, int fd = 1);
         ~JsonWriter();
         void write();
 
     private:
-        void write(Json json);
+        void write(Json* json);
         void writeElements(Element* elements);
         void writeEntries(Entry* entries);
 
@@ -24,7 +24,7 @@ namespace org_restfulipc
         void write(char ch);
         void flush();
 
-        JsonStruct* jsonStruct;
+        Json* json;
 
         char *buffer;
         int used;

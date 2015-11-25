@@ -1,14 +1,13 @@
 #include <unistd.h>
 
-#include "jsonstruct.h"
 #include "jsonwriter.h"
 
 namespace org_restfulipc
 {
 
 
-    JsonWriter::JsonWriter(JsonStruct *jsonStruct, int bufferSize, int fd) :
-        jsonStruct(jsonStruct),
+    JsonWriter::JsonWriter(Json *json, int bufferSize, int fd) :
+        json(json),
         buffer(0),
         used(0),
         size(bufferSize),
@@ -27,46 +26,46 @@ namespace org_restfulipc
 
     void JsonWriter::write()
     {
-        write(jsonStruct->root);
+        write(json);
         flush();
     }
 
-    void JsonWriter::write(Json json)
+    void JsonWriter::write(Json *json)
     {
-       if (json.type() == JsonType::Object) {
+       if (json->mType == JsonType::Object) {
            write("{");
-           writeEntries(json.firstEntry);
+           writeEntries(json->firstEntry);
            write("}");
        }
-       else if (json.type() == JsonType::Array) {
+       else if (json->mType == JsonType::Array) {
            write("[");
-           writeElements(json.firstElement);
+           writeElements(json->firstElement);
            write("]");
        }
-       else if (json.type() == JsonType::String) {
-           writeString(json.string);
+       else if (json->mType == JsonType::String) {
+           writeString(json->string);
        }
-       else if (json.type() == JsonType::Double) {
-            write(json.numberD);
+       else if (json->mType == JsonType::Double) {
+            write(json->numberD);
        }
-       else if (json.type() == JsonType::Long) {
-            write(json.numberL);
+       else if (json->mType == JsonType::Long) {
+            write(json->numberL);
        }
-       else if (json.type() == JsonType::Boolean) {
-            json.boolean ? write("true") : write("false");
+       else if (json->mType == JsonType::Boolean) {
+            json->boolean ? write("true") : write("false");
        }
-       else if (json.type() == JsonType::Null) {
+       else if (json->mType == JsonType::Null) {
             write("null");
-        }
+       }
     }
 
     void JsonWriter::writeElements(Element* elements)
     {
         if (elements) {
-            write(*elements);
+            write(elements);
             while (elements = elements->next) {
                 write(", ");
-                write(*elements);
+                write(elements);
             }
         }
     }
@@ -74,10 +73,14 @@ namespace org_restfulipc
     void JsonWriter::writeEntries(Entry* entries)
     {
         if (entries) {
-            write(*entries);
+            write(entries->key);
+            write(": ");
+            write(entries);
             while (entries = entries->next) {
                 write(", ");
-                write(*entries);
+                write(entries->key);
+                write(": ");
+                write(entries);
             }
         }
     }

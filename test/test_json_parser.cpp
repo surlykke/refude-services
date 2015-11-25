@@ -2,15 +2,15 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include "jsondoc.h"
-#include <vector>
-#include <map>
+
+#include "json.h"
 
 using namespace org_restfulipc;
 
 int main()
 {
-    uint32_t bufsize = 100000000;
+
+    /*uint32_t bufsize = 100000000;
     char* buf = (char*) calloc(bufsize, 1);
     int bufend = 0;
 
@@ -21,7 +21,10 @@ int main()
     if (bytesRead < 0) throw errno;
     buf[bufend] = 0;
     JsonDoc doc(buf);
-    std::cout << "Done reading, writing...\n";
     doc.write();
-    std::cout << "Done writing\n";
+    std::cout << "\n";*/
+    Json json;
+    json = 7.34;
+    double d = json;
+    std::cout << d << "\n";
 }

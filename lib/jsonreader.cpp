@@ -62,53 +62,74 @@ namespace org_restfulipc
 
     JsonReader::JsonReader(char *buf) :
         buf(buf),
-        bufferPos(0),
-        jsonStruct(new JsonStruct())
+        bufferPos(0)
+    {
+    }
+
+    void JsonReader::read(Json* json)
     {
         skipSpace();
-
-        jsonStruct->root = readAny();
-
+        readAny(json);
         if (currentChar() != '\0') {
             throw RuntimeError("Trailing characters");
         }
-
     }
 
-    Json JsonReader::readAny()
+    void JsonReader::readAny(Json* json)
     {
-        static action* actionTable = initializeActionTable();
-        switch(actionTable[currentChar()]) {
-        case object:
-            return readObject();
-        case array:
-            return readArray();
-        case string:
-            return readString();
-        case booleanTrue:
+        switch(currentChar()) {
+        case '{':
+            json->mType = JsonType::Object;
+            json->firstEntry = readObject();
+            break;
+        case '[':
+            json->mType = JsonType::Array;
+            json->firstElement = readArray();
+            break;
+        case '"':
+            json->mType = JsonType::String;
+            json->string = readString();
+            break;
+        case 't':
             skip("true");
-            return Json::True;
-        case booleanFalse:
+            json->mType = JsonType::Boolean;
+            json->boolean = true;
+            break;
+        case 'f':
             skip("false");
-            return Json::False;
-        case number:
-            return readNumber();
-        case nil:
+            json->mType = JsonType::Boolean;
+            json->boolean = false;
+            break;
+        case 'n':
             skip("null");
-            return Json::Null;
-        case error:
+            json->mType = JsonType::Null;
+            break;
+        case '+':
+        case '-':
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            readNumber(json);
+            break;
+        default:
             throw UnexpectedChar(currentChar(), bufferPos);
         }
      }
 
 
-    Json JsonReader::readObject()
+    Entry* JsonReader::readObject()
     {
-        Json newObject = Json::emptyObject();
+        Entry* firstEntry = NULL;
         skip('{');
         if (currentChar() != '}') {
-            newObject.firstEntry = readEntry();
-            Entry* entry = newObject.firstEntry;
+            Entry* entry = firstEntry = readEntry();
             while (currentChar() == ',') {
                 skip();
                 if (currentChar() == '}') {
@@ -119,37 +140,48 @@ namespace org_restfulipc
             }
         }
         skip('}');
-        return newObject;
+        return firstEntry;
 
     }
 
     Entry* JsonReader::readEntry()
     {
-        char* key = readString();
+        Entry* entry = new Entry();
+        entry->key = readString();
         skip(':');
-        return new Entry(key, readAny());
+        readAny(entry);
+        return entry;
     }
 
 
-     Json JsonReader::readArray()
+     Element *JsonReader::readArray()
      {
-         Json newArray = Json::emptyArray();
+         Element* firstElement = NULL;
          skip('[');
          if (currentChar() != ']') {
-             newArray.firstElement = new Element(readAny());
-             Element* element = newArray.firstElement;
+             Element* element = firstElement = readElement();
              while (currentChar() == ',') {
                  skip();
                  if (currentChar() == ']') {
                      break;
                  }
-                 element->next = new Element(readAny());
+                 element->next = readElement();
                  element = element->next;
              }
          }
          skip(']');
-         return newArray;
+         return firstElement;
      }
+
+     Element *JsonReader::readElement()
+     {
+         Element* element = new Element();
+         readAny(element);
+         return element;
+     }
+
+
+
 
      char* JsonReader::readString()
      {
@@ -167,7 +199,6 @@ namespace org_restfulipc
             case '"':
                 buf[stringPos] = '\0';
                 skip();
-                std::cout << "Read string: " << buf + stringStart << "\n";
                 return buf + stringStart;
                 break;
             case '\0':
@@ -193,7 +224,7 @@ namespace org_restfulipc
     }
 
 
-    Json JsonReader::readNumber()
+    void JsonReader::readNumber(Json* json)
     {
         long longResult = 0;
         double doubleResult;
@@ -222,8 +253,9 @@ namespace org_restfulipc
 
         if (currentChar() != '.') {
             skipSpace();
-            std::cout << "Read number: " << longResult << "\n";
-            return Json(longResult);
+            json->mType = JsonType::Long;
+            json->numberL = longResult;
+            return;
         }
 
         bufferPos++;
@@ -267,8 +299,8 @@ namespace org_restfulipc
             doubleResult = doubleResult*pow(10, exponent);
         }
         skipSpace();
-        std::cout << "Read number: " << doubleResult << "\n";
-        return Json(doubleResult);
+        json->mType = JsonType::Double;
+        json->numberD = doubleResult;
     }
 
 
@@ -325,8 +357,6 @@ namespace org_restfulipc
         codePoint += (hexValue(buf[bufferPos++]) << 4);
         codePoint += hexValue(buf[bufferPos]);
 
-        std::cout << "UTF: " <<  std::bitset<16>(codePoint);
-
         int returnValue;
         if (codePoint > 0x7FF) {
             buf[stringPos++] = (char) (0xE0 | ((codePoint & 0xF000) >> 12));
@@ -343,14 +373,6 @@ namespace org_restfulipc
             buf[stringPos++] = (char) codePoint;
             returnValue = 1;
         }
-
-        std::cout << " --> ";
-
-        for (int i = returnValue; i > 0; i--) {
-            std::cout << std::bitset<8>(buf[stringPos - i])  << " ";
-        }
-
-        std::cout << "\n";
 
         return returnValue;
     }
