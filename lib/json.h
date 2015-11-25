@@ -61,6 +61,8 @@ namespace org_restfulipc
 
     };
 
+    Json& operator<<(Json& json, char* serialized);
+
     struct Element : public Json
     {
         Element() : Json(), next(0) {}

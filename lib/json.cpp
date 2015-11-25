@@ -1,4 +1,6 @@
+#include "jsonreader.h"
 #include "json.h"
+
 namespace org_restfulipc
 {
 
@@ -137,5 +139,14 @@ namespace org_restfulipc
         typeAssert(JsonType::String);
         return string;
     }
+
+    Json& operator<<(Json& json, char* serialized)
+    {
+
+        JsonReader reader(serialized);
+        reader.read(&json);
+        return json;
+    }
+
 
 }
