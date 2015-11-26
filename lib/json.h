@@ -19,11 +19,13 @@ namespace org_restfulipc
         Null
     };
 
+
     class Element;
     class Entry;
 
-    struct Json
+    class Json
     {
+    public:
         Json() : string(0), mType(JsonType::Undefined) {}
         ~Json();
 
@@ -33,8 +35,10 @@ namespace org_restfulipc
         Json* at(const char *index);
         Json* at(uint index);
 
+        Json& operator=(JsonType jsonType);
         Json& operator=(const char* string);
         Json& operator=(double d);
+        Json& operator=(int i);
         Json& operator=(long l);
         Json& operator=(bool b);
 
@@ -43,13 +47,34 @@ namespace org_restfulipc
         operator long();
         operator bool();
 
-        void typeAssert(JsonType otherType) { if (otherType != mType) throw org_restfulipc::RuntimeError("Type mismatch"); }
-        template<typename T> T value();
+        Json* take(int index);
+        Json* take(uint index);
+        void remove(uint index);
+        Json* take(const char* key);
+        void remove(const char* key);
+        bool contains(const char* key);
+        uint size();
+
+        template<typename T> Json& append(T t)
+        {
+            Json& appended = appendUndefinded();
+            return appended = t;
+        }
+
+        template<typename T> Json& insertAt(uint index, T t)
+        {
+            Json& inserted = insertUndefinedAt(index);
+            return inserted = t;
+        }
+
+        void typeAssert(JsonType otherType);
         const char* typeAsString();
 
+    private:
         void deleteChildren();
+        Json& insertUndefinedAt(uint index);
+        Json& appendUndefinded();
 
-        JsonType mType;
         union {
             Element* firstElement;
             Entry* firstEntry;
@@ -58,7 +83,10 @@ namespace org_restfulipc
             long numberL;
             bool boolean;
         };
+        JsonType mType;
 
+        friend class JsonReader;
+        friend class JsonWriter;
     };
 
     Json& operator<<(Json& json, char* serialized);
