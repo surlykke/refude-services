@@ -69,12 +69,14 @@ namespace org_restfulipc
     void ResourceMap::map(const char* path, AbstractResource* resource)
     {
         std::unique_lock<std::shared_timed_mutex> lock(m);
+        resource->path = path;
         mResourceMappings->addMapping(path, resource);
     }
 
     void ResourceMap::unMap(AbstractResource* resource)
     {
         std::unique_lock<std::shared_timed_mutex> lock(m);
+        resource->path = 0;
         mResourceMappings->remove(resource);
     }
 

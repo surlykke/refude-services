@@ -11,33 +11,27 @@
 #include <shared_mutex>
 
 #include "abstractresource.h"
+#include "notifierresource.h"
 
 namespace org_restfulipc
 {
     class GenericResource : public AbstractResource
     {
     public:
-        GenericResource(const char* json = "{}");
+        GenericResource(const char* doc = "", NotifierResource *notifierResource = 0);
         virtual ~GenericResource();
 
         virtual void handleRequest(int &socket, const HttpMessage& request);
         virtual void doGet(int socket, const HttpMessage& request);
-        virtual void doStreamUpgrade(int socket, const HttpMessage& request);
         virtual void doPatch(int socket, const HttpMessage& request);
         void update(const char* data);
 
     private:
-        void notifyClients();    
-        void writeData(int socket, const char *data, int nBytes);
-
-
         char _response[8192]; // FIXME
         char* _respPtr;
         int _responseLength;
         std::shared_timed_mutex responseMutex;
-
-        std::vector<int> _webSockets;
-        std::mutex websocketsMutex;
+        NotifierResource *notifierResource;
     };
 }
 

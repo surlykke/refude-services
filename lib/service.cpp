@@ -82,13 +82,13 @@ namespace org_restfulipc
                     continue;
                 }
 
-                struct timeval tv;
+                /*struct timeval tv;
                 tv.tv_sec = 0;
                 tv.tv_usec = 200000;
                 if (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) < 0) {
                     close(requestSocket);
                     continue;
-                }
+                }*/
 
                 requestSockets.enqueue(requestSocket);
             }
@@ -121,7 +121,8 @@ namespace org_restfulipc
 
                     resource->handleRequest(requestSocket, request);
 
-                    if (request.headerValue(Header::connection) != 0 &&
+                    if (requestSocket > -1 &&
+                        request.headerValue(Header::connection) != 0 &&
                         strcasecmp("close", request.headerValue(Header::connection)) == 0) {
                         close(requestSocket);
                         requestSocket = -1;
@@ -137,7 +138,8 @@ namespace org_restfulipc
                     close(requestSocket);
                     requestSocket = -1;
                 }
-            }  while (requestSocket > -1);
+            }
+            while (requestSocket > -1);
         }
     }
 }

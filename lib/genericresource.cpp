@@ -9,16 +9,15 @@ using namespace std;
 namespace org_restfulipc
 {
 
-    GenericResource::GenericResource(const char* json) : 
+    GenericResource::GenericResource(const char* doc, NotifierResource* notifierResource) :
         AbstractResource(),
-        _response(""),
+        notifierResource(notifierResource),
+        _response(),
         _respPtr(_response),
         _responseLength(0),
-        responseMutex(),
-        _webSockets(),
-        websocketsMutex()
+        responseMutex()
     {
-        update(json);
+        update(doc);
     }
 
     GenericResource::~GenericResource()
@@ -29,18 +28,7 @@ namespace org_restfulipc
     {
         if (request.method == Method::GET)    
         {
-            if (request.headerValue(Header::connection) != 0 &&
-                strcasecmp(request.headerValue(Header::connection), "upgrade") == 0 &&
-                request.headerValue(Header::upgrade) != 0 &&
-                strcasecmp(request.headerValue(Header::upgrade), "socketstream") == 0)
-            {
-                doStreamUpgrade(socket, request);
-                socket = -1;
-            }
-            else 
-            {
-                doGet(socket, request);    
-            }
+            doGet(socket, request);
         }
         else if (request.method == Method::PATCH)
         {
@@ -48,7 +36,7 @@ namespace org_restfulipc
         }
         else
         {
-            throw Status::Http406;
+            throw Status::Http405;
         }
     }
 
@@ -65,26 +53,10 @@ namespace org_restfulipc
         while (bytesWritten < _responseLength);
     }
 
-    void GenericResource::doStreamUpgrade(int socket, const HttpMessage& request)
-    {
-
-        const char streamUpgradeResponse[] = 
-            "HTTP/1.1 101 Switching Protocols\r\n"
-            "Upgrade: socketstream\r\n"
-            "Connection: Upgrade\r\n"
-            "\r\n";
-
-        writeData(socket, streamUpgradeResponse, sizeof(streamUpgradeResponse));
-
-        {
-            std::unique_lock<std::mutex> lock(websocketsMutex);
-            _webSockets.push_back(socket);
-        }
-    }
 
     void GenericResource::doPatch(int socket, const HttpMessage& request)
     {
-        throw Status::Http406;
+        throw Status::Http405; // FIXME
     }
 
 
@@ -101,50 +73,11 @@ namespace org_restfulipc
         
         {
             std::unique_lock<std::shared_timed_mutex> lock(responseMutex);
-            sprintf(_response, responseTemplate, contentLength, data);
-            _responseLength = strlen(_response);
+            _responseLength = sprintf(_response, responseTemplate, contentLength, data);
         }
 
-        notifyClients();
-    }
-
-    void GenericResource::notifyClients()
-    {
-
-        std::unique_lock<std::mutex> lock(websocketsMutex);
-        std::vector<int>::iterator it = _webSockets.begin();
-        
-        //    AFAIBATG send to a socket will only block - or in the case of a nonblocking, 
-        //    return EAGAIN - if there's no room in the kernel buffer.
-        //    In that case there are waiting 'u'`s for the client to read, so no nead to send more
-            
-        while (it != _webSockets.end()) {
-            int res = send(*it, "u", 1, MSG_NOSIGNAL);
-            int errorNumber = errno;
-            if ( res < 0 && errorNumber != EAGAIN) {
-                while (close(*it) < 0 && errno == EINTR);
-                it = _webSockets.erase(it);
-            }
-            else {
-                it++;
-            }
+        if (notifierResource) {
+            notifierResource->notifyClients(NotifierResource::Event::Updated, path);
         }
     }
-
-
-    void GenericResource::writeData(int socket, const char* data, int nBytes)
-    {
-        int n = 0;
-        
-        do 
-        {    
-            int m = send(socket, data + n, nBytes - n, MSG_NOSIGNAL);
-            if (m < 0) {
-                throw errno;
-            }
-            n += m;
-        }
-        while (n < nBytes);
-    }
-
 }

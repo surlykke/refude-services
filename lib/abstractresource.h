@@ -21,9 +21,10 @@ namespace org_restfulipc
     class AbstractResource
     {
     public:
-        AbstractResource() {}
+        AbstractResource(): path("") {}
         virtual ~AbstractResource() {}
         virtual void handleRequest(int &socket, const HttpMessage& request) = 0;
+        const char* path;
     };
 
 }
