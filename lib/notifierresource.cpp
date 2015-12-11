@@ -18,12 +18,6 @@ namespace org_restfulipc {
         }
         mNumberOfClientSockets = 0;
         mClientSocketsCapacity = 128;
-
-        std::cout << "Out of NotifierResource, mNumberOfClientSockets: "
-                  << mNumberOfClientSockets
-                  << ", capacity: "
-                  << mClientSocketsCapacity
-                  << "\n";
     }
 
     void NotifierResource::handleRequest(int &socket, const HttpMessage &request)
@@ -75,13 +69,6 @@ namespace org_restfulipc {
 
     void NotifierResource::notifyClients(Event event, const char* pathOfResource)
     {
-        printf("%d - %d\n", mNumberOfClientSockets, mClientSocketsCapacity);
-        std::cout << "Into notifyClients "
-                  << (int) mNumberOfClientSockets
-                  << ", capacity: "
-                  << mClientSocketsCapacity
-                  << "\n";
-
         char data[300];
         const char* eventLine = event == Event::Updated ? "event:updated\n" : "event:removed\n";
         const char* dataPrefix = "data:";
@@ -92,11 +79,11 @@ namespace org_restfulipc {
         }
         int chunkLength = strlen(eventLine) + strlen(dataPrefix) + pathLength + 2;
         int dataLength = sprintf(data, "%x\r\n%s%s%s\n\n\r\n", chunkLength, eventLine, dataPrefix, pathOfResource);
-        std::cout << "Writing to clients:\n" << data << "-----\n";
         {
             std::unique_lock<std::mutex> lock(mMutex);
 
             for (int i = 0; i < mNumberOfClientSockets; i++) {
+                std::cout << "Writing \n" << data << "-----\n";
                 if (write(mClientSockets[i], data, dataLength) < dataLength) {
                     // We close, both if error and if sendbuffer full, which we take to
                     // indicate the client is not consuming... The client will then have to reconnnect

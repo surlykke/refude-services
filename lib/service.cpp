@@ -7,6 +7,7 @@
 
 #include <poll.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -49,6 +50,30 @@ namespace org_restfulipc
         }
     }
 
+    Service::Service(uint16_t portNumber, int workers) :
+         threads(),
+         requestSockets(),
+         bufferLock(),
+         bufferNotFull(),
+         bufferNotEmpty(),
+         shuttingDown(false),
+         listenSocket(-1)
+   {
+        struct sockaddr_in sockaddr;
+        memset(&sockaddr, 0, sizeof(struct sockaddr_un));
+        sockaddr.sin_family = AF_INET;
+        sockaddr.sin_port = htons(portNumber);
+        sockaddr.sin_addr.s_addr = INADDR_ANY;
+        if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
+        if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sockaddr)) < 0) throw C_Error();
+        if (listen(listenSocket, 8) < 0) throw C_Error();
+
+        threads.push_back(std::thread(&Service::listenForIncoming, this));
+        for (int i = 0; i < workers; i++) {
+            threads.push_back(std::thread(&Service::serveIncoming, this));
+        }
+    }
+
     Service::~Service()
     {
         shuttingDown = true;
@@ -67,7 +92,6 @@ namespace org_restfulipc
 
         for (;;) {
             int pollRes = poll(&pollfd, 1, 250);
-
             if (shuttingDown) {
                 for (int i = 1; i < threads.size(); i++) {
                     requestSockets.enqueue(-1); // Tell workers to quit
@@ -82,18 +106,8 @@ namespace org_restfulipc
                     continue;
                 }
 
-                /*struct timeval tv;
-                tv.tv_sec = 0;
-                tv.tv_usec = 200000;
-                if (setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (struct timeval*) &tv, sizeof(struct timeval)) < 0) {
-                    close(requestSocket);
-                    continue;
-                }*/
-
                 requestSockets.enqueue(requestSocket);
             }
-
-
         }
 
     }

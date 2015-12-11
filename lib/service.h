@@ -22,6 +22,7 @@ namespace org_restfulipc
     {
     public:
         Service(const char *socketPath, int workers = 5);
+        Service(uint16_t portNumber, int workers = 5);
         virtual ~Service();
         ResourceMap resourceMap;
 
