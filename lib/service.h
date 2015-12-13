@@ -6,27 +6,35 @@
  */
 
 #ifndef SERVICELISTENER_H
-#define    SERVICELISTENER_H
+#define SERVICELISTENER_H
 
 #include <linux/un.h>
 #include <thread>
-#include <mutex>
+#include <shared_mutex>
+#include <vector>
 #include <condition_variable>
 
 #include "shortmtqueue.h"
-#include "resourcemap.h"
 
 namespace org_restfulipc
 {
+    class ResourceMapping;
+    class AbstractResource;
+
     class Service
     {
     public:
         Service(const char *socketPath, int workers = 5);
         Service(uint16_t portNumber, int workers = 5);
         virtual ~Service();
-        ResourceMap resourceMap;
+
+        void map(const char* path, AbstractResource* findMapping, bool wildcarded = false);
+        void unMap(const AbstractResource* findMapping);
 
     private:
+        void listenForIncoming();
+        void serveIncoming();
+
         std::vector<std::thread> threads;
         ShortMtQueue<16> requestSockets;
         std::mutex bufferLock;
@@ -35,8 +43,11 @@ namespace org_restfulipc
         bool shuttingDown;
         int listenSocket;
 
-        void listenForIncoming();
-        void serveIncoming();
+        ResourceMapping* findMapping(const char* path);
+        std::shared_timed_mutex mMappingsMutex;
+        ResourceMapping* mMappings;
+        int mNumMappings;
+        int mMappingsCapacity;
     };
 
 }

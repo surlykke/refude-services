@@ -13,8 +13,8 @@ int main(int argc, char** argv)
     Service service(7938);
     NotifierResource notifier;
     GenericResource resource("", &notifier);
-    service.resourceMap.map("/res", &resource);
-    service.resourceMap.map("/res/notify", &notifier);
+    service.map("/res", &resource, true);
+    service.map("/notify", &notifier);
 
     char json[512];
     for(;;) {
