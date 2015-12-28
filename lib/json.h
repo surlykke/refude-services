@@ -3,22 +3,33 @@
 #include <memory>
 #include <stdint.h>
 #include "errorhandling.h"
+#include "list.h"
+#include "map.h"
 
 namespace org_restfulipc
 {
 
     enum class JsonType : uint8_t
     {
-        Undefined = 0,
+        Undefined = 0, // Important that this i 0. (So when we zero out a json, it will have type Undefined)
         Object,
         Array,
         String,
-        Long,
-        Double,
+        Number,
         Boolean,
         Null
     };
 
+    // Used for initilizing
+    enum class JsonConst
+    {
+        EmptyObject,
+        EmptyArray,
+        TRUE,
+        FALSE,
+        Null
+
+    };
 
     class Element;
     class Entry;
@@ -26,61 +37,48 @@ namespace org_restfulipc
     class Json
     {
     public:
-        Json() : string(0), mType(JsonType::Undefined) {}
+        Json() : mType(JsonType::Undefined) {}
+        Json(Json& other) = delete;
+        Json(Json&& other);
+        Json(JsonConst jsonConst);
+        Json(const char* string): mType(JsonType::String), string(string) {}
+        Json(double number) : mType(JsonType::Number), number(number) {}
         ~Json();
 
-        Json& operator[](const char* index);
-        Json& operator[](uint index);
-
-        Json* at(const char *index);
-        Json* at(uint index);
-
-        Json& operator=(JsonType jsonType);
+        Json& operator=(Json&& other);
+        Json& operator=(Json& other) = delete;
+        Json& operator=(JsonConst jsonConst);
         Json& operator=(const char* string);
-        Json& operator=(double d);
-        Json& operator=(int i);
-        Json& operator=(long l);
-        Json& operator=(bool b);
+        Json& operator=(double number);
+
+        Json& operator[](const char* index);
+        Json& operator[](int index);
 
         operator const char*();
         operator double();
         operator long();
         operator bool();
 
-        Json* take(int index);
-        Json* take(uint index);
-        void remove(uint index);
-        Json* take(const char* key);
-        void remove(const char* key);
+        Json&& take(int index);
+        Json&& take(const char* key);
         bool contains(const char* key);
         uint size();
 
-        template<typename T> Json& append(T t)
-        {
-            Json& appended = appendUndefinded();
-            return appended = t;
-        }
-
-        template<typename T> Json& insertAt(uint index, T t)
-        {
-            Json& inserted = insertUndefinedAt(index);
-            return inserted = t;
-        }
+        void append(Json&& json);
+        void insertAt(int index, Json&& json);
 
         void typeAssert(JsonType otherType);
         const char* typeAsString();
+        const char* typeAsString(JsonType type);
 
     private:
         void deleteChildren();
-        Json& insertUndefinedAt(uint index);
-        Json& appendUndefinded();
 
         union {
-            Element* firstElement;
-            Entry* firstEntry;
+            Map<Json>*  entries;
+            List<Json>* elements;
             const char* string;
-            double numberD;
-            long numberL;
+            double number;
             bool boolean;
         };
         JsonType mType;
@@ -90,20 +88,5 @@ namespace org_restfulipc
     };
 
     Json& operator<<(Json& json, char* serialized);
-
-    struct Element : public Json
-    {
-        Element() : Json(), next(0) {}
-        Element* next;
-    };
-
-    struct Entry : public Json
-    {
-        Entry() : Json(), key(0), next(0) {}
-        const char* key;
-        Entry* next;
-    };
-
-
 }
 #endif // JSON_H

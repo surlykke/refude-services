@@ -21,32 +21,6 @@ namespace org_restfulipc
         return table;
     }
 
-    enum action {
-        object = 1,
-        array,
-        string,
-        booleanTrue,
-        booleanFalse,
-        number,
-        nil,
-        error
-    };
-
-    action* initializeActionTable() {
-        action* table = new action[256] { error };
-        table['{'] = object;
-        table['['] = array;
-        table['"'] = string;
-        table['t'] = booleanTrue;
-        table['f'] = booleanFalse;
-        table['+'] = table['-'] = number;
-        for (int i = '0'; i <= '9'; i++) {
-            table[i] = number;
-        }
-        table['n'] = nil;
-        return table;
-    }
-
     char* initializeEscapeTable() {
         char* table = new char[256] {'\0'};
         table['/'] = '/';
@@ -66,243 +40,121 @@ namespace org_restfulipc
     {
     }
 
-    void JsonReader::read(Json* json)
+    Json JsonReader::read()
     {
         skipSpace();
-        readAny(json);
+        Json json;
+        readNext(json);
+
         if (currentChar() != '\0') {
             throw RuntimeError("Trailing characters");
         }
+        return json;
     }
 
-    void JsonReader::readAny(Json* json)
+    void JsonReader::readNext(Json& json)
     {
-        switch(currentChar()) {
-        case '{':
-            json->mType = JsonType::Object;
-            json->firstEntry = readObject();
-            break;
-        case '[':
-            json->mType = JsonType::Array;
-            json->firstElement = readArray();
-            break;
-        case '"':
-            json->mType = JsonType::String;
-            json->string = readString();
-            break;
-        case 't':
+        char cc = currentChar();
+        if (cc == '{') {
+            json = JsonConst::EmptyObject;
+            skip();
+            if (currentChar() != '}') {
+                for(;;) {
+                    const char* entryKey = readString();
+                    skip(':');
+                    json[entryKey] = read();
+                    if (currentChar() != ',') break;
+                    skip();
+                    if (currentChar() == '}') break;
+                }
+            }
+            skip('}');
+        }
+        else if (cc == '[')  {
+            json = JsonConst::EmptyArray;
+            skip();
+            if (currentChar () != ']') {
+                for (;;) {
+                    json.append(std::move(read()));
+                    if (currentChar() != ',') break;
+                    skip();
+                    if (currentChar() == ']') break;
+                }
+            }
+            skip(']');
+        }
+        else if (cc == '"') {
+            json = readString();
+        }
+        else if (cc = 't') {
             skip("true");
-            json->mType = JsonType::Boolean;
-            json->boolean = true;
-            break;
-        case 'f':
+            json = JsonConst::TRUE;
+        }
+        else if (cc == 'f') {
             skip("false");
-            json->mType = JsonType::Boolean;
-            json->boolean = false;
-            break;
-        case 'n':
+            json = JsonConst::FALSE;
+        }
+        else if (cc == 'n') {
             skip("null");
-            json->mType = JsonType::Null;
-            break;
-        case '+':
-        case '-':
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            readNumber(json);
-            break;
-        default:
+            json = JsonConst::Null;
+        }
+        else if (cc == '+' || cc == '-' || (cc >= '0' && cc <= '9')) {
+            json = readNumber();
+        }
+        else {
             throw UnexpectedChar(currentChar(), bufferPos);
         }
-     }
-
-
-    Entry* JsonReader::readObject()
-    {
-        Entry* firstEntry = NULL;
-        skip('{');
-        if (currentChar() != '}') {
-            Entry* entry = firstEntry = readEntry();
-            while (currentChar() == ',') {
-                skip();
-                if (currentChar() == '}') {
-                    break;
-                }
-                entry->next = readEntry();
-                entry = entry->next;
-            }
-        }
-        skip('}');
-        return firstEntry;
-
     }
 
-    Entry* JsonReader::readEntry()
+    char* JsonReader::readString()
     {
-        Entry* entry = new Entry();
-        entry->key = readString();
-        skip(':');
-        readAny(entry);
-        return entry;
-    }
-
-
-     Element *JsonReader::readArray()
-     {
-         Element* firstElement = NULL;
-         skip('[');
-         if (currentChar() != ']') {
-             Element* element = firstElement = readElement();
-             while (currentChar() == ',') {
-                 skip();
-                 if (currentChar() == ']') {
-                     break;
-                 }
-                 element->next = readElement();
-                 element = element->next;
-             }
-         }
-         skip(']');
-         return firstElement;
-     }
-
-     Element *JsonReader::readElement()
-     {
-         Element* element = new Element();
-         readAny(element);
-         return element;
-     }
-
-
-
-
-     char* JsonReader::readString()
-     {
-         static char* escapedChar = initializeEscapeTable();
-         if (currentChar() != '"') {
-             throw UnexpectedChar('"', bufferPos);
-         }
-         bufferPos++;
-
-         uint32_t stringStart = bufferPos;
-         uint32_t stringPos = bufferPos;
-
-         for (;;) {
-            switch (currentChar()) {
-            case '"':
-                buf[stringPos] = '\0';
-                skip();
-                return buf + stringStart;
-                break;
-            case '\0':
-                throw RuntimeError("Runaway string");
-            case '\\':
-                bufferPos++;
-                if (currentChar() == 'u') {
-                    stringPos += readUnicodeEscape(stringPos);
-                }
-                else if (escapedChar[currentChar()] == '\0') {
-                   throw UnescapableChar(currentChar(), bufferPos);
-                }
-                else {
-                    buf[stringPos++] = escapedChar[currentChar()];
-                }
-                break;
-            default:
-                buf[stringPos++] = currentChar();
-            }
-            bufferPos++;
-         }
-
-    }
-
-
-    void JsonReader::readNumber(Json* json)
-    {
-        long longResult = 0;
-        double doubleResult;
-        bool negative = false;
-        if (currentChar() == '+') {
-            bufferPos++;
+        static char* escapedChar = initializeEscapeTable();
+        if (currentChar() != '"') {
+            throw UnexpectedChar('"', bufferPos);
         }
-        else if (currentChar() == '-') {
-            negative = true;
-            bufferPos++;
-        }
-
-        int mark = bufferPos;
-
-        while (isdigit(currentChar())) {
-            longResult = 10*longResult + currentChar() - '0';
-            if (longResult < 0) {
-                throw RuntimeError("Overflow");
-            }
-            bufferPos++;
-        }
-
-        if (bufferPos <= mark) {
-            throw RuntimeError("Expected digit");
-        }
-
-        if (currentChar() != '.') {
-            skipSpace();
-            json->mType = JsonType::Long;
-            json->numberL = longResult;
-            return;
-        }
-
         bufferPos++;
-        double fraction = 0;
-        double weight = 1.0;
-        while (isdigit(currentChar())) {
-            weight = weight*0.1;
-            fraction = fraction + weight*(currentChar() - '0');
-            bufferPos++;
+
+        uint32_t stringStart = bufferPos;
+        uint32_t stringPos = bufferPos;
+
+        for (;;) {
+           switch (currentChar()) {
+           case '"':
+               buf[stringPos] = '\0';
+               skip();
+               return buf + stringStart;
+               break;
+           case '\0':
+               throw RuntimeError("Runaway string");
+           case '\\':
+               bufferPos++;
+               if (currentChar() == 'u') {
+                   stringPos += readUnicodeEscape(stringPos);
+               }
+               else if (escapedChar[currentChar()] == '\0') {
+                  throw UnescapableChar(currentChar(), bufferPos);
+               }
+               else {
+                   buf[stringPos++] = escapedChar[currentChar()];
+               }
+               break;
+           default:
+               buf[stringPos++] = currentChar();
+           }
+           bufferPos++;
         }
 
-        doubleResult = longResult + fraction;
-
-        if (currentChar() == 'e' || currentChar() == 'E') {
-            bufferPos++;
-            double exponent = 0;
-            bool negativeExponent = false;
-            if (currentChar() == '+') {
-                bufferPos++;
-            }
-            else if (currentChar() == '-') {
-                negativeExponent = true;
-                bufferPos++;
-            }
-
-            int startOfExponentPos = bufferPos;
-
-            while(isdigit(currentChar())) {
-                exponent = 10*exponent + currentChar() - '0';
-                bufferPos++;
-            }
-
-            if (bufferPos <= startOfExponentPos) {
-                throw RuntimeError("Expected digit");
-            }
-
-            if (negativeExponent) {
-                exponent = -exponent;
-            }
-
-            doubleResult = doubleResult*pow(10, exponent);
-        }
-        skipSpace();
-        json->mType = JsonType::Double;
-        json->numberD = doubleResult;
     }
 
+    double JsonReader::readNumber()
+    {
+        char *endPtr;
+        double number = strtod(buf + bufferPos, &endPtr);
+        if (number == HUGE_VAL || number == -HUGE_VAL) throw RuntimeError("Overflow");
+        bufferPos = endPtr - buf;
+        skipSpace();
+        return number;
+    }
 
     char JsonReader::currentChar() { return buf[bufferPos]; }
 

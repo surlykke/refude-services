@@ -1,36 +1,28 @@
 #ifndef JSONWRITER_H
 #define JSONWRITER_H
-#include "json.h"
+
+#include "buffer.h"
 
 namespace org_restfulipc
 {
+    class Json;
 
-    class JsonWriter
+    struct JsonWriter
     {
-    public:
-        JsonWriter(Json* json, int bufferSize = 1024, int fd = 1);
+        JsonWriter(Json* json);
         ~JsonWriter();
-        void write();
+
+        Json* json;
+        Buffer buffer;
 
     private:
         void write(Json* json);
-        void writeElements(Element* elements);
-        void writeEntries(Entry* entries);
 
         void writeString(const char *string);
         void write(const char* string);
         void write(double d);
-        void write(long l);
         void write(char ch);
-        void flush();
 
-        Json* json;
-
-        char *buffer;
-        int used;
-        int size;
-
-        int   fd;
     };
 }
 

@@ -24,53 +24,21 @@
 namespace org_restfulipc
 {
 
-    struct ResourceMapping
-    {
-        ResourceMapping(const char* path, AbstractResource* resource, bool wildcarded = false):
-            path(path),
-            pathLength(strlen(path)),
-            resource(resource),
-            wildcarded(wildcarded)
-        {
-        }
 
-        bool matches(const char* path)
-        {
-            const char* p = this->path;
-            while (*p) {
-                if (*p++ != *path++) {
-                    return NULL;
-                }
-            }
-
-            return *path == '\0' || (wildcarded && *path == '/');
-        }
-
-        const char* path;
-        int pathLength;
-        AbstractResource *resource;
-        bool wildcarded;
-    };
-
-
-
-    Service::Service(const char *socketPath, int workers) :
+    Service::Service(const char *socketPath, int numThreads) :
         threads(),
-        requestSockets(),
-        bufferLock(),
-        bufferNotFull(),
-        bufferNotEmpty(),
-        shuttingDown(false),
+        mNumThreads(numThreads),
         listenSocket(-1),
-        mMappingsMutex(),
-        mMappings(0),
-        mNumMappings(0),
-        mMappingsCapacity(0)
+        requestSockets(),
+        mResourceMappings(),
+        shuttingDown(false)
     {
+
         if (strlen(socketPath) >= UNIX_PATH_MAX - 1)
         {
             throw std::runtime_error("Socket path too long");
         }
+
 
         struct sockaddr_un sockaddr;
         memset(&sockaddr, 0, sizeof(struct sockaddr_un));
@@ -79,103 +47,67 @@ namespace org_restfulipc
         if ((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
         unlink(socketPath);
         if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) < 0) throw C_Error();
-        if (listen(listenSocket, 8) < 0) throw C_Error();
 
-        threads.push_back(std::thread(&Service::listenForIncoming, this));
-        for (int i = 0; i < workers; i++) {
-            threads.push_back(std::thread(&Service::serveIncoming, this));
-        }
-
-        mMappings = (ResourceMapping*) calloc(8, sizeof(ResourceMapping));
-        if (!mMappings) {
-            throw C_Error();
-        }
-        mMappingsCapacity = 8;
     }
 
-    Service::Service(uint16_t portNumber, int workers) :
+    Service::Service(uint16_t portNumber, int numThreads) :
          threads(),
-         requestSockets(),
-         bufferLock(),
-         bufferNotFull(),
-         bufferNotEmpty(),
-         shuttingDown(false),
+         mNumThreads(numThreads),
          listenSocket(-1),
-         mMappingsMutex(),
-         mMappings(0),
-         mNumMappings(0),
-         mMappingsCapacity(0)
-  {
+         requestSockets(),
+         mResourceMappings(),
+         shuttingDown(false)
+    {
+        std::cout << "Into Service constructor\n";
         struct sockaddr_in sockaddr;
-        memset(&sockaddr, 0, sizeof(struct sockaddr_un));
+        memset(&sockaddr, 0, sizeof(struct sockaddr_in));
         sockaddr.sin_family = AF_INET;
         sockaddr.sin_port = htons(portNumber);
         sockaddr.sin_addr.s_addr = INADDR_ANY;
         if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
         if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sockaddr)) < 0) throw C_Error();
-        if (listen(listenSocket, 8) < 0) throw C_Error();
+        std::cout << "Service constructor done\n";
+    }
 
-        threads.push_back(std::thread(&Service::listenForIncoming, this));
-        for (int i = 0; i < workers; i++) {
+    void Service::run()
+    {
+        if (listen(listenSocket, 8) < 0) throw C_Error();
+        for (int i = 0; i < mNumThreads; i++) {
             threads.push_back(std::thread(&Service::serveIncoming, this));
         }
+        Service::listenForIncoming();
+    }
 
-        mMappings = (ResourceMapping*) calloc(8, sizeof(ResourceMapping));
-        if (!mMappings) {
-            throw C_Error();
-        }
-        mMappingsCapacity = 8;
-   }
-
-    Service::~Service()
+    void Service::runInBackground()
     {
-        shuttingDown = true;
-        for (int i = 0; i < threads.size(); i++) {
-            threads.at(i).join();
+        if (listen(listenSocket, 8) < 0) throw C_Error();
+        for (int i = 0; i < mNumThreads; i++) {
+            threads.push_back(std::thread(&Service::serveIncoming, this));
         }
-
-        close(listenSocket);
-        delete mMappings;
+        threads.push_back(std::thread(&Service::listenForIncoming, this));
     }
 
 
-    void Service::map(const char* path, AbstractResource* resource, bool wildcarded)
+    Service::~Service()
     {
-        std::unique_lock<std::shared_timed_mutex> lock(mMappingsMutex);
-        if (mMappingsCapacity <= mNumMappings) {
-            mMappings = (ResourceMapping*) realloc(mMappings, 2*mMappingsCapacity*sizeof(ResourceMapping));
-            if (!mMappings) throw C_Error();
-            mMappingsCapacity = 2*mMappingsCapacity;
+        std::cout << "Service destructor\n";
+        shuttingDown = true;
+        /*for (int i = 0; i < threads.size(); i++) {
+            threads.at(i).join();
         }
 
+        close(listenSocket);*/
 
-        mMappings[mNumMappings++] = ResourceMapping(path, resource, wildcarded);
+    }
+
+    void Service::map(const char* path, AbstractResource* resource, bool wildcarded)
+    {
+        mResourceMappings.map(path, resource, wildcarded);
     }
 
     void Service::unMap(const AbstractResource* resource)
     {
-        std::unique_lock<std::shared_timed_mutex> lock(mMappingsMutex);
-        int numRemoved = 0;
-        for (int i = 0; i < mNumMappings; i++) {
-            if (mMappings[i].resource == resource) {
-                numRemoved++;
-            }
-
-            mMappings[i - numRemoved] = mMappings[i];
-        }
-        mNumMappings -= numRemoved;
-    }
-
-    ResourceMapping* Service::findMapping(const char* path)
-    {
-        std::shared_lock<std::shared_timed_mutex> lock(mMappingsMutex);
-        for (int i = 0; i < mNumMappings; i++) {
-            if (mMappings[i].matches(path)) {
-                return mMappings + i;
-            }
-        }
-
-        return NULL;
+        mResourceMappings.unMap(resource);
     }
 
 
@@ -223,12 +155,13 @@ namespace org_restfulipc
                 try {
                     HttpMessageReader(requestSocket, request).readRequest();
 
-                    ResourceMapping* mapping = findMapping(request.path);
+                    ResourceMapping* mapping = mResourceMappings.find(request.path);
                     if (! mapping) {
                         throw Status::Http404;
                     }
-                    request.remainingPath = request.path + mapping->pathLength;
-                    mapping->resource->handleRequest(requestSocket, request);
+
+                    request.remainingPath = request.path + mapping->mPathLength;
+                    mapping->mResource->handleRequest(requestSocket, request);
 
                     if (requestSocket > -1 &&
                         request.headerValue(Header::connection) != 0 &&

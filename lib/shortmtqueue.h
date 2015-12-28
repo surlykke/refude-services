@@ -3,7 +3,7 @@
 
 #include <mutex>
 #include <condition_variable>
-
+#include <iostream>
 using namespace std;
 
 namespace org_restfulipc
@@ -11,7 +11,7 @@ namespace org_restfulipc
     template<int size> struct ShortMtQueue
     {
 
-        ShortMtQueue() : elements(), count(0), m() {}
+        ShortMtQueue() : elements(), count(0), m() { std::cout << "ShortMtQueue constructor\n";}
 
         void enqueue(int s) {
            {

@@ -4,58 +4,56 @@
 namespace org_restfulipc
 {
 
-    const char *Json::typeAsString()
+    const char* Json::typeAsString() {
+        return typeAsString(mType);
+    }
+
+    const char* Json::typeAsString(JsonType type)
     {
-        static const char* typeNames[] = { "NoType0", "Object", "Array", "String", "Long", "Double", "Boolean", "Null" };
-        return typeNames[(uint8_t)mType];
+        static const char* typeNames[] = { "Undefined", "Object", "Array", "String", "Long", "Double", "Boolean", "Null" };
+        return typeNames[(uint8_t)type];
     }
 
     void Json::deleteChildren()
     {
         if (mType == JsonType::Object){
-            Entry* ptr;
-            while (firstEntry) {
-                ptr = firstEntry;
-                firstEntry = firstEntry->next;
-                delete ptr;
-            }
+            map_delete(entries);
         }
         else if (mType == JsonType::Array) {
-            Element* ptr;
-            while (firstElement) {
-                ptr = firstElement;
-                firstElement = firstElement->next;
-                delete ptr;
-            }
+            list_delete(elements);
         }
     }
 
-    Json&Json::insertUndefinedAt(uint index)
+    Json::Json(Json&& other)
     {
-        typeAssert(JsonType::Array);
-        Element** ptr = &firstElement;
-        while (index > 0 && *ptr) {
-            index--;
-            ptr = &((*ptr)->next);
-        }
-        if (index> 0) {
-            throw RuntimeError("Out of range");
-        }
-        Element* newElement = new Element();
-        newElement->next = *ptr;
-        *ptr = newElement;
-        return *newElement;
+        memcpy(this, &other, sizeof(Json));
+        memset(&other, 0, sizeof(Json));
     }
 
-    Json&Json::appendUndefinded()
+
+    Json::Json(JsonConst jsonConst)
     {
-        typeAssert(JsonType::Array);
-        Element** ptr = &firstElement;
-        while (*ptr) {
-            ptr = &((*ptr)->next);
+        switch (jsonConst) {
+        case JsonConst::EmptyObject:
+            mType = JsonType::Object;
+            entries = map_create<Json>();
+            break;
+        case JsonConst::EmptyArray:
+            mType = JsonType::Array;
+            elements = list_create<Json>();
+            break;
+        case JsonConst::TRUE:
+            mType = JsonType::Boolean;
+            boolean = true;
+            break;
+        case JsonConst::FALSE:
+            mType = JsonType::Boolean;
+            boolean = false;
+            break;
+        case JsonConst::Null:
+            mType = JsonType::Null;
+            break;
         }
-        *ptr = new Element();
-        return **ptr;
     }
 
     Json::~Json()
@@ -63,151 +61,88 @@ namespace org_restfulipc
         deleteChildren();
     }
 
-    Json &Json::operator[](const char *index)
-    {
-        typeAssert(JsonType::Object);
-        Entry** ptr = &firstEntry;
-        while (*ptr && strcmp(index, (*ptr)->key)) {
-            ptr = &((*ptr)->next);
-        }
-        if (! (*ptr)) {
-            *ptr = new Entry();
-            (*ptr)->key = index;
-        }
-
-        return **ptr;
-    }
-
-    Json &Json::operator[](uint index)
-    {
-        typeAssert(JsonType::Array);
-        Element** ptr = &firstElement;
-        while (*ptr && index > 0) {
-            ptr = &((*ptr)->next);
-            index--;
-        }
-        if (index >0) {
-            throw RuntimeError("Out of range");
-        }
-        return **ptr;
-    }
-
-    Json *Json::at(const char* index)
-    {
-        typeAssert(JsonType::Object);
-        for (Entry* ptr = firstEntry; ptr; ptr = ptr->next) {
-            if (! strcmp(index, ptr->key)) {
-                return ptr;
-            }
-        }
-
-        return NULL;
-    }
-
-    Json *Json::at(uint index)
-    {
-        typeAssert(JsonType::Array);
-        for (Element* ptr = firstElement; ptr; ptr = ptr->next) {
-            if (index == 0) {
-                return ptr;
-            }
-            index--;
-        }
-
-        return NULL;
-    }
-
-    Json&Json::operator=(JsonType jsonType)
+    Json& Json::operator=(Json&& other)
     {
         deleteChildren();
-        memset(this, 0, sizeof(Json));
-        mType = jsonType;
+        memcpy(this, &other, sizeof(Json));
+        memset(&other, 0, sizeof(Json));
     }
 
-    Json &Json::operator=(const char *string)
+
+    Json& Json::operator[](const char *index)
+    {
+        typeAssert(JsonType::Object);
+        return map_at(entries, index);
+    }
+
+    Json& Json::operator[](int index)
+    {
+        typeAssert(JsonType::Array);
+        return list_at(elements, index);
+    }
+
+    Json&Json::operator=(JsonConst jsonConst)
+    {
+        deleteChildren();
+        switch (jsonConst) {
+        case JsonConst::EmptyObject:
+            mType = JsonType::Object;
+            entries = map_create<Json>();
+            break;
+        case JsonConst::EmptyArray:
+            mType = JsonType::Array;
+            elements = list_create<Json>();
+            break;
+        case JsonConst::TRUE:
+            mType = JsonType::Boolean;
+            boolean = true;
+            break;
+        case JsonConst::FALSE:
+            mType = JsonType::Boolean;
+            boolean = false;
+            break;
+        case JsonConst::Null:
+            mType = JsonType::Null;
+            break;
+        }
+    }
+
+    Json& Json::operator=(const char *string)
     {
         deleteChildren();
         mType = JsonType::String;
         this->string = string;
     }
 
-    Json &Json::operator=(double d)
+    Json &Json::operator=(double number)
     {
         deleteChildren();
-        mType = JsonType::Double;
-        this->numberD = d;
+        mType = JsonType::Number;
+        this->number = number;
     }
 
-    Json &Json::operator=(int i)
-    {
-        deleteChildren();
-        mType = JsonType::Long;
-        this->numberL = (long)i;
-    }
 
-    Json &Json::operator=(long l)
-    {
-        deleteChildren();
-        mType = JsonType::Long;
-        this->numberL = l;
-    }
-
-    Json &Json::operator=(bool b)
-    {
-        deleteChildren();
-        mType = JsonType::Boolean;
-        boolean = b;
-    }
-
-    Json*Json::take(int index)
-    {
-       if (index < 0) {
-           throw RuntimeError("Out of range");
-       }
-       return take((uint) index);
-    }
-
-    Json*Json::take(uint index)
+    Json&& Json::take(int index)
     {
         typeAssert(JsonType::Array);
-        Element **ptr = &firstElement;
-        while (index > 0 && *ptr) {
-            index--;
-            ptr = &((*ptr)->next);
-        }
-        if (!(*ptr)) {
-            throw RuntimeError("Out of range");
-        }
-        Element* taken = *ptr;
-        *ptr = taken->next;
-        taken->next = NULL;
-        return taken;
+        return list_take(elements, index);
     }
+
 
     bool Json::contains(const char* key)
     {
         typeAssert(JsonType::Object);
-        for (Entry* entry = firstEntry; entry; entry = entry->next) {
-            if (! strcmp(key, entry->key)) {
-                return true;
-            }
-        }
-
-        return false;
+        return map_contains(entries, key);
     }
 
     uint Json::size()
     {
         uint length = 0;
         if (mType == JsonType::Array) {
-            for (Element* element = firstElement; element; element = element->next) {
-                length++;
-            }
+            return elements->size;
         }
         else if (mType == JsonType::Object) {
-            for (Entry* entry = firstEntry; entry; entry = entry->next) {
-                length++;
-            }
+            return entries->size;
         }
         else {
             throw RuntimeError("size() can only be called on Objects or Arrays");
@@ -215,36 +150,31 @@ namespace org_restfulipc
         return length;
     }
 
+    void Json::append(Json&& json)
+    {
+        typeAssert(JsonType::Array);
+        list_append(elements, std::move(json));
+    }
+
+    void Json::insertAt(int index, Json&& json)
+    {
+        typeAssert(JsonType::Array);
+        list_insert(elements, std::move(json), index);
+    }
+
     void Json::typeAssert(JsonType otherType) {
         if (otherType != mType) {
-            throw org_restfulipc::RuntimeError("Type mismatch");
+            throw org_restfulipc::RuntimeError(std::string("Type mismatch - expected ") +
+                                               typeAsString() + " got " + typeAsString(otherType));
         }
     }
 
-    Json*Json::take(const char* key)
+    Json&& Json::take(const char* key)
     {
         typeAssert(JsonType::Object);
-        for (Entry** ptr = &firstEntry; *ptr; ptr = &((*ptr)->next)) {
-            if (! strcmp(key, (*ptr)->key)) {
-                Entry* taken = *ptr;
-                *ptr = (*ptr)->next;
-                taken->next = NULL;
-                return taken;
-            }
-        }
-
-        throw RuntimeError("Not found");
+        return map_take(entries, key);
     }
 
-    void Json::remove(uint index)
-    {
-        delete take(index);
-    }
-
-    void Json::remove(const char* key)
-    {
-        delete take(key);
-    }
 
     org_restfulipc::Json::operator bool()
     {
@@ -254,14 +184,14 @@ namespace org_restfulipc
 
     org_restfulipc::Json::operator long()
     {
-        typeAssert(JsonType::Long);
-        return numberL;
+        typeAssert(JsonType::Number);
+        return (long)number;
     }
 
     org_restfulipc::Json::operator double()
     {
-        typeAssert(JsonType::Double);
-        return numberD;
+        typeAssert(JsonType::Number);
+        return number;
     }
 
     org_restfulipc::Json::operator const char *()
@@ -274,7 +204,7 @@ namespace org_restfulipc
     {
 
         JsonReader reader(serialized);
-        reader.read(&json);
+        json = reader.read();
         return json;
     }
 

@@ -12,27 +12,21 @@ int main()
 {
 
     Json json;
-    json = JsonType::Object;
+    json = JsonConst::EmptyObject;
     json["foo"] = 7;
-    json["baa"] = false;
+    json["baa"] = JsonConst::FALSE;
     json.take("foo");
     std::cout << json.size() << "\n";
-    JsonWriter(&json).write();
+    std::cout << JsonWriter(&json).buffer.data << "\n";
     std::cout << "\n";
 
-    json = JsonType::Array;
+    json = JsonConst::EmptyArray;
     json.append( 1);
     json.append( 2);
-    json.insertAt(1, true);
-    JsonWriter(&json).write();
-    std::cout << "\n";
-    json.remove(2);
-    Json* taken = json.take(0);
-    long l = *taken;
-    std::cout << "At 0: " << l << "\n";
-    delete taken;
-    std::cout << "taken deleted\n";
-    JsonWriter(&(json)).write();
-    std::cout << "\n";
-    json.insertAt(17, JsonType::Null);
+    json.append( 3);
+    json.take(2);
+    Json taken = json.take(0);
+    std::cout << "At 0: " << (double)taken << "\n";
+    std::cout << JsonWriter(&json).buffer.data << "\n";
+
 }

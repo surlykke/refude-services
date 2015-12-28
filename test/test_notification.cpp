@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     service.map("/res", &resource, true);
     service.map("/notify", &notifier);
 
-    char json[512];
+   char json[512];
     for(;;) {
         sprintf(json, "{\"time\" : %Ld}\n", time(NULL)) ;
         std::cout << json;

@@ -11,16 +11,12 @@ namespace org_restfulipc
     {
     public:
         JsonReader(char* buf);
-        void read(Json* json);
+        Json read();
 
     private:
-        void readAny(Json* json);
-        Entry* readObject();
-        Entry* readEntry();
-        Element* readArray();
-        Element* readElement();
+        void readNext(Json& json);
         char *readString();
-        void readNumber(Json* json);
+        double readNumber();
 
         char currentChar();
         bool currentCharIsWhiteSpace();

@@ -15,6 +15,7 @@
 #include <string>
 #include <list>
 #include <iostream>
+#include <sstream>
 
 #include "httpprotocol.h"
 #include "httpprotocol.h"
@@ -47,7 +48,7 @@ namespace org_restfulipc
 
     struct RuntimeError : std::runtime_error, Backtrace
     {
-        RuntimeError(const char *what) : std::runtime_error(what), Backtrace() {
+        RuntimeError(std::string &what) : std::runtime_error(what), Backtrace() {
             saveStackTrace();
         }
 
@@ -55,7 +56,11 @@ namespace org_restfulipc
             saveStackTrace();
         }
 
-       virtual ~RuntimeError() {}
+        RuntimeError(std::stringstream what) : std::runtime_error(what.str()) , Backtrace() {
+            saveStackTrace();
+        }
+
+        virtual ~RuntimeError() {}
     };
 
     struct C_Error : public RuntimeError

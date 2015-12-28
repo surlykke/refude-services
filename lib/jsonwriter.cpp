@@ -1,55 +1,53 @@
 #include <unistd.h>
-
+#include "errorhandling.h"
+#include "json.h"
 #include "jsonwriter.h"
 
 namespace org_restfulipc
 {
 
 
-    JsonWriter::JsonWriter(Json *json, int bufferSize, int fd) :
+    JsonWriter::JsonWriter(Json *json) :
         json(json),
-        buffer(0),
-        used(0),
-        size(bufferSize),
-        fd(fd)
+        buffer()
     {
-        if (size < 1024) {
-            size = 1024;
-        }
-        buffer = new char[size];
+        if (!json) throw RuntimeError("JsonWriter cannot handle NULL json ptr");
+        write(json);
     }
 
     JsonWriter::~JsonWriter()
     {
-        delete buffer;
-    }
-
-    void JsonWriter::write()
-    {
-        write(json);
-        flush();
     }
 
     void JsonWriter::write(Json *json)
     {
        if (json->mType == JsonType::Object) {
            write("{");
-           writeEntries(json->firstEntry);
+           const char* separator = "";
+           for (int i = 0; i < json->entries->size; i++) {
+               write(separator);
+               writeString(json->entries->data[i].key);
+               write(":");
+               write(&(json->entries->data[i].value));
+               separator = ",";
+           }
            write("}");
        }
        else if (json->mType == JsonType::Array) {
            write("[");
-           writeElements(json->firstElement);
+           const char* separator = "";
+           for (int i = 0; i < json->elements->size; i++) {
+                write(separator);
+                write(&(json->elements->data[i]));
+                separator = ",";
+           }
            write("]");
        }
        else if (json->mType == JsonType::String) {
            writeString(json->string);
        }
-       else if (json->mType == JsonType::Double) {
-            write(json->numberD);
-       }
-       else if (json->mType == JsonType::Long) {
-            write(json->numberL);
+       else if (json->mType == JsonType::Number) {
+            write(json->number);
        }
        else if (json->mType == JsonType::Boolean) {
             json->boolean ? write("true") : write("false");
@@ -57,32 +55,6 @@ namespace org_restfulipc
        else if (json->mType == JsonType::Null) {
             write("null");
        }
-    }
-
-    void JsonWriter::writeElements(Element* elements)
-    {
-        if (elements) {
-            write(elements);
-            while (elements = elements->next) {
-                write(", ");
-                write(elements);
-            }
-        }
-    }
-
-    void JsonWriter::writeEntries(Entry* entries)
-    {
-        if (entries) {
-            write(entries->key);
-            write(": ");
-            write(entries);
-            while (entries = entries->next) {
-                write(", ");
-                write(entries->key);
-                write(": ");
-                write(entries);
-            }
-        }
     }
 
     void JsonWriter::writeString(const char* string)
@@ -103,43 +75,15 @@ namespace org_restfulipc
 
     void JsonWriter::write(double d)
     {
-        if (used > size - 25) {
-            flush();
-        }
-        used += sprintf(buffer + used, "%E", d);
-    }
-
-    void JsonWriter::write(long l)
-    {
-        if (used > size - 25) {
-            flush();
-        }
-        used += sprintf(buffer + used, "%d", l);
+        buffer.ensureCapacity(25);
+        buffer.used += sprintf(buffer.data + buffer.used, "%.17g", d);
     }
 
     void JsonWriter::write(char ch)
     {
-        if (used >= size) {
-            flush();
-        }
-
-        buffer[used++] = ch;
+        buffer.ensureCapacity(1);
+        buffer.data[buffer.used++] = ch;
     }
-
-    void JsonWriter::flush()
-    {
-        int n = 0;
-        int m = 0;
-        while (n < used) {
-            m = ::write(fd, buffer + n, used - n);
-            if (m < 0) {
-                throw C_Error();
-            }
-            n += m;
-        }
-        used = 0;
-    }
-
 
 }
 

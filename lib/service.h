@@ -10,44 +10,39 @@
 
 #include <linux/un.h>
 #include <thread>
-#include <shared_mutex>
 #include <vector>
 #include <condition_variable>
 
+#include "resourcemapping.h"
 #include "shortmtqueue.h"
 
 namespace org_restfulipc
 {
-    class ResourceMapping;
     class AbstractResource;
 
     class Service
     {
     public:
-        Service(const char *socketPath, int workers = 5);
-        Service(uint16_t portNumber, int workers = 5);
+        Service(const char *socketPath, int numThreads = 5);
+        Service(uint16_t portNumber, int numThreads = 5);
+        void run();
+        void runInBackground();
         virtual ~Service();
 
-        void map(const char* path, AbstractResource* findMapping, bool wildcarded = false);
-        void unMap(const AbstractResource* findMapping);
+        void map(const char* path, AbstractResource* resource, bool wildcarded = false);
+        void unMap(const AbstractResource* resource);
 
     private:
+        void prepareRun();
         void listenForIncoming();
         void serveIncoming();
 
         std::vector<std::thread> threads;
-        ShortMtQueue<16> requestSockets;
-        std::mutex bufferLock;
-        std::condition_variable bufferNotFull;
-        std::condition_variable bufferNotEmpty;
-        bool shuttingDown;
+        int mNumThreads;
         int listenSocket;
-
-        ResourceMapping* findMapping(const char* path);
-        std::shared_timed_mutex mMappingsMutex;
-        ResourceMapping* mMappings;
-        int mNumMappings;
-        int mMappingsCapacity;
+        ShortMtQueue<16> requestSockets;
+        ResourceMappings mResourceMappings;
+        bool shuttingDown;
     };
 
 }
