@@ -12,9 +12,9 @@ int main(int argc, char** argv)
     using namespace org_restfulipc;
     Service service(7938);
     //WebServer webServer("/home/christian/NetBeansProjects/GenericRipcClient/public_html");
-    Json json = JsonConst::EmptyObject;
-    json["time"] = time(NULL);
-    JsonResource resource(std::move(json));
+    JsonResource resource("/service");
+    resource.json["time"] = time(NULL);
+    resource.setResponseStale();
 
     std::cout << "map..\n";
     //service.map("/client", &webServer, true);
@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 
     for(;;) {
         resource.json["time"] = time(NULL);
-        resource.jsonUpdated();
+        resource.setResponseStale();
         sleep(3);
     }
 }

@@ -38,37 +38,17 @@
 
 namespace org_restfulipc
 {
-    struct Backtrace
+    struct RuntimeError : std::runtime_error
     {
-        Backtrace();
-        void saveStackTrace();
-        void printStackTrace(std::ostream& os = std::cerr);
-        std::list<std::string> callStack;
-    };
-
-    struct RuntimeError : std::runtime_error, Backtrace
-    {
-        RuntimeError(std::string &what) : std::runtime_error(what), Backtrace() {
-            saveStackTrace();
-        }
-
-        RuntimeError(std::string what) : std::runtime_error(what), Backtrace() {
-            saveStackTrace();
-        }
-
-        RuntimeError(std::stringstream what) : std::runtime_error(what.str()) , Backtrace() {
-            saveStackTrace();
-        }
-
+        RuntimeError(std::string &what) : std::runtime_error(what) {}
+        RuntimeError(std::string what) : std::runtime_error(what) {}
+        RuntimeError(std::stringstream&& what) : std::runtime_error(what.str()) {}
         virtual ~RuntimeError() {}
     };
 
     struct C_Error : public RuntimeError
     {
-        C_Error() : RuntimeError(strerror(errno)), errorNumber(errno) {
-            saveStackTrace();
-        }
-
+        C_Error() : RuntimeError(strerror(errno)), errorNumber(errno) {}
         int errorNumber;
     };
 

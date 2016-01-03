@@ -22,8 +22,34 @@ namespace org_restfulipc
     {
 
         int size;
+        int sorted;
         int capacity;
-        Pair<ValueType> data[];
+        Pair<ValueType> data[0]; // Struct hack
+
+        Map() = delete; // use map_create below
+
+    private:
+        void sort() 
+        {
+            if (sorted < size - 1) {
+                sort(sorted, size - 1);
+                if (sorted > 0) {
+                    merge(sorted);
+                }
+            }
+            sorted = size;
+        }
+        
+        void sort(int start, int end) 
+        {
+            // FIXME
+        }
+
+        void merge(int midpoint)
+        {
+            // FIXME
+        }
+
     };
 
     template<typename ValueType>
@@ -91,14 +117,15 @@ namespace org_restfulipc
     Map<ValueType>* map_create(int initialCapacity = 4)
     {
         Map<ValueType>* map = (Map<ValueType>*)malloc(sizeof(Map<ValueType>) + initialCapacity*sizeof(Pair<ValueType>));
+        if (!map) throw C_Error();
         map->size = 0;
         map->capacity = initialCapacity;
-        if (!map) throw C_Error();
         return map;
     }
 
+
     template<typename ValueType>
-    void map_delete(Map<ValueType>*& map)
+    void map_delete(Map<ValueType>* map)
     {
         for (int i = 0; i < map->size; i++) {
             map->data[i].value.~ValueType();
@@ -111,12 +138,14 @@ namespace org_restfulipc
     void ensureCapacityForOneMore(Map<ValueType>*& map)
     {
         if (map->size < map->capacity) return;
-
+        
         int newCapacity = 2*map->capacity;
         map = (Map<ValueType>*) realloc(map, sizeof(Map<ValueType>) + newCapacity*sizeof(Pair<ValueType>));
         if (!map) throw C_Error();
-        memset(map->data + map->capacity*sizeof(Pair<ValueType>), 0, map->capacity*sizeof(Pair<ValueType>));
+        //memset(map->data + map->capacity, 0, map->capacity*sizeof(Pair<ValueType>));
         map->capacity = newCapacity;
+        std::cout << "Out of ensureCapacity, mapptr: " << (void*)map << "\n";
+        //std::cout << "Out of mapEnsure, map: " << (void*)map << "\n";
     }
 }
 #endif // MAP_H

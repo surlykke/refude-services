@@ -11,9 +11,7 @@
 #include <linux/un.h>
 #include <thread>
 #include <vector>
-#include <condition_variable>
-
-#include "resourcemapping.h"
+#include <map.h>
 #include "shortmtqueue.h"
 
 namespace org_restfulipc
@@ -29,8 +27,9 @@ namespace org_restfulipc
         void runInBackground();
         virtual ~Service();
 
-        void map(const char* path, AbstractResource* resource, bool wildcarded = false);
-        void unMap(const AbstractResource* resource);
+        void map(const char* path, org_restfulipc::AbstractResource* resource, bool wildcarded = false);
+        void unMap(const char* path);
+        AbstractResource* mapping(const char* path, bool wildcarded = false);
 
     private:
         void prepareRun();
@@ -41,7 +40,7 @@ namespace org_restfulipc
         int mNumThreads;
         int listenSocket;
         ShortMtQueue<16> requestSockets;
-        ResourceMappings mResourceMappings;
+        Map<AbstractResource*>* resourceMappings;
         bool shuttingDown;
     };
 

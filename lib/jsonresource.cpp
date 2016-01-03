@@ -4,17 +4,41 @@
 
 namespace org_restfulipc
 {
-    JsonResource::JsonResource(Json&& json):
+
+    /*JsonResource*JsonResource::fromTemplate(const char* templ, std::map<const char*, const char*> parameters)
+    {
+        JsonResource* jsonResource = new JsonResource();
+
+
+    }*/
+
+    JsonResource::JsonResource(const char* selfLinkUri):
         AbstractResource(),
-        json(std::move(json)),
+        json(JsonConst::EmptyObject),
         response(),
         responseMutex()
     {
-        jsonUpdated();
+        json = JsonConst::EmptyObject;
+        json["_links"] = JsonConst::EmptyObject;
+        json["_links"]["self"] = JsonConst::EmptyObject;
+        json["_links"]["self"]["href"] = selfLinkUri;
     }
 
     JsonResource::~JsonResource()
     {
+    }
+
+    void JsonResource::addRelatedLink(const char* relatedUri, bool templated)
+    {
+        if (! json["_links"].contains("related")) {
+            json["_links"]["related"] = JsonConst::EmptyArray;
+        }
+
+        Json& relatedObject = json["_links"]["related"].append(JsonConst::EmptyObject);
+        relatedObject["href"] = relatedUri;
+        if (templated) {
+            relatedObject["templated"] = JsonConst::TRUE;
+        }
     }
 
     void JsonResource::handleRequest(int &socket, const HttpMessage& request)
@@ -36,17 +60,23 @@ namespace org_restfulipc
 
     void JsonResource::doGet(int socket, const HttpMessage& request)
     {
-        std::shared_lock<std::shared_timed_mutex> lock(responseMutex);
-        int bytesWritten = 0;
-        do
+        if (responseIsStale) 
         {
-            int nbytes = send(socket, response.data + bytesWritten, response.used - bytesWritten, MSG_NOSIGNAL);
-            if (nbytes < 0) throw C_Error();
-            bytesWritten += nbytes;
+            buildResponse();
         }
-        while (bytesWritten < response.used);
-    }
 
+        {
+            std::shared_lock<std::shared_timed_mutex> lock(responseMutex);
+            int bytesWritten = 0;
+            do
+            {
+                int nbytes = send(socket, response.data + bytesWritten, response.used - bytesWritten, MSG_NOSIGNAL);
+                if (nbytes < 0) throw C_Error();
+                bytesWritten += nbytes;
+            }
+            while (bytesWritten < response.used);
+        }
+    }
 
     void JsonResource::doPatch(int socket, const HttpMessage& request)
     {
@@ -54,8 +84,9 @@ namespace org_restfulipc
     }
 
 
-    void JsonResource::jsonUpdated()
+    void JsonResource::buildResponse()
     {
+        std::unique_lock<std::shared_timed_mutex> lock;
         static const char* responseTemplate =
             "HTTP/1.1 200 OK\r\n"
             "Content-Type: application/json; charset=UTF-8\r\n"
@@ -70,6 +101,12 @@ namespace org_restfulipc
             response.ensureCapacity(jsonWriter.buffer.used + 1);
             strcpy(response.data + response.used, jsonWriter.buffer.data);
             response.used += jsonWriter.buffer.used;
+            responseIsStale = false;
         }
     }
+    void JsonResource::setResponseStale() 
+    {
+        responseIsStale = true;
+    }
+
 }

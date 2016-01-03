@@ -30,7 +30,7 @@ namespace org_restfulipc
         mNumThreads(numThreads),
         listenSocket(-1),
         requestSockets(),
-        mResourceMappings(),
+        resourceMappings(map_create<AbstractResource*>()),
         shuttingDown(false)
     {
 
@@ -55,7 +55,7 @@ namespace org_restfulipc
          mNumThreads(numThreads),
          listenSocket(-1),
          requestSockets(),
-         mResourceMappings(),
+         resourceMappings(map_create<AbstractResource*>()),
          shuttingDown(false)
     {
         std::cout << "Into Service constructor\n";
@@ -102,12 +102,22 @@ namespace org_restfulipc
 
     void Service::map(const char* path, AbstractResource* resource, bool wildcarded)
     {
-        mResourceMappings.map(path, resource, wildcarded);
+        map_insert(resourceMappings, path, std::move(resource));
     }
 
-    void Service::unMap(const AbstractResource* resource)
+    void Service::unMap(const char* path)
     {
-        mResourceMappings.unMap(resource);
+        map_take(resourceMappings, path);
+    }
+
+    AbstractResource*Service::mapping(const char* path, bool wildcarded)
+    {
+        if (!map_contains(resourceMappings, path)) {
+            return NULL;
+        }
+        else {
+            return map_at(resourceMappings, path);
+        }
     }
 
 
@@ -155,13 +165,12 @@ namespace org_restfulipc
                 try {
                     HttpMessageReader(requestSocket, request).readRequest();
 
-                    ResourceMapping* mapping = mResourceMappings.find(request.path);
-                    if (! mapping) {
+                    if (! map_contains(resourceMappings, request.path)) {
                         throw Status::Http404;
                     }
-
-                    request.remainingPath = request.path + mapping->mPathLength;
-                    mapping->mResource->handleRequest(requestSocket, request);
+                    AbstractResource *resource = map_at(resourceMappings, request.path);
+                    request.remainingPath = ""; // FIXME
+                    resource->handleRequest(requestSocket, request);
 
                     if (requestSocket > -1 &&
                         request.headerValue(Header::connection) != 0 &&

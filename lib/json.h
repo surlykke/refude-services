@@ -9,7 +9,7 @@
 namespace org_restfulipc
 {
 
-    enum class JsonType : uint8_t
+    enum JsonType
     {
         Undefined = 0, // Important that this i 0. (So when we zero out a json, it will have type Undefined)
         Object,
@@ -64,10 +64,10 @@ namespace org_restfulipc
         bool contains(const char* key);
         uint size();
 
-        void append(Json&& json);
-        void insertAt(int index, Json&& json);
+        Json& append(Json&& json);
+        Json& insertAt(int index, Json&& json);
 
-        void typeAssert(JsonType otherType);
+        void typeAssert(const char* operation, JsonType otherType);
         const char* typeAsString();
         const char* typeAsString(JsonType type);
 

@@ -10,7 +10,15 @@ namespace org_restfulipc
 
     const char* Json::typeAsString(JsonType type)
     {
-        static const char* typeNames[] = { "Undefined", "Object", "Array", "String", "Long", "Double", "Boolean", "Null" };
+        static const char* typeNames[] = { 
+            "Undefined", 
+            "Object", 
+            "Array", 
+            "String", 
+            "Number"
+            "Boolean", 
+            "Null" 
+        };
         return typeNames[(uint8_t)type];
     }
 
@@ -22,6 +30,7 @@ namespace org_restfulipc
         else if (mType == JsonType::Array) {
             list_delete(elements);
         }
+
     }
 
     Json::Json(Json&& other)
@@ -71,13 +80,16 @@ namespace org_restfulipc
 
     Json& Json::operator[](const char *index)
     {
-        typeAssert(JsonType::Object);
+        typeAssert("operator[const char*]", JsonType::Object);
         return map_at(entries, index);
     }
 
     Json& Json::operator[](int index)
     {
-        typeAssert(JsonType::Array);
+        if (mType != JsonType::Array) {
+            throw RuntimeError(std::string("operator[") + std::to_string(index) + "] called on " + typeAsString());
+        }
+
         return list_at(elements, index);
     }
 
@@ -124,14 +136,14 @@ namespace org_restfulipc
 
     Json&& Json::take(int index)
     {
-        typeAssert(JsonType::Array);
+        typeAssert("take(int)", JsonType::Array);
         return list_take(elements, index);
     }
 
 
     bool Json::contains(const char* key)
     {
-        typeAssert(JsonType::Object);
+        typeAssert("contains(const char*)", JsonType::Object);
         return map_contains(entries, key);
     }
 
@@ -150,53 +162,54 @@ namespace org_restfulipc
         return length;
     }
 
-    void Json::append(Json&& json)
+    Json& Json::append(Json&& json)
     {
-        typeAssert(JsonType::Array);
-        list_append(elements, std::move(json));
+        typeAssert("append(Json&&)", JsonType::Array);
+        return list_append(elements, std::move(json));
     }
 
-    void Json::insertAt(int index, Json&& json)
+    Json& Json::insertAt(int index, Json&& json)
     {
-        typeAssert(JsonType::Array);
-        list_insert(elements, std::move(json), index);
+        typeAssert("insertAt(index, Json&&)", JsonType::Array);
+        return list_insert(elements, std::move(json), index);
     }
 
-    void Json::typeAssert(JsonType otherType) {
-        if (otherType != mType) {
-            throw org_restfulipc::RuntimeError(std::string("Type mismatch - expected ") +
-                                               typeAsString() + " got " + typeAsString(otherType));
+    void Json::typeAssert(const char* operation, JsonType type) {
+        if (type != mType) {
+            std::stringstream ss;
+            ss << operation << " called on " << typeAsString() << "\n";
+            throw RuntimeError(std::move(ss));
         }
     }
 
     Json&& Json::take(const char* key)
     {
-        typeAssert(JsonType::Object);
+        typeAssert("take(const char*)", JsonType::Object);
         return map_take(entries, key);
     }
 
 
     org_restfulipc::Json::operator bool()
     {
-        typeAssert(JsonType::Boolean);
+        typeAssert("operator bool()", JsonType::Boolean);
         return boolean;
     }
 
     org_restfulipc::Json::operator long()
     {
-        typeAssert(JsonType::Number);
+        typeAssert("operator long()", JsonType::Number);
         return (long)number;
     }
 
     org_restfulipc::Json::operator double()
     {
-        typeAssert(JsonType::Number);
+        typeAssert("operator double()", JsonType::Number);
         return number;
     }
 
     org_restfulipc::Json::operator const char *()
     {
-        typeAssert(JsonType::String);
+        typeAssert("operator const char*()", JsonType::String);
         return string;
     }
 

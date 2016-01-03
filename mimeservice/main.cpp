@@ -2,5 +2,6 @@
 
 int main(int argc, char *argv[])
 {
-    ResourceBuilder("/usr/share/mime/packages/freedesktop.org.xml");
+    org_restfulipc::ResourceBuilder rb("/usr/share/mime/packages/freedesktop.org.xml");
+    rb.run();    
 }

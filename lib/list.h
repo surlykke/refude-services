@@ -11,26 +11,29 @@ namespace org_restfulipc
     {
         int size;
         int capacity;
-        ValueType data[];
+        ValueType data[0];
+
+        List() = delete;
     };
 
     template<typename ValueType>
-    void list_append(List<ValueType>*& list, ValueType&& t)
+    ValueType& list_append(List<ValueType>*& list, ValueType&& t)
     {
         ensureCapacityForOneMore(list);
-        list->data[list->size++] = std::move(t);
+        return (list->data[list->size++] = std::move(t));
     }
 
     template<typename ValueType>
-    void list_insert(List<ValueType>*& list, ValueType&& value, int pos)
+    ValueType& list_insert(List<ValueType>*& list, ValueType&& value, int pos)
     {
         if (pos<0 || pos>list->size) throw RuntimeError("Out of range");
         ensureCapacityForOneMore(list);
         for (int j = list->size; j > pos; j--) {
             list->data[j] = std::move(list->data[j-1]);
         }
-        list->data[pos] = std::move(value);
         list->size++;
+        return (list->data[pos] = std::move(value));
+
     }
 
     template<typename ValueType>
@@ -83,9 +86,13 @@ namespace org_restfulipc
         if (list->size < list->capacity) return;
 
         int newCapacity = 2*list->capacity;
+        std::cout << "list, ensure.., capacity: " << list->capacity
+                  << " newCapacity: " << newCapacity
+                  << " new size: " << sizeof(List<ValueType>) << " + " << newCapacity*sizeof(ValueType) << "\n";
+
         list = (List<ValueType>*) realloc(list, sizeof(List<ValueType>) + newCapacity*sizeof(ValueType));
         if (!list) throw C_Error();
-        memset(list->data + list->capacity*sizeof(ValueType), 0, list->capacity*sizeof(ValueType));
+        memset(list->data + list->capacity, 0, list->capacity*sizeof(ValueType));
         list->capacity = newCapacity;
     }
 }
