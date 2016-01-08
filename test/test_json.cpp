@@ -20,12 +20,14 @@ int main()
     json.insertAt(2, 18);
 
     JsonWriter(&json).write();*/
+    std::cout << "Start building\n";
     Json json = JsonConst::EmptyObject;
-
-    json["foo"] = JsonConst::Null;
-    json["baa"] = "hejsa";
-    json["moo"] = 832;
-    json["foo"] = JsonConst::TRUE;
+    for (int i = 0; i < 5000000; i++) {
+        json.append("foo", 1);
+        json.append("baa", 2);
+        json.append("yxy", 3);
+    }
+    std::cout << "Start sorting\n";
+    json.entries->sort();
     std::cout << JsonWriter(&json).buffer.data << "\n";
-
 }

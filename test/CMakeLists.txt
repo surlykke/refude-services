@@ -12,6 +12,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data.json ${CMAKE_CURRENT_BINARY_DIR}
 add_executable(test_json test_json.cpp)
 target_link_libraries(test_json pthread ${CMAKE_BINARY_DIR}/lib/librestfulipc.so)
 
+add_executable(test_json_2 test_json_2.cpp)
+target_link_libraries(test_json_2 pthread ${CMAKE_BINARY_DIR}/lib/librestfulipc.so)
+
 add_executable(test_json_parser test_json_parser.cpp data.json)
 target_link_libraries(test_json_parser pthread ${CMAKE_BINARY_DIR}/lib/librestfulipc.so)
 

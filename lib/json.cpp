@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "jsonreader.h"
 #include "json.h"
 
@@ -25,12 +27,11 @@ namespace org_restfulipc
     void Json::deleteChildren()
     {
         if (mType == JsonType::Object){
-            map_delete(entries);
+            delete entries;
         }
         else if (mType == JsonType::Array) {
-            list_delete(elements);
+            delete elements;
         }
-
     }
 
     Json::Json(Json&& other)
@@ -45,11 +46,11 @@ namespace org_restfulipc
         switch (jsonConst) {
         case JsonConst::EmptyObject:
             mType = JsonType::Object;
-            entries = map_create<Json>();
+            entries = new Map<Json>();
             break;
         case JsonConst::EmptyArray:
             mType = JsonType::Array;
-            elements = list_create<Json>();
+            elements = new std::vector<Json>();
             break;
         case JsonConst::TRUE:
             mType = JsonType::Boolean;
@@ -75,22 +76,26 @@ namespace org_restfulipc
         deleteChildren();
         memcpy(this, &other, sizeof(Json));
         memset(&other, 0, sizeof(Json));
+        return *this;
     }
 
 
     Json& Json::operator[](const char *index)
     {
         typeAssert("operator[const char*]", JsonType::Object);
-        return map_at(entries, index);
+        return (*entries)[index];
     }
 
     Json& Json::operator[](int index)
     {
         if (mType != JsonType::Array) {
-            throw RuntimeError(std::string("operator[") + std::to_string(index) + "] called on " + typeAsString());
+            throw RuntimeError(std::string("operator[") + 
+                               std::to_string(index) + 
+                               "] called on " + 
+                               typeAsString());
         }
 
-        return list_at(elements, index);
+        return (*elements)[index];
     }
 
     Json&Json::operator=(JsonConst jsonConst)
@@ -99,11 +104,11 @@ namespace org_restfulipc
         switch (jsonConst) {
         case JsonConst::EmptyObject:
             mType = JsonType::Object;
-            entries = map_create<Json>();
+            entries = new Map<Json>();
             break;
         case JsonConst::EmptyArray:
             mType = JsonType::Array;
-            elements = list_create<Json>();
+            elements = new std::vector<Json>();
             break;
         case JsonConst::TRUE:
             mType = JsonType::Boolean;
@@ -117,6 +122,7 @@ namespace org_restfulipc
             mType = JsonType::Null;
             break;
         }
+        return *this;
     }
 
     Json& Json::operator=(const char *string)
@@ -124,6 +130,7 @@ namespace org_restfulipc
         deleteChildren();
         mType = JsonType::String;
         this->string = string;
+        return *this;
     }
 
     Json &Json::operator=(double number)
@@ -131,30 +138,33 @@ namespace org_restfulipc
         deleteChildren();
         mType = JsonType::Number;
         this->number = number;
+        return *this;
     }
 
 
     Json&& Json::take(int index)
     {
         typeAssert("take(int)", JsonType::Array);
-        return list_take(elements, index);
+        Json tmp = std::move((*elements)[index]);
+        elements->erase(elements->begin() + index);
+        return std::move(tmp);
     }
 
 
     bool Json::contains(const char* key)
     {
         typeAssert("contains(const char*)", JsonType::Object);
-        return map_contains(entries, key);
+        return entries->find(key) > -1;
     }
 
     uint Json::size()
     {
         uint length = 0;
         if (mType == JsonType::Array) {
-            return elements->size;
+            return elements->size();
         }
         else if (mType == JsonType::Object) {
-            return entries->size;
+            return entries->size();
         }
         else {
             throw RuntimeError("size() can only be called on Objects or Arrays");
@@ -165,27 +175,34 @@ namespace org_restfulipc
     Json& Json::append(Json&& json)
     {
         typeAssert("append(Json&&)", JsonType::Array);
-        return list_append(elements, std::move(json));
+        elements->push_back(std::move(json));
+        return elements->back();
     }
+
+    Json& Json::append(const char* key, Json&& json) {
+        typeAssert("append(const char*, Json&&)", JsonType::Object);
+        return entries->add(key, std::move(json));
+    }
+
+
 
     Json& Json::insertAt(int index, Json&& json)
     {
         typeAssert("insertAt(index, Json&&)", JsonType::Array);
-        return list_insert(elements, std::move(json), index);
+        elements->insert(elements->begin() + index, std::move(json));
+        return elements->at(index);
     }
 
     void Json::typeAssert(const char* operation, JsonType type) {
         if (type != mType) {
-            std::stringstream ss;
-            ss << operation << " called on " << typeAsString() << "\n";
-            throw RuntimeError(std::move(ss));
+            throw RuntimeError("Fehler");
         }
     }
 
     Json&& Json::take(const char* key)
     {
         typeAssert("take(const char*)", JsonType::Object);
-        return map_take(entries, key);
+        return entries->take(key);
     }
 
 
@@ -220,6 +237,5 @@ namespace org_restfulipc
         json = reader.read();
         return json;
     }
-
 
 }

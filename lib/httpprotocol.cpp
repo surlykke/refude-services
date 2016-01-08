@@ -78,11 +78,11 @@ namespace org_restfulipc
 
     Header string2Header(const char* str)
     {
-        for(int i = 0; i < (int) Header::unknown; i++)
+        for(int i = 0; i < static_cast<int>(Header::unknown); i++)
         {
             if (strcasecmp(str, header_str_value[i]) == 0)
             {
-                return (Header) i;
+                return static_cast<Header>(i);
             }
         }
 

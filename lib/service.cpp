@@ -30,7 +30,8 @@ namespace org_restfulipc
         mNumThreads(numThreads),
         listenSocket(-1),
         requestSockets(),
-        resourceMappings(map_create<AbstractResource*>()),
+        resourceMappings(),
+        prefixMappings(),
         shuttingDown(false)
     {
 
@@ -51,12 +52,13 @@ namespace org_restfulipc
     }
 
     Service::Service(uint16_t portNumber, int numThreads) :
-         threads(),
-         mNumThreads(numThreads),
-         listenSocket(-1),
-         requestSockets(),
-         resourceMappings(map_create<AbstractResource*>()),
-         shuttingDown(false)
+        threads(),
+        mNumThreads(numThreads),
+        listenSocket(-1),
+        requestSockets(),
+        resourceMappings(),
+        prefixMappings(),
+        shuttingDown(false)
     {
         std::cout << "Into Service constructor\n";
         struct sockaddr_in sockaddr;
@@ -102,21 +104,22 @@ namespace org_restfulipc
 
     void Service::map(const char* path, AbstractResource* resource, bool wildcarded)
     {
-        map_insert(resourceMappings, path, std::move(resource));
+        resourceMappings.add(path, std::move(resource));
     }
 
     void Service::unMap(const char* path)
     {
-        map_take(resourceMappings, path);
+        resourceMappings.take(path);
     }
 
-    AbstractResource*Service::mapping(const char* path, bool wildcarded)
+    AbstractResource* Service::mapping(const char* path, bool wildcarded)
     {
-        if (!map_contains(resourceMappings, path)) {
+        int pos = resourceMappings.find(path); 
+        if (pos < 0) {
             return NULL;
         }
         else {
-            return map_at(resourceMappings, path);
+            return resourceMappings.at(pos).value;
         }
     }
 
@@ -164,11 +167,11 @@ namespace org_restfulipc
             do {
                 try {
                     HttpMessageReader(requestSocket, request).readRequest();
-
-                    if (! map_contains(resourceMappings, request.path)) {
+                    int resourceIndex = resourceMappings.find(request.path);
+                    if (resourceIndex < 0) {
                         throw Status::Http404;
                     }
-                    AbstractResource *resource = map_at(resourceMappings, request.path);
+                    AbstractResource *resource = resourceMappings.at(resourceIndex).value;
                     request.remainingPath = ""; // FIXME
                     resource->handleRequest(requestSocket, request);
 

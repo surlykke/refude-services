@@ -1,151 +1,159 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include <vector>
 #include <utility>
-
+#include <algorithm>
 #include "errorhandling.h"
+#include "jsonwriter.h"
 
 using namespace std;
 
 namespace org_restfulipc
-{
-
-    template<typename ValueType>
+{ 
+    template<class V>
     struct Pair
     {
         const char* key;
-        ValueType value;
+        V value;
     };
 
-    template<typename ValueType>
-    struct Map
+    template<typename V>    
+    struct LessThan
     {
+        bool operator()(const Pair<V>& p1, const Pair<V>& p2) 
+        {
+            return strcmp(p1.key, p2.key) < 0; 
+        }
+    };
 
-        int size;
-        int sorted;
-        int capacity;
-        Pair<ValueType> data[0]; // Struct hack
+    template<typename V>
+    struct Equal
+    {
+        bool operator()(const Pair<V>& p1, const Pair<V>& p2) 
+        {
+            return strcmp(p1.key, p2.key) == 0;
+        }
+    };
 
-        Map() = delete; // use map_create below
 
-    private:
+    template<class V> 
+    struct Map 
+    {
+        std::vector<Pair<V>> list;
+        size_t sorted; 
+
+        Map(): list(), sorted(0) {}
+
+        V& add(const char* key, V&& value)
+        {
+            if (!key) throw RuntimeError("NULL is not allowed as map key");
+            list.push_back({key, std::move(value)});
+            return list.back().value;
+        }
+
+        int find(const char* key)
+        {
+            bool found;
+            int pos = search(key, found);
+            if (found) {
+                return pos;
+            }
+            else {
+                return -1;
+            }
+        }
+
+        int find_longest_prefix(const char* key)
+        {
+            bool found;
+            int pos = search(key, found);
+            if (found) {
+                return pos;
+            }
+            else if (pos > 0 && strncmp(key, list.at(pos - 1).key, strlen(list.at(pos - 1).key))) {
+                return pos - 1;
+            }
+            else {
+                return -1;
+            }
+        }
+
+        V& operator[](const char* key)
+        {
+            bool found;
+            int pos = search(key, found);
+            if (!found) {
+                list.insert(list.begin() + pos, {key, V()});
+                sorted++;
+            }
+            return list.at(pos).value;
+        }
+
+        V&& take(const char* key)
+        {
+            bool found;
+            int pos = search(key, found);
+            if (!found) throw RuntimeError(std::string("Key not found: ") + key);
+            V tmp = std::move(list[pos].value);
+            list.erase(list.begin() + pos);
+            sorted--;
+            return std::move(tmp);
+        }
+   
+        size_t size() 
+        {
+            sort();
+            return list.size();
+        }
+
+        const Pair<V> & at(size_t pos) 
+        {
+            sort();
+            return list.at(pos);
+        }
+
         void sort() 
         {
-            if (sorted < size - 1) {
-                sort(sorted, size - 1);
+            if (sorted < list.size()) {
+                if (sorted < list.size() - 1) {
+                    std::sort(list.begin() + sorted, list.end(), LessThan<V>());
+                } 
                 if (sorted > 0) {
-                    merge(sorted);
+                    std::inplace_merge(list.begin(), list.begin() + sorted, list.end(), LessThan<V>());
+                }
+                list.erase(std::unique(list.begin(), list.end(), Equal<V>()), list.end());
+            } 
+            sorted = list.size();
+        }
+
+    private:
+        
+        int search(const char * key, bool& found) 
+        {
+            sort();
+            int lo = -1;
+            int hi = list.size();
+            while (lo < hi - 1) {
+                int mid = (lo + hi)/2;
+                int comp = strcmp(key, list.at(mid).key);
+                if (comp == 0) {
+                    found = true;
+                    return mid;
+                }
+                else if (comp > 0) {
+                    lo = mid;
+                }
+                else {
+                    hi = mid;
                 }
             }
-            sorted = size;
+           
+            found = false;
+            return hi;
         }
-        
-        void sort(int start, int end) 
-        {
-            // FIXME
-        }
-
-        void merge(int midpoint)
-        {
-            // FIXME
-        }
-
     };
 
-    template<typename ValueType>
-    void map_insert(Map<ValueType>*& map, const char* key, ValueType&& value)
-    {
-        if (!key) throw RuntimeError("NULL is not allowed as map key");
 
-        ensureCapacityForOneMore(map);
-        for (int i = 0; i < map->size; i++) {
-            if (! strcmp(key, map->data[i].key)) {
-                map->data[i].value = std::move(value);
-                return;
-            }
-        }
-
-        ensureCapacityForOneMore(map);
-        map->data[map->size].key = key;
-        map->data[map->size++].value = std::move(value);
-    }
-
-    template<typename ValueType>
-    bool map_contains(Map<ValueType>*& map, const char* key)
-    {
-        for (int i = 0; i<map->size; i++) {
-            if (!strcmp(key, map->data[i].key)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    template<typename ValueType>
-    ValueType& map_at(Map<ValueType>*& map, const char* key)
-    {
-        for (int i = 0; i< map->size; i++) {
-            if (!strcmp(key, map->data[i].key)) {
-                return map->data[i].value;
-            }
-        }
-
-        ensureCapacityForOneMore(map);
-        map->data[map->size].key = key;
-        new (&(map->data[map->size].value)) ValueType();
-        return map->data[map->size++].value;
-    }
-
-    template<typename ValueType>
-    ValueType&& map_take(Map<ValueType>*& map, const char* key)
-    {
-        for (int i = 0; i < map->size; i++) {
-            if (!strcmp(key, map->data[i].key)) {
-                ValueType tmp = std::move(map->data[i].value);
-                for (int j = i+1; j < map->size; j++) {
-                    map->data[j-1] = std::move(map->data[j]);
-                }
-                map->data[--map->size].~Pair();
-                return std::move(tmp);
-            }
-        }
-
-        throw RuntimeError(std::string("Key not found: ") + key);
-    }
-
-    template<typename ValueType>
-    Map<ValueType>* map_create(int initialCapacity = 4)
-    {
-        Map<ValueType>* map = (Map<ValueType>*)malloc(sizeof(Map<ValueType>) + initialCapacity*sizeof(Pair<ValueType>));
-        if (!map) throw C_Error();
-        map->size = 0;
-        map->capacity = initialCapacity;
-        return map;
-    }
-
-
-    template<typename ValueType>
-    void map_delete(Map<ValueType>* map)
-    {
-        for (int i = 0; i < map->size; i++) {
-            map->data[i].value.~ValueType();
-        }
-
-        free(map);
-    }
-
-    template<typename ValueType>
-    void ensureCapacityForOneMore(Map<ValueType>*& map)
-    {
-        if (map->size < map->capacity) return;
-        
-        int newCapacity = 2*map->capacity;
-        map = (Map<ValueType>*) realloc(map, sizeof(Map<ValueType>) + newCapacity*sizeof(Pair<ValueType>));
-        if (!map) throw C_Error();
-        //memset(map->data + map->capacity, 0, map->capacity*sizeof(Pair<ValueType>));
-        map->capacity = newCapacity;
-        std::cout << "Out of ensureCapacity, mapptr: " << (void*)map << "\n";
-        //std::cout << "Out of mapEnsure, map: " << (void*)map << "\n";
-    }
 }
 #endif // MAP_H

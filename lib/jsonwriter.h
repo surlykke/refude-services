@@ -16,7 +16,7 @@ namespace org_restfulipc
         Buffer buffer;
 
     private:
-        void write(Json* json);
+        void write(const Json* json);
 
         void writeString(const char *string);
         void write(const char* string);

@@ -1,3 +1,4 @@
+#include <sstream>
 #include <math.h>
 #include <bitset>
 #include "jsonreader.h"
@@ -40,62 +41,71 @@ namespace org_restfulipc
     {
     }
 
-    Json JsonReader::read()
+    Json&& JsonReader::read()
     {
         skipSpace();
         Json json;
         readNext(json);
 
         if (currentChar() != '\0') {
-            throw RuntimeError("Trailing characters");
+            throw RuntimeError(std::string("Trailing characters: ") + currentChar() + " at " + std::to_string(bufferPos));
         }
-        return json;
+        return std::move(json);
     }
 
     void JsonReader::readNext(Json& json)
     {
         char cc = currentChar();
         if (cc == '{') {
+            std::cout << "{";
             json = JsonConst::EmptyObject;
             skip();
             if (currentChar() != '}') {
                 for(;;) {
                     const char* entryKey = readString();
                     skip(':');
-                    json[entryKey] = read();
+                    Json& value = json.append(entryKey, Json());
+                    readNext(value);
                     if (currentChar() != ',') break;
                     skip();
                     if (currentChar() == '}') break;
                 }
             }
             skip('}');
+            std::cout << "}"; 
         }
         else if (cc == '[')  {
+            std::cout << "[";
             json = JsonConst::EmptyArray;
             skip();
             if (currentChar () != ']') {
                 for (;;) {
-                    json.append(std::move(read()));
+                    Json& element = json.append(Json());
+                    readNext(element);
                     if (currentChar() != ',') break;
                     skip();
                     if (currentChar() == ']') break;
                 }
             }
             skip(']');
+            std::cout << "]";
         }
         else if (cc == '"') {
             json = readString();
         }
-        else if (cc = 't') {
+        else if (cc == 't') {
             skip("true");
+            std::cout << "true ";
             json = JsonConst::TRUE;
         }
         else if (cc == 'f') {
             skip("false");
+            std::cout << "false ";
             json = JsonConst::FALSE;
         }
         else if (cc == 'n') {
             skip("null");
+            std::cout << "null ";
             json = JsonConst::Null;
         }
         else if (cc == '+' || cc == '-' || (cc >= '0' && cc <= '9')) {
@@ -122,6 +132,7 @@ namespace org_restfulipc
            case '"':
                buf[stringPos] = '\0';
                skip();
+               std::cout << buf + stringStart << " ";
                return buf + stringStart;
                break;
            case '\0':
@@ -153,6 +164,7 @@ namespace org_restfulipc
         if (number == HUGE_VAL || number == -HUGE_VAL) throw RuntimeError("Overflow");
         bufferPos = endPtr - buf;
         skipSpace();
+        std::cout << number << " ";
         return number;
     }
 

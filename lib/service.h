@@ -40,7 +40,8 @@ namespace org_restfulipc
         int mNumThreads;
         int listenSocket;
         ShortMtQueue<16> requestSockets;
-        Map<AbstractResource*>* resourceMappings;
+        Map<AbstractResource*> resourceMappings;
+        Map<AbstractResource*> prefixMappings;
         bool shuttingDown;
     };
 

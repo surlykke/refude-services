@@ -11,7 +11,7 @@ namespace org_restfulipc
     {
     public:
         JsonReader(char* buf);
-        Json read();
+        Json&& read();
 
     private:
         void readNext(Json& json);

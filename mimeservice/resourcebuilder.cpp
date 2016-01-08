@@ -14,16 +14,13 @@ namespace org_restfulipc
 
     ResourceBuilder::ResourceBuilder(const char* mimedir) :
         Service((uint16_t)7938),
-        strings(list_create<char*>(256))
+        strings()
     {
-        std::cout << "ResourceBuilder constructor, strings.size: " << strings->size << ", strings.capacity: " << strings->capacity << "\n";
         read(mimedir);
     }
 
     void ResourceBuilder::read(const char* xmlFilePath)
     {
-        Map<AbstractResource*>*  resourceMap = map_create<AbstractResource*>(1024);
-
         XMLDocument* doc = new XMLDocument;
         std::cout << "loading: " << xmlFilePath << "\n";
         doc->LoadFile(xmlFilePath);
@@ -40,19 +37,19 @@ namespace org_restfulipc
 
             XMLElement* commentElement = mimetypeElement->FirstChildElement("comment");
             if (commentElement && commentElement->GetText()) {
-                subtypeResource->json["comment"] = list_append(strings, strdup(commentElement->GetText()));
+                subtypeResource->json["comment"] = keep(commentElement->GetText());
             }
 
             for (XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
                  aliasElement;
                  aliasElement = aliasElement->NextSiblingElement("alias")) {
-                subtypeResource->json["aliases"].append(list_append(strings,strdup(aliasElement->Attribute("type"))));
+                subtypeResource->json["aliases"].append(keep(aliasElement->Attribute("type")));
             }
 
             for (XMLElement* globElement = mimetypeElement->FirstChildElement("glob");
                  globElement;
                  globElement = globElement->NextSiblingElement("glob")) {
-                subtypeResource->json["globs"].append(list_append(strings, strdup(globElement->Attribute("pattern"))));
+                subtypeResource->json["globs"].append(keep(globElement->Attribute("pattern")));
             }
             
             std::cout << "Out of loop\n";
@@ -72,6 +69,9 @@ namespace org_restfulipc
             mimeTypesResource = new JsonResource("/mimetypes");
             mimeTypesResource->json["types"] = JsonConst::EmptyArray;
             mimeTypesResource->json["_links"]["related"] = JsonConst::EmptyArray;
+            mimeTypesResource->json["_links"]["related"].append(JsonConst::EmptyObject);
+            mimeTypesResource->json["_links"]["related"][0]["href"] = "/mimetypes/{type}";
+            mimeTypesResource->json["_links"]["related"][0]["templated"] = JsonConst::TRUE;
             mimeTypesResource->setResponseStale();
             map("/mimetypes", mimeTypesResource);
         }
@@ -83,7 +83,7 @@ namespace org_restfulipc
         std::cout << "Into buildToplevelResource, selfUri: " << selfUriTmp << "\n";
         JsonResource* toplevelResource = (JsonResource*) mapping(selfUriTmp);
         if (! toplevelResource) {
-            const char* selfUri = list_append(strings, strdup(selfUriTmp));
+            const char* selfUri = keep(selfUriTmp);
             const char* typeName = selfUri + strlen("/mimetypes/");
             toplevelResource = new JsonResource(selfUri);
             toplevelResource->json["name"] = typeName;
@@ -92,7 +92,7 @@ namespace org_restfulipc
             toplevelResource->json["_links"]["related"]["templated"] = JsonConst::TRUE;
             char relHref[128];
             sprintf(relHref, "%s/{subtype}", selfUri);
-            toplevelResource->json["_links"]["related"]["href"] = list_append(strings, strdup(relHref));
+            toplevelResource->json["_links"]["related"]["href"] = keep(relHref);
             toplevelResource->setResponseStale();
             map(selfUri, toplevelResource);
             buildMimeTypesResource()->json["types"].append(typeName);
@@ -110,7 +110,7 @@ namespace org_restfulipc
 
         char tmp[256];
         sprintf(tmp, "/mimetypes/%s", typeString);
-        const char* subtypeSelfUri = list_append(strings, strdup(tmp));
+        const char* subtypeSelfUri = keep(tmp);
         const char* subtypeName = subtypeSelfUri + strlen("/mimetypes/") + slashIndex + 1;
 
         tmp[strlen("/mimetypes/") + slashIndex] = '\0';
@@ -124,6 +124,11 @@ namespace org_restfulipc
         subtypeResource->setResponseStale();
         map(subtypeSelfUri, subtypeResource);
         return subtypeResource;
+    }
+
+    const char* ResourceBuilder::keep(const char* string) {
+        strings.push_back(strdup(string));
+        return strings.back();
     }
 
 }

@@ -35,7 +35,7 @@ namespace org_restfulipc
 
         pos += 7;
             
-        if (*pos = '{')    {
+        if (*pos == '{')    {
             domain = AF_UNIX;    
             socketPath = pos + 1;
             pos = index(pos, '}');    

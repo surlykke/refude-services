@@ -3,7 +3,6 @@
 #include <memory>
 #include <stdint.h>
 #include "errorhandling.h"
-#include "list.h"
 #include "map.h"
 
 namespace org_restfulipc
@@ -65,18 +64,19 @@ namespace org_restfulipc
         uint size();
 
         Json& append(Json&& json);
+        Json& append(const char* key, Json&& json);
         Json& insertAt(int index, Json&& json);
 
         void typeAssert(const char* operation, JsonType otherType);
         const char* typeAsString();
         const char* typeAsString(JsonType type);
 
-    private:
+    //private:
         void deleteChildren();
 
         union {
             Map<Json>*  entries;
-            List<Json>* elements;
+            std::vector<Json>* elements;
             const char* string;
             double number;
             bool boolean;

@@ -3,7 +3,6 @@
 
 #include <json.h>
 #include <buffer.h>
-#include <list.h>
 #include <service.h>
 
 using namespace std;
@@ -22,7 +21,8 @@ namespace org_restfulipc
         JsonResource* buildToplevelResource(const char* selfUriTmp);
         JsonResource* buildSubTypeResource(const char* typeString);
 
-        List<char*>* strings;
+        const char* keep(const char* string);
+        std::vector<const char*> strings;
     };
 
 }
