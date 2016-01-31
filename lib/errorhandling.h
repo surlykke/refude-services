@@ -38,12 +38,12 @@
 
 namespace org_restfulipc
 {
-    struct RuntimeError : std::runtime_error
+    struct RuntimeError : public std::exception
     {
-        RuntimeError(std::string &what) : std::runtime_error(what) {}
-        RuntimeError(std::string what) : std::runtime_error(what) {}
-        RuntimeError(std::stringstream&& what) : std::runtime_error(what.str()) {}
-        virtual ~RuntimeError() {}
+        RuntimeError(const char* fmt, ...);
+        virtual ~RuntimeError() {};
+        virtual const char* what() const noexcept { return errorMsg;}
+        char errorMsg[1024];
     };
 
     struct C_Error : public RuntimeError

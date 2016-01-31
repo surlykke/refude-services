@@ -25,7 +25,6 @@ namespace org_restfulipc
 
     void GenericResource::handleRequest(int &socket, const HttpMessage& request)
     {
-        std::cout << "handleRequest, path: " << request.path << ", remaining path:" << request.remainingPath << "\n";
         if (request.method == Method::GET)    
         {
             doGet(socket, request);

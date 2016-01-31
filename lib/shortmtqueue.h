@@ -11,7 +11,7 @@ namespace org_restfulipc
     template<int size> struct ShortMtQueue
     {
 
-        ShortMtQueue() : elements(), count(0), m() { std::cout << "ShortMtQueue constructor\n";}
+        ShortMtQueue() : elements(), count(0), m() { }
 
         void enqueue(int s) {
            {
@@ -43,7 +43,6 @@ namespace org_restfulipc
 
                 result = elements[--count];
             }
-
             notFull.notify_one();
 
             return result;

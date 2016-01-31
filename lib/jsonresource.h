@@ -11,9 +11,8 @@ namespace org_restfulipc
     class JsonResource : public AbstractResource
     {
     public:
-        //static JsonResource* fromTemplate(const char* templ, std::map<const char*, const char*> parameters);
         JsonResource(const char* selfLinkUri);
-        //JsonResource();
+        JsonResource();
         virtual ~JsonResource();
 
         void addRelatedLink(const char* relatedUri, bool templated);

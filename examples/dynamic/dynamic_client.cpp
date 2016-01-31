@@ -31,7 +31,7 @@ int main(int argc, char** argv)
         }
     }
     catch (C_Error c_e) {
-        cout << "Caught: " << c_e.what() << "\n";
+        cout << "Caught: " << c_e.errorMsg << "\n";
     }
 }
 

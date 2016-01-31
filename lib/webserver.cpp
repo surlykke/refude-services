@@ -60,7 +60,7 @@ namespace org_restfulipc
                 byteswritten += bytes;
             }
 
-            off_t offset = NULL;
+            off_t offset = 0L;
             while (filesize > 0)  {
                 std::cout << "writing body, socket: " << socket << ", fd: " << fd << ", filesize: " << filesize << "\n";
                 int bytes = sendfile(socket, fd, &offset, filesize);

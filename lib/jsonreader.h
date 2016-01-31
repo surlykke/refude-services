@@ -10,40 +10,31 @@ namespace org_restfulipc
     class JsonReader
     {
     public:
-        JsonReader(char* buf);
-        Json&& read();
+        JsonReader(const char* buf);
+        Json read();
 
     private:
         void readNext(Json& json);
-        char *readString();
+        const char *readString();
+        void replaceEscapes(char* string);
+        void readUnicodeEscape(char*& dest, char*& src);
         double readNumber();
 
-        char currentChar();
         bool currentCharIsWhiteSpace();
 
         void skip();
         void skip(char c);
         void skipSpace();
-        void skip(const char* string);
+        void skipKeyword(const char* string);
         uint16_t hexValue(char c);
-        int readUnicodeEscape(uint32_t stringPos);
 
-        char* buf;
-        uint32_t bufferPos;
-
+        const char* buf;
+        const char* cc;
+        
+        // Error reporting
+        int line();
+        int column();
     };
 
-    class UnexpectedChar : public RuntimeError
-    {
-    public:
-        UnexpectedChar(char c, uint32_t bufferPos) : RuntimeError("") {}
-    };
-
-    class UnescapableChar : public RuntimeError
-    {
-    public:
-        UnescapableChar(char c, uint32_t bufferPos) : RuntimeError(std::string("Got ") + c + " at " + std::to_string(bufferPos)) {}
-
-    };
 }
 #endif // JSONREADER_H

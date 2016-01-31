@@ -24,6 +24,16 @@ namespace org_restfulipc
         json["_links"]["self"]["href"] = selfLinkUri;
     }
 
+    JsonResource::JsonResource() : 
+        AbstractResource(), 
+            json(),
+            response(),
+            responseMutex()
+
+    {
+    }
+
+
     JsonResource::~JsonResource()
     {
     }
@@ -43,7 +53,6 @@ namespace org_restfulipc
 
     void JsonResource::handleRequest(int &socket, const HttpMessage& request)
     {
-        std::cout << "handleRequest, path: " << request.path << ", remaining path:" << request.remainingPath << "\n";
         if (request.method == Method::GET)
         {
             doGet(socket, request);
@@ -64,7 +73,7 @@ namespace org_restfulipc
         {
             buildResponse();
         }
-
+        
         {
             std::shared_lock<std::shared_timed_mutex> lock(responseMutex);
             int bytesWritten = 0;
@@ -97,7 +106,7 @@ namespace org_restfulipc
         {
             JsonWriter jsonWriter(&json);
             std::unique_lock<std::shared_timed_mutex> lock(responseMutex);
-            response.used = sprintf(response.data, responseTemplate, jsonWriter.buffer.used);
+            response.used = sprintf(response.data, responseTemplate, jsonWriter.buffer.used - 1);
             response.ensureCapacity(jsonWriter.buffer.used + 1);
             strcpy(response.data + response.used, jsonWriter.buffer.data);
             response.used += jsonWriter.buffer.used;

@@ -1,0 +1,17 @@
+{
+    "name": "REPLACEME",
+    "subtypes": [],
+    "_links": {
+        "self" : {
+            "href": "REPLACEME"
+        },
+        "related": [
+            {
+                "href": "REPLACEME",
+                "templated": true
+            }
+        ]
+    },
+    "ripc::prefetched": {}
+}
+

@@ -1,0 +1,14 @@
+{
+    "types" : [],
+    "_links" : {
+        "self" : {
+            "href" : "/mimetypes"
+        },
+        "related": [ { 
+                "href": "/mimetypes/{type}",
+                "templated": true
+            }
+        ]
+    },
+    "ripc::prefetched" : {}
+}

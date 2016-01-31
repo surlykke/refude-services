@@ -45,10 +45,10 @@ namespace org_restfulipc
 
         Map(): list(), sorted(0) {}
 
-        V& add(const char* key, V&& value)
+        V& add(const char* key, V&& value, bool ownKey = false)
         {
             if (!key) throw RuntimeError("NULL is not allowed as map key");
-            list.push_back({key, std::move(value)});
+            list.push_back({strdup(key), std::move(value)});
             return list.back().value;
         }
 
@@ -84,21 +84,21 @@ namespace org_restfulipc
             bool found;
             int pos = search(key, found);
             if (!found) {
-                list.insert(list.begin() + pos, {key, V()});
+                list.insert(list.begin() + pos, {strdup(key), V()});
                 sorted++;
             }
             return list.at(pos).value;
         }
 
-        V&& take(const char* key)
+        V take(const char* key)
         {
             bool found;
             int pos = search(key, found);
-            if (!found) throw RuntimeError(std::string("Key not found: ") + key);
+            if (!found) throw RuntimeError("Key not found: %s", key);
             V tmp = std::move(list[pos].value);
             list.erase(list.begin() + pos);
             sorted--;
-            return std::move(tmp);
+            return tmp;
         }
    
         size_t size() 
@@ -153,7 +153,5 @@ namespace org_restfulipc
             return hi;
         }
     };
-
-
 }
 #endif // MAP_H

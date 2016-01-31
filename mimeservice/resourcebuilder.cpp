@@ -5,6 +5,9 @@
 #include <service.h>
 #include <jsonresource.h>
 #include <map.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include "resourcebuilder.h"
 
 using namespace tinyxml2;
@@ -12,17 +15,40 @@ using namespace tinyxml2;
 namespace org_restfulipc
 {
 
+    char* readFile(const char* path) 
+    {
+        int fd = open(path, O_RDONLY);
+        if (fd < 0) throw C_Error();
+        
+        struct stat st;
+        if (fstat(fd, &st) < 0) throw C_Error();
+        
+        char* result = new char[st.st_size + 1];
+        for (int bytesRead = 0; bytesRead < st.st_size; ) {
+            int n = read(fd, result, st.st_size - bytesRead);
+            if (n < 0) throw C_Error();
+            bytesRead += n;
+        }
+        result[st.st_size] = '\0';
+
+        return result; 
+    }
+
     ResourceBuilder::ResourceBuilder(const char* mimedir) :
-        Service((uint16_t)7938),
-        strings()
+        Service((uint16_t)7938)    
     {
         read(mimedir);
+        JsonResource* rootResource = new JsonResource();
+        rootResource->json = std::move(root);
+        rootResource->setResponseStale();
+        map("/mimetypes", rootResource);
     }
 
     void ResourceBuilder::read(const char* xmlFilePath)
     {
+        buildRoot();
+        std::cout << JsonWriter(&root).buffer.data << "\n";
         XMLDocument* doc = new XMLDocument;
-        std::cout << "loading: " << xmlFilePath << "\n";
         doc->LoadFile(xmlFilePath);
         XMLElement* rootElement = doc->FirstChildElement("mime-info");
 
@@ -32,104 +58,89 @@ namespace org_restfulipc
              mimetypeElement;
              mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
 
-            JsonResource* subtypeResource = buildSubTypeResource(mimetypeElement->Attribute("type"));
-            if (! subtypeResource) continue;
+            char mimetype[128];
+            if (sprintf(mimetype, mimetypeElement->Attribute("type"), 128) > 127)  {
+                std::cout << "Warn: mimetype too long: " << mimetypeElement->Attribute("type");
+                return;
+            }
+
+            char* typeName = mimetype;
+            char* subtype = NULL;
+            for (char *c = mimetype; *c; c++) {
+                if ('/' == *c) {
+                    *c = '\0';
+                    subtype = c + 1;
+                }
+            }
+
+            if (*typeName == '\0' || subtype == NULL || *subtype == '\0') {
+                std::cerr << "Warn: Invalid mimetype: " << mimetypeElement->Attribute("type");
+            }
+
+            Json& subtypeJson = buildSubtype(typeName, subtype);
 
             XMLElement* commentElement = mimetypeElement->FirstChildElement("comment");
             if (commentElement && commentElement->GetText()) {
-                subtypeResource->json["comment"] = keep(commentElement->GetText());
+                subtypeJson["comment"] = commentElement->GetText();
             }
 
             for (XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
                  aliasElement;
                  aliasElement = aliasElement->NextSiblingElement("alias")) {
-                subtypeResource->json["aliases"].append(keep(aliasElement->Attribute("type")));
+                subtypeJson["aliases"].append(aliasElement->Attribute("type"));
             }
 
             for (XMLElement* globElement = mimetypeElement->FirstChildElement("glob");
                  globElement;
                  globElement = globElement->NextSiblingElement("glob")) {
-                subtypeResource->json["globs"].append(keep(globElement->Attribute("pattern")));
+                subtypeJson["globs"].append(globElement->Attribute("pattern"));
             }
             
-            std::cout << "Out of loop\n";
-            std::cout << "main: " << JsonWriter(&buildMimeTypesResource()->json).buffer.data << "\n";
-            std::cout << "sub:  " << JsonWriter(&subtypeResource->json).buffer.data << "\n";
             i++;
-        }
-
-        std::cout << "Read done - " << i << " mimetypes\n";
+        } 
     }
 
 
-    JsonResource* ResourceBuilder::buildMimeTypesResource()
+    void ResourceBuilder::buildRoot()
     {
-        JsonResource* mimeTypesResource = (JsonResource*) mapping("/mimetypes");
-        if (! mimeTypesResource) {
-            mimeTypesResource = new JsonResource("/mimetypes");
-            mimeTypesResource->json["types"] = JsonConst::EmptyArray;
-            mimeTypesResource->json["_links"]["related"] = JsonConst::EmptyArray;
-            mimeTypesResource->json["_links"]["related"].append(JsonConst::EmptyObject);
-            mimeTypesResource->json["_links"]["related"][0]["href"] = "/mimetypes/{type}";
-            mimeTypesResource->json["_links"]["related"][0]["templated"] = JsonConst::TRUE;
-            mimeTypesResource->setResponseStale();
-            map("/mimetypes", mimeTypesResource);
-        }
-        return mimeTypesResource;
+        const char* jsonTemplate = readFile("rootTemplate.json");
+        root << jsonTemplate;
+        delete jsonTemplate;
     }
 
-    JsonResource* ResourceBuilder::buildToplevelResource(const char* selfUriTmp)
+    Json& ResourceBuilder::buildType(const char* typeName) 
     {
-        std::cout << "Into buildToplevelResource, selfUri: " << selfUriTmp << "\n";
-        JsonResource* toplevelResource = (JsonResource*) mapping(selfUriTmp);
-        if (! toplevelResource) {
-            const char* selfUri = keep(selfUriTmp);
-            const char* typeName = selfUri + strlen("/mimetypes/");
-            toplevelResource = new JsonResource(selfUri);
-            toplevelResource->json["name"] = typeName;
-            toplevelResource->json["subtypes"] = JsonConst::EmptyArray;
-            toplevelResource->json["_links"]["related"] = JsonConst::EmptyObject;
-            toplevelResource->json["_links"]["related"]["templated"] = JsonConst::TRUE;
-            char relHref[128];
-            sprintf(relHref, "%s/{subtype}", selfUri);
-            toplevelResource->json["_links"]["related"]["href"] = keep(relHref);
-            toplevelResource->setResponseStale();
-            map(selfUri, toplevelResource);
-            buildMimeTypesResource()->json["types"].append(typeName);
+        static char* typeTemplate = readFile("typeTemplate.json");
+
+        char selfUri[128];
+        snprintf(selfUri, 128, "/mimetypes/%s", typeName);
+        
+        Json& typeJson = root["ripc::prefetched"][selfUri];
+        if (typeJson.mType == JsonType::Undefined) {
+            typeJson << typeTemplate;
+            typeJson["name"] = typeName;
+            typeJson["_links"]["self"]["href"] = selfUri;
+            char relatedHref[32];
+            sprintf(relatedHref, "/mimetypes/%s/{subtype}", typeName);
+            typeJson["_links"]["related"][0]["href"] = relatedHref;
+            
         }
-    
-        return toplevelResource;
+        return typeJson;
     }
 
-    JsonResource* ResourceBuilder::buildSubTypeResource(const char* typeString)
+    Json& ResourceBuilder::buildSubtype(const char* typeName, const char* subtype)
     {
-        const char* slashPtr = strchr(typeString, '/');
-        if (!slashPtr) return NULL;
-        int slashIndex = slashPtr - typeString;
-        if (slashIndex == 0 || slashIndex == strlen(typeString - 1)) return NULL;
+        static char* subtypeTemplate = readFile("subtypeTemplate.json");
 
-        char tmp[256];
-        sprintf(tmp, "/mimetypes/%s", typeString);
-        const char* subtypeSelfUri = keep(tmp);
-        const char* subtypeName = subtypeSelfUri + strlen("/mimetypes/") + slashIndex + 1;
-
-        tmp[strlen("/mimetypes/") + slashIndex] = '\0';
-        JsonResource* toplevelResource = buildToplevelResource(tmp);
-        toplevelResource->json["subtypes"].append(subtypeName);
-        JsonResource* subtypeResource = new JsonResource(subtypeSelfUri);
-        subtypeResource->json["name"] = subtypeName;
-
-        subtypeResource->json["aliases"] = JsonConst::EmptyArray;
-        subtypeResource->json["globs"] = JsonConst::EmptyArray;
-        subtypeResource->setResponseStale();
-        map(subtypeSelfUri, subtypeResource);
-        return subtypeResource;
+        char selfUri[164];
+        snprintf(selfUri, 164, "/mimetypes/%s/%s", typeName, subtype);
+        Json& typeJson = buildType(typeName);
+        Json& subtypeJson = typeJson["ripc::prefetched"][selfUri];
+        subtypeJson << subtypeTemplate;
+        subtypeJson["type"] = typeName;
+        subtypeJson["subtype"] = subtype;
+        subtypeJson["_links"]["self"]["href"] = selfUri;
+        return subtypeJson;
     }
-
-    const char* ResourceBuilder::keep(const char* string) {
-        strings.push_back(strdup(string));
-        return strings.back();
-    }
-
 }
 

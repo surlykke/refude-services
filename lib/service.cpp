@@ -60,7 +60,6 @@ namespace org_restfulipc
         prefixMappings(),
         shuttingDown(false)
     {
-        std::cout << "Into Service constructor\n";
         struct sockaddr_in sockaddr;
         memset(&sockaddr, 0, sizeof(struct sockaddr_in));
         sockaddr.sin_family = AF_INET;
@@ -68,7 +67,6 @@ namespace org_restfulipc
         sockaddr.sin_addr.s_addr = INADDR_ANY;
         if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
         if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sockaddr)) < 0) throw C_Error();
-        std::cout << "Service constructor done\n";
     }
 
     void Service::run()
@@ -92,13 +90,12 @@ namespace org_restfulipc
 
     Service::~Service()
     {
-        std::cout << "Service destructor\n";
         shuttingDown = true;
-        /*for (int i = 0; i < threads.size(); i++) {
+        for (int i = 0; i < threads.size(); i++) {
             threads.at(i).join();
         }
 
-        close(listenSocket);*/
+        close(listenSocket);
 
     }
 
@@ -146,6 +143,12 @@ namespace org_restfulipc
                     continue;
                 }
 
+                struct timeval tv;
+                tv.tv_sec = 0;  
+                tv.tv_usec = 200000;  
+                setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv , sizeof(struct timeval));
+
+
                 requestSockets.enqueue(requestSocket);
             }
         }
@@ -159,7 +162,6 @@ namespace org_restfulipc
 
         for (;;) {
             requestSocket = requestSockets.dequeue();
-
             if (requestSocket < 0) {
                 return;
             }
@@ -174,7 +176,8 @@ namespace org_restfulipc
                     AbstractResource *resource = resourceMappings.at(resourceIndex).value;
                     request.remainingPath = ""; // FIXME
                     resource->handleRequest(requestSocket, request);
-
+                    const char* connectHeader = request.headerValue(Header::connection);
+                    if (!connectHeader) connectHeader = "(null)"; 
                     if (requestSocket > -1 &&
                         request.headerValue(Header::connection) != 0 &&
                         strcasecmp("close", request.headerValue(Header::connection)) == 0) {

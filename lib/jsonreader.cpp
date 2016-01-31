@@ -35,172 +35,193 @@ namespace org_restfulipc
         return table;
     }
 
-    JsonReader::JsonReader(char *buf) :
-        buf(buf),
-        bufferPos(0)
+    JsonReader::JsonReader(const char *buf) :
+        buf(buf), 
+        cc(buf)
     {
     }
 
-    Json&& JsonReader::read()
+    Json JsonReader::read()
     {
         skipSpace();
         Json json;
         readNext(json);
 
-        if (currentChar() != '\0') {
-            throw RuntimeError(std::string("Trailing characters: ") + currentChar() + " at " + std::to_string(bufferPos));
+        if (*cc != '\0') {
+            throw RuntimeError("Trailing character: %c at %d,%d", *cc, line(), column());
         }
-        return std::move(json);
+        
+        return Json(std::move(json));
     }
 
     void JsonReader::readNext(Json& json)
     {
-        char cc = currentChar();
-        if (cc == '{') {
-            std::cout << "{";
+        if (*cc == '{') {
             json = JsonConst::EmptyObject;
             skip();
-            if (currentChar() != '}') {
+            if (*cc != '}') {
                 for(;;) {
                     const char* entryKey = readString();
                     skip(':');
                     Json& value = json.append(entryKey, Json());
                     readNext(value);
-                    if (currentChar() != ',') break;
+                    if (*cc != ',') break;
                     skip();
-                    if (currentChar() == '}') break;
+                    if (*cc == '}') break;
                 }
             }
             skip('}');
-            std::cout << "}"; 
         }
-        else if (cc == '[')  {
-            std::cout << "[";
+        else if (*cc == '[')  {
             json = JsonConst::EmptyArray;
             skip();
-            if (currentChar () != ']') {
+            if (*cc != ']') {
                 for (;;) {
                     Json& element = json.append(Json());
                     readNext(element);
-                    if (currentChar() != ',') break;
+                    if (*cc != ',') break;
                     skip();
-                    if (currentChar() == ']') break;
+                    if (*cc == ']') break;
                 }
             }
             skip(']');
-            std::cout << "]";
         }
-        else if (cc == '"') {
+        else if (*cc == '"') {
             json = readString();
         }
-        else if (cc == 't') {
-            skip("true");
-            std::cout << "true ";
+        else if (*cc == 't') {
+            skipKeyword("true");
             json = JsonConst::TRUE;
         }
-        else if (cc == 'f') {
-            skip("false");
-            std::cout << "false ";
+        else if (*cc == 'f') {
+            skipKeyword("false");
             json = JsonConst::FALSE;
         }
-        else if (cc == 'n') {
-            skip("null");
-            std::cout << "null ";
+        else if (*cc == 'n') {
+            skipKeyword("null");
             json = JsonConst::Null;
         }
-        else if (cc == '+' || cc == '-' || (cc >= '0' && cc <= '9')) {
+        else if (*cc == '+' || *cc == '-' || (*cc >= '0' && *cc <= '9')) {
             json = readNumber();
         }
         else {
-            throw UnexpectedChar(currentChar(), bufferPos);
+            throw RuntimeError("Unexcpected char '%c' at %d,%d. Excpected start of json element", *cc, line(), column());
         }
     }
 
-    char* JsonReader::readString()
+    const char* JsonReader::readString()
+    {
+        if (*cc != '"') {
+            throw RuntimeError("Expected start of string at %d,%d", line(), column()); 
+        }
+        cc++;
+
+        const char* stringStart = cc;
+        while (*cc != '"') {
+            if (*cc == '\0' || (*cc++ == '\\' && *cc++ == '\0')) {
+                throw RuntimeError("Runaway string");
+            }
+        }
+
+        char* result = strndup(stringStart, cc - stringStart);
+        replaceEscapes(result);
+        skip('"');
+        return result;
+
+    }
+
+    void JsonReader::replaceEscapes(char* string)
     {
         static char* escapedChar = initializeEscapeTable();
-        if (currentChar() != '"') {
-            throw UnexpectedChar('"', bufferPos);
-        }
-        bufferPos++;
-
-        uint32_t stringStart = bufferPos;
-        uint32_t stringPos = bufferPos;
-
-        for (;;) {
-           switch (currentChar()) {
-           case '"':
-               buf[stringPos] = '\0';
-               skip();
-               std::cout << buf + stringStart << " ";
-               return buf + stringStart;
-               break;
-           case '\0':
-               throw RuntimeError("Runaway string");
-           case '\\':
-               bufferPos++;
-               if (currentChar() == 'u') {
-                   stringPos += readUnicodeEscape(stringPos);
-               }
-               else if (escapedChar[currentChar()] == '\0') {
-                  throw UnescapableChar(currentChar(), bufferPos);
-               }
-               else {
-                   buf[stringPos++] = escapedChar[currentChar()];
-               }
-               break;
-           default:
-               buf[stringPos++] = currentChar();
-           }
-           bufferPos++;
-        }
-
+        char* dest = string;
+        do {
+            if (*string == '\\') {
+                string++;
+                if (*string == 'u') {
+                    readUnicodeEscape(dest, string);
+                }
+                else if (escapedChar[*string] == '\0') {
+                    throw RuntimeError("Unescapable char");
+                }
+                else {
+                    *dest++ = escapedChar[*string++];
+                }
+            }
+            else {
+                *dest++ = *string++;
+            }
+        } 
+        while (*string);
     }
+
+    void JsonReader::readUnicodeEscape(char*& dest, char*& src)
+    {
+        src++; // Skip 'u'
+        uint16_t codePoint = (hexValue(*src++) << 12);
+        codePoint += (hexValue(*src++) << 8);
+        codePoint += (hexValue(*src++) << 4);
+        codePoint += hexValue(*src);
+
+        int returnValue;
+        if (codePoint > 0x7FF) {
+            *dest++ = (char) (0xE0 | ((codePoint & 0xF000) >> 12));
+            *dest++ = (char) (0x80 | ((codePoint & 0xFC0) >> 6));
+            *dest++ = (char) (0x80 | (codePoint & 0x3F));
+            returnValue = 3;
+        }
+        else if (codePoint > 0x7F) {
+            *dest++ = (char) (0xC0 | ((codePoint & 0x7C0) >> 6));
+            *dest++ = (char) (0x80 | (codePoint & 0x3F));
+            returnValue = 2;
+        }
+        else {
+            *dest++ = (char) codePoint;
+            returnValue = 1;
+        }
+    }
+
 
     double JsonReader::readNumber()
     {
         char *endPtr;
-        double number = strtod(buf + bufferPos, &endPtr);
+        double number = strtod(cc, &endPtr);
         if (number == HUGE_VAL || number == -HUGE_VAL) throw RuntimeError("Overflow");
-        bufferPos = endPtr - buf;
+        cc = cc + (endPtr - cc);
         skipSpace();
-        std::cout << number << " ";
         return number;
     }
 
-    char JsonReader::currentChar() { return buf[bufferPos]; }
-
     bool JsonReader::currentCharIsWhiteSpace() {
         static bool *table = initializeSpaceTable();
-        return table[currentChar()];
+        return table[*cc];
     }
 
     void JsonReader::skip() {
-        bufferPos++;
+        cc++;
         skipSpace();
     }
 
     void JsonReader::skip(char c)
     {
-        if (c != currentChar()) {
-            throw UnexpectedChar(c, bufferPos);
+        if (c != *cc) {
+            throw RuntimeError("Unexpected char at %d,%d. Got '%c', expected: '%c'", line(), column(), *cc, c);
         }
         skip();
     }
 
     void JsonReader::skipSpace()
     {
-        while (currentCharIsWhiteSpace()) bufferPos++;
+        while (currentCharIsWhiteSpace()) cc++;
     }
 
-    void JsonReader::skip(const char* string)
+    void JsonReader::skipKeyword(const char* string)
     {
         for (const char* c = string; *c; c++) {
-            if (*c != buf[bufferPos++]) {
-                throw UnexpectedChar(*c, bufferPos);
+            if (*c != *cc++) {
+                throw RuntimeError("Unexpected char at %d,%d. Excepected to read '%s'", line(), column(), string);
             }
         }
-        while (currentCharIsWhiteSpace()) bufferPos++;
+        skipSpace();
     }
 
     uint16_t JsonReader::hexValue(char c)
@@ -212,34 +233,24 @@ namespace org_restfulipc
         }
         return val;
     }
-
-    int JsonReader::readUnicodeEscape(uint32_t stringPos)
-    {
-        bufferPos++;
-        uint16_t codePoint = (hexValue(buf[bufferPos++]) << 12);
-        codePoint += (hexValue(buf[bufferPos++]) << 8);
-        codePoint += (hexValue(buf[bufferPos++]) << 4);
-        codePoint += hexValue(buf[bufferPos]);
-
-        int returnValue;
-        if (codePoint > 0x7FF) {
-            buf[stringPos++] = (char) (0xE0 | ((codePoint & 0xF000) >> 12));
-            buf[stringPos++] = (char) (0x80 | ((codePoint & 0xFC0) >> 6));
-            buf[stringPos++] = (char) (0x80 | (codePoint & 0x3F));
-            returnValue = 3;
+    int JsonReader::line() {
+        int l = 1; 
+        for (const char* c = buf; c < cc; c++) {
+            if (*c == '\n') {
+                l++;
+            }
         }
-        else if (codePoint > 0x7F) {
-            buf[stringPos++] = (char) (0xC0 | ((codePoint & 0x7C0) >> 6));
-            buf[stringPos++] = (char) (0x80 | (codePoint & 0x3F));
-            returnValue = 2;
-        }
-        else {
-            buf[stringPos++] = (char) codePoint;
-            returnValue = 1;
-        }
-
-        return returnValue;
+        return l;
     }
 
+    int JsonReader::column() {
+        int lastLineStart = 0;
+        for (const char* c = buf; c < cc; c++) {
+            if (*c == '\n') {
+                lastLineStart = c - buf + 1;
+            }
+        }
+        return (cc - buf) -  lastLineStart; 
+    }
 
 }

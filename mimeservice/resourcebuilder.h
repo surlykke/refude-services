@@ -1,28 +1,23 @@
 #ifndef JSONBUILDER_H
 #define JSONBUILDER_H
 
-#include <json.h>
+#include <jsonresource.h>
 #include <buffer.h>
 #include <service.h>
 
-using namespace std;
 namespace org_restfulipc
 {
-    class JsonResource;
-
     class ResourceBuilder : public Service
     {
     public:
         ResourceBuilder(const char* mimedir);
     private:
-
         void read(const char* xmlFilePath);
-        JsonResource* buildMimeTypesResource();
-        JsonResource* buildToplevelResource(const char* selfUriTmp);
-        JsonResource* buildSubTypeResource(const char* typeString);
+        void buildRoot();
+        Json& buildType(const char* typeName);
+        Json& buildSubtype(const char* typeName, const char* subtype);
 
-        const char* keep(const char* string);
-        std::vector<const char*> strings;
+        Json root;
     };
 
 }

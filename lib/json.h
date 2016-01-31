@@ -5,12 +5,13 @@
 #include "errorhandling.h"
 #include "map.h"
 
+
 namespace org_restfulipc
 {
 
     enum JsonType
     {
-        Undefined = 0, // Important that this i 0. (So when we zero out a json, it will have type Undefined)
+        Undefined = 0, // Important that this is 0 - so when we zero out a json, it will have type Undefined)
         Object,
         Array,
         String,
@@ -19,7 +20,7 @@ namespace org_restfulipc
         Null
     };
 
-    // Used for initilizing
+    // Used for initializing
     enum class JsonConst
     {
         EmptyObject,
@@ -30,8 +31,6 @@ namespace org_restfulipc
 
     };
 
-    class Element;
-    class Entry;
 
     class Json
     {
@@ -40,15 +39,13 @@ namespace org_restfulipc
         Json(Json& other) = delete;
         Json(Json&& other);
         Json(JsonConst jsonConst);
-        Json(const char* string): mType(JsonType::String), string(string) {}
-        Json(double number) : mType(JsonType::Number), number(number) {}
+        Json(const char* string);
+        Json(double number);
         ~Json();
 
         Json& operator=(Json&& other);
         Json& operator=(Json& other) = delete;
         Json& operator=(JsonConst jsonConst);
-        Json& operator=(const char* string);
-        Json& operator=(double number);
 
         Json& operator[](const char* index);
         Json& operator[](int index);
@@ -58,8 +55,8 @@ namespace org_restfulipc
         operator long();
         operator bool();
 
-        Json&& take(int index);
-        Json&& take(const char* key);
+        Json take(int index);
+        Json take(const char* key);
         bool contains(const char* key);
         uint size();
 
@@ -87,6 +84,6 @@ namespace org_restfulipc
         friend class JsonWriter;
     };
 
-    Json& operator<<(Json& json, char* serialized);
+    Json& operator<<(Json& json, const char* serialized);
 }
 #endif // JSON_H

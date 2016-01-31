@@ -32,6 +32,9 @@ namespace org_restfulipc
         else if (mType == JsonType::Array) {
             delete elements;
         }
+        else if (mType == JsonType::String) {
+            delete string;
+        }
     }
 
     Json::Json(Json&& other)
@@ -65,7 +68,20 @@ namespace org_restfulipc
             break;
         }
     }
+        
+    Json::Json(const char* string) :
+        mType(JsonType::String), 
+        string(strdup(string))
+    {
+    }
 
+    Json::Json(double number) :
+        mType(JsonType::Number), 
+        number(number) 
+    {
+    }
+    
+ 
     Json::~Json()
     {
         deleteChildren();
@@ -80,23 +96,6 @@ namespace org_restfulipc
     }
 
 
-    Json& Json::operator[](const char *index)
-    {
-        typeAssert("operator[const char*]", JsonType::Object);
-        return (*entries)[index];
-    }
-
-    Json& Json::operator[](int index)
-    {
-        if (mType != JsonType::Array) {
-            throw RuntimeError(std::string("operator[") + 
-                               std::to_string(index) + 
-                               "] called on " + 
-                               typeAsString());
-        }
-
-        return (*elements)[index];
-    }
 
     Json&Json::operator=(JsonConst jsonConst)
     {
@@ -125,29 +124,25 @@ namespace org_restfulipc
         return *this;
     }
 
-    Json& Json::operator=(const char *string)
+
+    Json& Json::operator[](const char *index)
     {
-        deleteChildren();
-        mType = JsonType::String;
-        this->string = string;
-        return *this;
+        typeAssert("operator[const char*]", JsonType::Object);
+        return (*entries)[index];
     }
 
-    Json &Json::operator=(double number)
+    Json& Json::operator[](int index)
     {
-        deleteChildren();
-        mType = JsonType::Number;
-        this->number = number;
-        return *this;
+        typeAssert("operator[int]", JsonType::Array);
+        return (*elements)[index];
     }
 
-
-    Json&& Json::take(int index)
+    Json Json::take(int index)
     {
         typeAssert("take(int)", JsonType::Array);
         Json tmp = std::move((*elements)[index]);
         elements->erase(elements->begin() + index);
-        return std::move(tmp);
+        return tmp;
     }
 
 
@@ -195,11 +190,11 @@ namespace org_restfulipc
 
     void Json::typeAssert(const char* operation, JsonType type) {
         if (type != mType) {
-            throw RuntimeError("Fehler");
+            throw RuntimeError("Attempting %s on json of type %s", operation, typeAsString());
         }
     }
 
-    Json&& Json::take(const char* key)
+    Json Json::take(const char* key)
     {
         typeAssert("take(const char*)", JsonType::Object);
         return entries->take(key);
@@ -230,7 +225,7 @@ namespace org_restfulipc
         return string;
     }
 
-    Json& operator<<(Json& json, char* serialized)
+    Json& operator<<(Json& json, const char* serialized)
     {
 
         JsonReader reader(serialized);

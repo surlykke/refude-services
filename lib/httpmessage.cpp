@@ -175,7 +175,6 @@ namespace org_restfulipc
         if (nextChar() != '\n') throw Status::Http400;
         _message.buffer[endOfHeaderValue] = '\0';
         Header h = string2Header(_message.buffer + startOfHeaderLine);
-        printf("h: %d\n", static_cast<int>(h));
         if (h != Header::unknown)
         {
             _message.headers[(int) h] = _message.buffer + startOfHeaderValue;
