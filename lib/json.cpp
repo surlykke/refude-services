@@ -125,6 +125,11 @@ namespace org_restfulipc
     }
 
 
+    Json& Json::operator[](char *index)
+    {
+        return operator[]((const char*) index);
+    }
+
     Json& Json::operator[](const char *index)
     {
         typeAssert("operator[const char*]", JsonType::Object);

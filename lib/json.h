@@ -48,6 +48,7 @@ namespace org_restfulipc
         Json& operator=(JsonConst jsonConst);
 
         Json& operator[](const char* index);
+        Json& operator[](char *index);
         Json& operator[](int index);
 
         operator const char*();
