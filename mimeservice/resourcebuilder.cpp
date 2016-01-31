@@ -47,7 +47,6 @@ namespace org_restfulipc
     void ResourceBuilder::read(const char* xmlFilePath)
     {
         buildRoot();
-        std::cout << JsonWriter(&root).buffer.data << "\n";
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile(xmlFilePath);
         XMLElement* rootElement = doc->FirstChildElement("mime-info");
@@ -59,22 +58,13 @@ namespace org_restfulipc
              mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
 
             char mimetype[128];
-            if (sprintf(mimetype, mimetypeElement->Attribute("type"), 128) > 127)  {
-                std::cout << "Warn: mimetype too long: " << mimetypeElement->Attribute("type");
-                return;
-            }
+            char* saveptr;
+            strncpy(mimetype, mimetypeElement->Attribute("type"), 127);
+            char* typeName = strtok_r(mimetype, "/", &saveptr);
+            char* subtype = strtok_r(NULL, "/", &saveptr);
 
-            char* typeName = mimetype;
-            char* subtype = NULL;
-            for (char *c = mimetype; *c; c++) {
-                if ('/' == *c) {
-                    *c = '\0';
-                    subtype = c + 1;
-                }
-            }
-
-            if (*typeName == '\0' || subtype == NULL || *subtype == '\0') {
-                std::cerr << "Warn: Invalid mimetype: " << mimetypeElement->Attribute("type");
+            if (typeName == NULL || *typeName == '\0' || subtype == NULL || *subtype == '\0') {
+                std::cerr << "Warn: Invalid mimetype: " << mimetype << "\n";
             }
 
             Json& subtypeJson = buildSubtype(typeName, subtype);
