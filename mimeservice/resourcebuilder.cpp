@@ -9,6 +9,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "resourcebuilder.h"
+#include "rootTemplate.h"
+#include "typeTemplate.h"
+#include "subtypeTemplate.h"
 
 using namespace tinyxml2;
 
@@ -16,18 +19,12 @@ namespace org_restfulipc
 {
 
     ResourceBuilder::ResourceBuilder(const char* mimedir) :
-        Service((uint16_t)7938),
-            rootTemplate(readFile("rootTemplate.json")),
-            typeTemplate(readFile("typeTemplate.json")),
-            subtypeTemplate(readFile("subtypeTemplate.json"))
+        Service((uint16_t)7938)
     {
         readXml(mimedir);
     }
 
     ResourceBuilder::~ResourceBuilder() {
-        delete rootTemplate;
-        delete typeTemplate;
-        delete subtypeTemplate;
     }
 
     void ResourceBuilder::readXml(const char* xmlFilePath)
@@ -82,7 +79,7 @@ namespace org_restfulipc
         JsonResource* rootResource = (JsonResource*) mapping("/mimetypes");
         if (rootResource == NULL) {
             rootResource = new JsonResource();
-            rootResource->json << rootTemplate;
+            rootResource->json << rootTemplate_json;
             map("/mimetypes", rootResource);
             rootResource->setResponseStale();
         }
@@ -96,7 +93,7 @@ namespace org_restfulipc
         JsonResource* typeResource = (JsonResource*) mapping(selfUri);
         if (typeResource == NULL)  {
             typeResource = new JsonResource();
-            typeResource->json << typeTemplate;
+            typeResource->json << typeTemplate_json;
             typeResource->json["name"] = typeName;
             typeResource->json["_links"]["self"]["href"] = selfUri;
             char subtypeRef[128];
@@ -114,7 +111,7 @@ namespace org_restfulipc
         char selfUri[164];
         snprintf(selfUri, 164, "/mimetypes/%s/%s", typeName, subtype);
         JsonResource* subtypeResource = new JsonResource(); 
-        subtypeResource->json << subtypeTemplate;
+        subtypeResource->json << subtypeTemplate_json;
         subtypeResource->json["type"] = typeName;
         subtypeResource->json["subtype"] = subtype;
         subtypeResource->json["_links"]["self"]["href"] = selfUri;
@@ -124,25 +121,5 @@ namespace org_restfulipc
         
         return subtypeResource->json;
     }
-
-    char* ResourceBuilder::readFile(const char* path) 
-    {
-        int fd = open(path, O_RDONLY);
-        if (fd < 0) throw C_Error();
-        
-        struct stat st;
-        if (fstat(fd, &st) < 0) throw C_Error();
-       
-        char* result = new char[st.st_size + 1];
-        for (int bytesRead = 0; bytesRead < st.st_size; ) {
-            int n = read(fd, result, st.st_size - bytesRead);
-            if (n < 0) throw C_Error();
-            bytesRead += n;
-        }
-        result[st.st_size] = '\0';
-
-        return result; 
-    }
-
 }
 

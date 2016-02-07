@@ -17,11 +17,6 @@ namespace org_restfulipc
         Json& root();
         Json& type(const char* typeName);
         Json& subtype(const char* typeName, const char* subtype);
-
-        char* rootTemplate;
-        char* typeTemplate;
-        char* subtypeTemplate;
-        char* readFile(const char* path);
     };
 
 }
