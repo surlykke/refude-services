@@ -4,11 +4,10 @@
         "self" : {
             "href" : "/mimetypes"
         },
-        "related": [ { 
+        "type": [ { 
                 "href": "/mimetypes/{type}",
                 "templated": true
             }
         ]
-    },
-    "ripc::prefetched" : {}
+    }
 }

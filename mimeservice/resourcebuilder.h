@@ -11,13 +11,17 @@ namespace org_restfulipc
     {
     public:
         ResourceBuilder(const char* mimedir);
+        virtual ~ResourceBuilder();
     private:
-        void read(const char* xmlFilePath);
-        void buildRoot();
-        Json& buildType(const char* typeName);
-        Json& buildSubtype(const char* typeName, const char* subtype);
+        void readXml(const char* xmlFilePath);
+        Json& root();
+        Json& type(const char* typeName);
+        Json& subtype(const char* typeName, const char* subtype);
 
-        Json root;
+        char* rootTemplate;
+        char* typeTemplate;
+        char* subtypeTemplate;
+        char* readFile(const char* path);
     };
 
 }

@@ -5,13 +5,10 @@
         "self" : {
             "href": "REPLACEME"
         },
-        "related": [
-            {
-                "href": "REPLACEME",
-                "templated": true
-            }
-        ]
-    },
-    "ripc::prefetched": {}
+        "subtype": {
+            "href": "REPLACEME",
+            "templated": true
+        }
+    }
 }
 
