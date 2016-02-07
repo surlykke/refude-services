@@ -1,7 +1,6 @@
 set(PROJECT "MimeService")
 project(${PROJECT})
 include_directories(${CMAKE_SOURCE_DIR}/lib)
-find_package(Qt5Core REQUIRED)
 file(GLOB SOURCE_FILES *.cpp) 
 add_custom_target(JSON_FILES ALL COMMAND cp -u ${CMAKE_CURRENT_SOURCE_DIR}/*.json ${CMAKE_CURRENT_BINARY_DIR})
 add_executable(${PROJECT} ${SOURCE_FILES})
