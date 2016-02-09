@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include "resourcebuilder.h"
+#include "mimeservice.h"
 #include "rootTemplate.h"
 #include "typeTemplate.h"
 #include "subtypeTemplate.h"
@@ -18,16 +18,16 @@ using namespace tinyxml2;
 namespace org_restfulipc
 {
 
-    ResourceBuilder::ResourceBuilder(const char* mimedir) :
+    MimeService::MimeService(const char* mimedir) :
         Service()
     {
         readXml(mimedir);
     }
 
-    ResourceBuilder::~ResourceBuilder() {
+    MimeService::~MimeService() {
     }
 
-    void ResourceBuilder::readXml(const char* xmlFilePath)
+    void MimeService::readXml(const char* xmlFilePath)
     {
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile(xmlFilePath);
@@ -74,7 +74,7 @@ namespace org_restfulipc
     }
 
 
-    Json& ResourceBuilder::root()
+    Json& MimeService::root()
     {
         JsonResource* rootResource = (JsonResource*) mapping("/mimetypes");
         if (rootResource == NULL) {
@@ -86,7 +86,7 @@ namespace org_restfulipc
         return rootResource->json;
     }
 
-    Json& ResourceBuilder::type(const char* typeName) 
+    Json& MimeService::type(const char* typeName) 
     {
         char selfUri[128];
         snprintf(selfUri, 128, "/mimetypes/%s", typeName);
@@ -106,7 +106,7 @@ namespace org_restfulipc
         return typeResource->json;
     }
 
-    Json& ResourceBuilder::subtype(const char* typeName, const char* subtype)
+    Json& MimeService::subtype(const char* typeName, const char* subtype)
     {
         char selfUri[164];
         snprintf(selfUri, 164, "/mimetypes/%s/%s", typeName, subtype);

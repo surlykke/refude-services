@@ -1,5 +1,5 @@
-#ifndef JSONBUILDER_H
-#define JSONBUILDER_H
+#ifndef MIMESERVICE_H
+#define MIMESERVICE_H
 
 #include <jsonresource.h>
 #include <buffer.h>
@@ -7,11 +7,11 @@
 
 namespace org_restfulipc
 {
-    class ResourceBuilder : public Service
+    class MimeService : public Service
     {
     public:
-        ResourceBuilder(const char* mimedir);
-        virtual ~ResourceBuilder();
+        MimeService(const char* mimedir);
+        virtual ~MimeService();
     private:
         void readXml(const char* xmlFilePath);
         Json& root();
@@ -21,4 +21,4 @@ namespace org_restfulipc
 
 }
 
-#endif // JSONBUILDER_H
+#endif // MIMESERVICE_H

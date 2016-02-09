@@ -1,13 +1,13 @@
 #include <iostream>
 #include "json.h"
 #include "errorhandling.h"
-#include "resourcebuilder.h"
+#include "mimeservice.h"
 
 int main(int argc, char *argv[])
 {
     
     //try {
-        org_restfulipc::ResourceBuilder rb("/usr/share/mime/packages/freedesktop.org.xml");
+        org_restfulipc::MimeService rb("/usr/share/mime/packages/freedesktop.org.xml");
         rb.serve(7938);
         rb.wait();
     /*}
