@@ -5,5 +5,5 @@
 
 int main(int argc, char *argv[])
 {
-    org_restfulipc::DesktopEntryReader();
+    
 }
