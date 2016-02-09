@@ -25,40 +25,26 @@ namespace org_restfulipc
 {
 
 
-    Service::Service(const char *socketPath, int numThreads) :
+    Service::Service() :
         threads(),
-        mNumThreads(numThreads),
+        mNumThreads(5),
         listenSocket(-1),
         requestSockets(),
         resourceMappings(),
         prefixMappings(),
         shuttingDown(false)
     {
+    }
 
-        if (strlen(socketPath) >= UNIX_PATH_MAX - 1)
-        {
-            throw std::runtime_error("Socket path too long");
-        }
-
-
-        struct sockaddr_un sockaddr;
-        memset(&sockaddr, 0, sizeof(struct sockaddr_un));
-        sockaddr.sun_family = AF_UNIX;
-        strncpy(&sockaddr.sun_path[0], socketPath, strlen(socketPath));
-        if ((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
-        unlink(socketPath);
-        if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) < 0) throw C_Error();
+    Service::~Service()
+    {
+        shuttingDown = true;
+        wait(); 
+        close(listenSocket);
 
     }
 
-    Service::Service(uint16_t portNumber, int numThreads) :
-        threads(),
-        mNumThreads(numThreads),
-        listenSocket(-1),
-        requestSockets(),
-        resourceMappings(),
-        prefixMappings(),
-        shuttingDown(false)
+    void Service::serve(uint16_t portNumber) 
     {
         struct sockaddr_in sockaddr;
         memset(&sockaddr, 0, sizeof(struct sockaddr_in));
@@ -67,38 +53,37 @@ namespace org_restfulipc
         sockaddr.sin_addr.s_addr = INADDR_ANY;
         if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
         if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sockaddr)) < 0) throw C_Error();
+    
+        startThreads();
     }
 
-    void Service::run()
+
+    void Service::serve(const char* socketPath) 
     {
-        if (listen(listenSocket, 8) < 0) throw C_Error();
-        for (int i = 0; i < mNumThreads; i++) {
-            threads.push_back(std::thread(&Service::serveIncoming, this));
+        if (strlen(socketPath) >= UNIX_PATH_MAX - 1)
+        {
+            throw std::runtime_error("Socket path too long");
         }
-        Service::listenForIncoming();
-    }
 
-    void Service::runInBackground()
-    {
-        if (listen(listenSocket, 8) < 0) throw C_Error();
-        for (int i = 0; i < mNumThreads; i++) {
-            threads.push_back(std::thread(&Service::serveIncoming, this));
+        struct sockaddr_un sockaddr;
+        memset(&sockaddr, 0, sizeof(struct sockaddr_un));
+        sockaddr.sun_family = AF_UNIX;
+        strncpy(&sockaddr.sun_path[0], socketPath, strlen(socketPath));
+        if ((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
+        unlink(socketPath);
+        if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) < 0) {
+            throw C_Error();
         }
-        threads.push_back(std::thread(&Service::listenForIncoming, this));
+   
+        startThreads();
     }
 
-
-    Service::~Service()
-    {
-        shuttingDown = true;
+    void Service::wait() {
         for (int i = 0; i < threads.size(); i++) {
             threads.at(i).join();
         }
-
-        close(listenSocket);
-
     }
-
+    
     void Service::map(const char* path, AbstractResource* resource, bool wildcarded)
     {
         resourceMappings.add(path, std::move(resource));
@@ -121,7 +106,17 @@ namespace org_restfulipc
     }
 
 
-    void Service::listenForIncoming()
+    void Service::startThreads()
+    {
+        if (listen(listenSocket, 8) < 0) throw C_Error();
+        for (int i = 0; i < mNumThreads; i++) {
+            threads.push_back(std::thread(&Service::worker, this));
+        }
+        threads.push_back(std::thread(&Service::listener, this));
+    }
+
+
+    void Service::listener()
     {
         struct pollfd pollfd;
         pollfd.fd = listenSocket;
@@ -155,7 +150,7 @@ namespace org_restfulipc
 
     }
 
-    void Service::serveIncoming()
+    void Service::worker()
     {
         int requestSocket;
         HttpMessage request;

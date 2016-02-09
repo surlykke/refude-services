@@ -19,7 +19,7 @@ namespace org_restfulipc
 {
 
     ResourceBuilder::ResourceBuilder(const char* mimedir) :
-        Service((uint16_t)7938)
+        Service()
     {
         readXml(mimedir);
     }

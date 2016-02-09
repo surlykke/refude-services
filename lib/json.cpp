@@ -75,6 +75,12 @@ namespace org_restfulipc
     {
     }
 
+    Json::Json(std::string string) :
+        mType(JsonType::String),
+        string(strdup(string.data()))
+    {
+    } 
+        
     Json::Json(double number) :
         mType(JsonType::Number), 
         number(number) 
@@ -125,15 +131,20 @@ namespace org_restfulipc
     }
 
 
+    Json& Json::operator[](const char *index)
+    {
+        typeAssert("operator[const char*]", JsonType::Object);
+        return (*entries)[index];
+    }
+
     Json& Json::operator[](char *index)
     {
         return operator[]((const char*) index);
     }
 
-    Json& Json::operator[](const char *index)
+    Json& Json::operator[](std::string index)
     {
-        typeAssert("operator[const char*]", JsonType::Object);
-        return (*entries)[index];
+        return operator[](index.data());
     }
 
     Json& Json::operator[](int index)

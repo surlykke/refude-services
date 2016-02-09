@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     char json[256];
     GenericResource resource("{}");
 
-    Service service("org.restfulipc.examples.Dynamic");
+    Service service;
     service.map("/res", &resource);
     for (int i = 0; i < 10; i++) {
         sprintf(json,

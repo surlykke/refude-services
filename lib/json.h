@@ -1,6 +1,7 @@
 #ifndef JSON_H
 #define JSON_H
 #include <memory>
+#include <string>
 #include <stdint.h>
 #include "errorhandling.h"
 #include "map.h"
@@ -40,6 +41,7 @@ namespace org_restfulipc
         Json(Json&& other);
         Json(JsonConst jsonConst);
         Json(const char* string);
+        Json(std::string string);
         Json(double number);
         ~Json();
 
@@ -49,6 +51,7 @@ namespace org_restfulipc
 
         Json& operator[](const char* index);
         Json& operator[](char *index);
+        Json& operator[](std::string index);
         Json& operator[](int index);
 
         operator const char*();

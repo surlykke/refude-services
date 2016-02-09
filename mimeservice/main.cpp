@@ -8,7 +8,8 @@ int main(int argc, char *argv[])
     
     //try {
         org_restfulipc::ResourceBuilder rb("/usr/share/mime/packages/freedesktop.org.xml");
-        rb.run();
+        rb.serve(7938);
+        rb.wait();
     /*}
     catch (org_restfulipc::C_Error err) {
         std::cerr << "C_Error: " << err.errorMsg << "\n";

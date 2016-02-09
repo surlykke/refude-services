@@ -21,20 +21,22 @@ namespace org_restfulipc
     class Service
     {
     public:
-        Service(const char *socketPath, int numThreads = 5);
-        Service(uint16_t portNumber, int numThreads = 5);
-        void run();
-        void runInBackground();
+        Service();
         virtual ~Service();
+        
+        void serve(uint16_t portNumber); 
+        void serve(const char *socketPath); 
+        
+        void wait();
 
         void map(const char* path, org_restfulipc::AbstractResource* resource, bool wildcarded = false);
         void unMap(const char* path);
         AbstractResource* mapping(const char* path, bool wildcarded = false);
 
     private:
-        void prepareRun();
-        void listenForIncoming();
-        void serveIncoming();
+        void startThreads();
+        void listener();
+        void worker();
 
         std::vector<std::thread> threads;
         int mNumThreads;

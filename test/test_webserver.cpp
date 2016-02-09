@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 {
     std::cout << "test_webserver\n";
     using namespace org_restfulipc;
-    Service service(7938);
+    Service service;
     //WebServer webServer("/home/christian/NetBeansProjects/GenericRipcClient/public_html");
     JsonResource resource("/service");
     resource.json["time"] = time(NULL);
@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     //service.map("/client", &webServer, true);
     service.map("/service", &resource);
     //service.map("/service/notify", &notifier);
-    service.runInBackground();
+    service.serve(7938);
 
     for(;;) {
         resource.json["time"] = time(NULL);
