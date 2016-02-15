@@ -24,6 +24,11 @@ namespace org_restfulipc
         return typeNames[(uint8_t)type];
     }
 
+    bool Json::undefined() {
+        return mType == JsonType::Undefined;
+    }
+
+
     void Json::deleteChildren()
     {
         if (mType == JsonType::Object){

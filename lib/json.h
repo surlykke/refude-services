@@ -71,8 +71,9 @@ namespace org_restfulipc
         void typeAssert(const char* operation, JsonType otherType);
         const char* typeAsString();
         const char* typeAsString(JsonType type);
-
-    //private:
+        bool undefined();
+    
+    private:
         void deleteChildren();
 
         union {

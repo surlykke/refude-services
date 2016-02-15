@@ -1,24 +1,34 @@
 #ifndef DESKTOPENTRYREADER_H
 #define DESKTOPENTRYREADER_H
+#include <fstream>
+#include <string>
+#include <list>
+
 #include <json.h>
+
 namespace org_restfulipc 
 {
+    class LineReader;
     class DesktopEntryReader
     {
     public:
-        DesktopEntryReader();
+        DesktopEntryReader(std::string applicationsDir, std::string relativeFilePath);
         virtual ~DesktopEntryReader();
-    private:
-        void read(const char* desktopFilePath);
-        void handleGroupHeading(std::string heading);
-        void handleKeyValuePair(std::string key, std::string locale, std::string value);
-        void handleStringValue(std::string key, std::string value);
-        void handleBool(std::string key, std::string value);
-        void handleStringlistKey(std::string key, std::string value);
-
         Json json;
-        int state;
-        std::string currentAction;
+        Json localizedJson;
+    private:
+        void read();
+        void readMainGroup();
+        void readGroup();
+
+        void readKeyValues(Json& json);
+        bool readKeyValue(Json& json);
+        void handleBool(Json&, std::string value);
+        std::list<std::string> toList(std::string value);
+
+        bool keyOneOf(std::list<std::string> list);
+    
+        LineReader* lineReader;
     };
 }
 

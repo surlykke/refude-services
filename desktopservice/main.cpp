@@ -1,9 +1,8 @@
 #include <iostream>
-#include "json.h"
-#include "errorhandling.h"
-#include "desktopentryreader.h"
+#include "desktopservice.h"
 
+using namespace org_restfulipc;
 int main(int argc, char *argv[])
 {
-    
+    DesktopService();
 }
