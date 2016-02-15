@@ -1,5 +1,6 @@
 #ifndef DESKTOPSERVICE_H
 #define DESKTOPSERVICE_H
+#include <string>
 #include "service.h"
 
 namespace org_restfulipc
@@ -11,7 +12,9 @@ namespace org_restfulipc
         DesktopService();
         virtual ~DesktopService();
     private:
+        void init(std::string applicationsDir, std::string subDir);
 
+        std::list<std::string> applicationsDirs;
     };
 
 }

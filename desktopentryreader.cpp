@@ -1,7 +1,6 @@
 #include <iostream>
-#include <list>
-#include <fstream>
 #include <regex>
+#include <ctype.h>
 #include "desktopentryreader.h"
 #include "desktopTemplate.h"
 #include "errorhandling.h"
@@ -17,138 +16,262 @@ namespace org_restfulipc
         inActionGroup
     };
 
-    enum  ValueType 
+    class LineReader 
     {
-        str = 0,
-        strlist,
-        boolean
+    public:
+        LineReader(std::string filePath) : lineType(Unknown), desktopFile(filePath) {}
+        bool getNextLine();
+        std::string action; 
+        std::string customHeading;
+        std::string key;
+        std::string locale;
+        std::string value;
+        enum {
+            Unknown,
+            MainHeading,
+            ActionHeading,
+            OtherHeading,
+            KeyValue,
+            EndOfFile
+        } lineType;
+
+    private:
+        void getHeadingLine();
+        void getKeyValueLine();
+        std::string getKey();
+        
+
+        void skip(const char *expected = "") ;
+        void assertAtEnd();
+
+        std::ifstream desktopFile;
+
+        std::string line;
+        int pos;
+
     };
 
-
-    DesktopEntryReader::DesktopEntryReader() :
-        json(JsonConst::EmptyObject),
-        state(atStart),
-        currentAction()
+    bool LineReader::getNextLine()
     {
-        read("/usr/share/applications/firefox.desktop");
-        std::cout << JsonWriter(&json).buffer.data << "\n";
+        if (! std::getline(desktopFile, line)) {
+            lineType = EndOfFile;
+            return false;
+        }
+        else {
+            pos = 0;
+            skip();
+        
+            if (pos >= line.size() || line[pos] == '#') { 
+                return getNextLine();
+            }
+
+            if (line[pos] == '[') {
+                getHeadingLine();    
+            }
+            else {
+                getKeyValueLine();
+            }
+            return true;
+        }
+    };
+
+    void LineReader::getHeadingLine() {
+        int startOfHeading = pos + 1;
+        skip("[");
+        if (!strncmp("Desktop", line.data() + pos, 7)) {
+            // We assume a group heading starting with 'Desktop' is either 'Desktop Entry' or 
+            // 'Desktop Action <action>'. Ie. we do not allow custom group headings starting with 'Desktop'
+            skip("Desktop");
+            if (line[pos] == 'E') {
+                skip("Entry");
+                skip("]");
+                assertAtEnd();
+                lineType = MainHeading;
+            }
+            else {
+                skip("Action");
+                action = getKey();
+                skip("]");
+                lineType = ActionHeading;
+                assertAtEnd();
+            }
+        }
+        else {
+            while (pos < line.size() && line[pos] != ']') {
+                pos++;
+            }
+            customHeading = line.substr(startOfHeading, pos - startOfHeading);
+            skip("]");
+            assertAtEnd();
+        }
+
+    }
+
+    void LineReader::getKeyValueLine() {
+        key = getKey();
+        if (line[pos] == '[') {
+            int localeStart = ++pos;
+            while (line[pos] != ']') {
+                if (pos >= line.size()) throw RuntimeError("']' expected");
+                pos++;
+            }
+            locale = line.substr(localeStart, pos++ - localeStart);
+        }
+        skip("");
+        skip("=");
+        size_t end = line.size();
+        while (isspace(line[end]) && end > pos) end--;
+        value = line.substr(pos, end - pos);
+        lineType = KeyValue;
+    }
+
+    
+    
+    void LineReader::skip(const char* expected)
+    {
+        for (const char* c = expected; *c;) {
+            if (line[pos++] != *c++) {
+                throw RuntimeError("Expected: %s", expected);
+            }
+        }
+
+        while (isspace(line[pos])) pos++;
+    };
+
+    void LineReader::assertAtEnd()
+    {
+        if (line.size() > pos) throw RuntimeError("Trailing characters: %s\n", line.substr(pos).data());
+    };
+
+    std::string LineReader::getKey() 
+    {
+        int keyStart = pos;
+        
+        while (pos < line.size() && (isalpha(line[pos]) || line[pos] == '-')) {
+            pos++;
+        }
+
+        return  line.substr(keyStart, pos - keyStart);
+    }
+ 
+    DesktopEntryReader::DesktopEntryReader(std::string applicationsDirPath, std::string relativeFilePath) :
+            json(JsonConst::EmptyObject),
+            lineReader(new LineReader(applicationsDirPath + "/" + relativeFilePath))
+    {
+        json << desktopTemplate_json;
+        read();
+        
+        std::replace(relativeFilePath.begin(), relativeFilePath.end(), '/', '-') ;
+        std::string selfHref = std::string("/desktopservice/desktopEntry/") + relativeFilePath;
+        json["_links"]["self"]["href"] = selfHref;
     }
 
     DesktopEntryReader::~DesktopEntryReader() 
     {
     }
 
-    void DesktopEntryReader::read(const char* desktopFilePath) 
+    void DesktopEntryReader::read()
     {
-        static std::regex groupHeadingReg("^\\s*\\[\\s*(.*)\\s*\\]\\s*$");
-        static std::regex commentLine("^\\s*(#.*)*$");
-        static std::regex keyValueLineReg("^\\s*([A-Za-z0-9-]+)(\\[([A-Za-z_]+)\\])?\\s*=\\s*(.*?)\\s*$");
+        lineReader->getNextLine(); 
+        if (lineReader->lineType != LineReader::MainHeading) {
+            throw RuntimeError("'[Desktop Entry]' expected");
+        }
+        readKeyValues(json);
 
-        std::string line;
-        std::ifstream desktopFile(desktopFilePath);
-        while (std::getline(desktopFile, line)) {
-            std::smatch m;
-            if (std::regex_match(line, commentLine)) {
+        for (;;) {
+            if (lineReader->lineType == LineReader::EndOfFile) {
+                break;
             }
-            else if (std::regex_match(line, m, groupHeadingReg)) {
-                handleGroupHeading(m[1]);
+            else if (lineReader->lineType == LineReader::ActionHeading) {
+                if (json["Actions"].undefined() || json["Actions"][lineReader->action].undefined()) {
+                    throw RuntimeError("Unknown action: %s", lineReader->action.data());
+                }
+                readKeyValues(json["Actions"][lineReader->action]);
             }
-            else if (std::regex_match(line, m, keyValueLineReg)) {
-                handleKeyValuePair(m[1], m[3], m[4]);
+            else if (lineReader->lineType == LineReader::OtherHeading) {
+                if (json["Other_groups"].undefined()) {
+                    json["Other_groups"] = JsonConst::EmptyObject;
+                }
+                json["Other_groups"][lineReader->customHeading] = JsonConst::EmptyObject;
+                readKeyValues(json["Other_groups"][lineReader->customHeading]);
             }
             else {
-                throw RuntimeError("Could not match: '%s'\n", line.data());
+                throw RuntimeError("Group heading expected");
             }
+            
+        }
+    } 
+
+
+    void DesktopEntryReader::readKeyValues(Json& json) {
+        while (lineReader->getNextLine() && lineReader->lineType == LineReader::KeyValue) {
+            readKeyValue(json);
         }
     }
 
-    void DesktopEntryReader::handleGroupHeading(std::string heading) 
+
+    bool DesktopEntryReader::readKeyValue(Json& json) 
     {
-        std::regex actionHeadingReg("^\\s*Desktop\\s+Action\\s+(\\w*)\\s*$");
-        std::smatch m;
-        if (state == State::atStart) {
-            if (heading == "Desktop Entry") {
-                state = inDesktopEntryGroup;
+        if (keyOneOf({"Type", "Version", "Exec", "Path", "StartupWMClass", "URL"})) {
+            json[lineReader->key] = lineReader->value;
+        }
+        else if (keyOneOf({"Name", "GenericName", "Comment"})) {
+            if (json[lineReader->key].undefined())  {
+                json[lineReader->key] = JsonConst::EmptyObject;
+            }
+            json[lineReader->key][lineReader->locale] = lineReader->value;
+        }
+        else if (keyOneOf({"NoDisplay", "DBusActivatable", "Terminal", "StartupNotify"})) {
+            if (lineReader->value == "true") { 
+                json[lineReader->key] = JsonConst::TRUE;
+            }
+            else if (lineReader->value == "false") {
+                json[lineReader->key] = JsonConst::FALSE;
             }
             else {
-                throw RuntimeError("Desktop file should start with '[Desktop Entry]'-line");
+                throw RuntimeError("Value for must be 'true' or 'false'");
             }
         }
-        else if (std::regex_match(heading, m, actionHeadingReg)) {
-            // FIXME check action 
-            state = State::inActionGroup;
-            currentAction = m[1];
-            json[currentAction] = JsonConst::EmptyObject;
-        }
-    }
-    void DesktopEntryReader::handleKeyValuePair(std::string key, std::string locale, std::string value) 
-    {
-        // FIXME Handle locale strings
-        if (state == State::atStart) {
-            throw RuntimeError("Desktop file should start with '[Desktop Entry]'-line");
-        }
-     
-        /*if (! ((currentAction.empty() && json[key].mType == JsonType::Undefined) ||
-               json[currentAction][key].mType == JsonType::Undefined)) { 
-            throw RuntimeError("Duplicate definition of key: %s", key); 
-        }*/
-        if (currentAction.empty()) { 
-            static std::list<std::string> stringKeys = 
-                {"Type", "Version","Name", "GenericName", "Comment", "Icon", "Exec", "Path", "StartupWMClass", "URL"};
-            static std::list<std::string> boolKeys =  
-                {"NoDisplay", "DBusActivatable", "Terminal", "StartupNotify"};
-            static std::list<std::string> stringlistKeys = 
-                {"OnlyShowIn","NotShowIn","Actions","MimeType","Categories","Implements","Keywords"};
-
-            for (std::string stringKey : stringKeys) {
-                if (key == stringKey) {
-                    handleStringValue(key, value);
-                    return;
-                } 
-            } 
-            for (std::string boolKey : boolKeys) {
-                if (key == boolKey) {
-                    handleBool(key, value);
-                    return;
-                } 
-            } 
-            for (std::string stringlistKey : stringlistKeys) {
-                if (key == stringlistKey) {
-                    handleStringlistKey(key, value);
-                    return;
-                } 
-            }    
-             
-        }
-    }
-
-    void DesktopEntryReader::handleStringValue(std::string key, std::string value) {
-        Json& element = currentAction.empty() ? json[key] : json[currentAction][key];
-        element = value;
-    }
-
-    void DesktopEntryReader::handleBool(std::string key, std::string value) {
-        Json& element = currentAction.empty() ? json[key] : json[currentAction][key];
-        if (value == "true") {
-            element = JsonConst::TRUE; 
-        }
-        else if (value == "false") {
-            element = JsonConst::FALSE;
+        else if (keyOneOf({"OnlyShowIn","NotShowIn","MimeType","Categories","Implements"})) {
+            json[lineReader->key] = JsonConst::EmptyArray;
+            for (std::string val : toList(lineReader->value)) {
+                json[lineReader->key].append(val);
+            }
+        }    
+        else if (lineReader->key == "Keywords") { 
+            if (json[lineReader->key].undefined())  {
+                json[lineReader->key] = JsonConst::EmptyObject;
+            }
+            json[lineReader->key][lineReader->locale] = JsonConst::EmptyArray;
+            for (std::string val : toList(lineReader->value)) {
+                json[lineReader->key][lineReader->locale].append(val);
+            }
         } 
-        else {
-            throw RuntimeError("Value for key %s must be 'true' or 'false'", key);
+        else if (lineReader->key == "Actions") {
+            json["Actions"] = JsonConst::EmptyObject;
+            for (std::string val : toList(lineReader->value)) {
+                json["Actions"][val] = JsonConst::EmptyObject;
+            }
         }
     }
 
-    void DesktopEntryReader::handleStringlistKey(std::string key, std::string value) {
-        Json& element = currentAction.empty() ? json[key] : json[currentAction][key];
-        element = JsonConst::EmptyArray; 
+
+
+    std::list<std::string> DesktopEntryReader::toList(std::string value) {
+        std::list<std::string> result;
         std::size_t startOfRemaining = 0; 
         std::size_t semicolonPos;
         while ((semicolonPos = value.find(";", startOfRemaining)) != string::npos) {
-            element.append(value.substr(startOfRemaining, semicolonPos - startOfRemaining));
+            result.push_back(value.substr(startOfRemaining, semicolonPos - startOfRemaining));
             startOfRemaining = semicolonPos + 1;
         }; 
+        return result;
+    }
+    
+
+    bool DesktopEntryReader::keyOneOf(std::list<std::string> list) {
+        for (std::string val : list) if (lineReader->key == val) return true;
+        return false;
     }
 
 }
