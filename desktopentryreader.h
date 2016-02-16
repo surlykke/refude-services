@@ -5,17 +5,17 @@
 #include <list>
 
 #include <json.h>
+#include "linereader.h"
 
 namespace org_restfulipc 
 {
-    class LineReader;
     class DesktopEntryReader
     {
     public:
         DesktopEntryReader(std::string applicationsDir, std::string relativeFilePath);
         virtual ~DesktopEntryReader();
+        std::string entryId;
         Json json;
-        Json localizedJson;
     private:
         void read();
         void readMainGroup();
@@ -28,7 +28,7 @@ namespace org_restfulipc
 
         bool keyOneOf(std::list<std::string> list);
     
-        LineReader* lineReader;
+        LineReader lines;
     };
 }
 

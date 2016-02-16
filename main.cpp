@@ -4,5 +4,7 @@
 using namespace org_restfulipc;
 int main(int argc, char *argv[])
 {
-    DesktopService();
+    DesktopService desktopService;
+    desktopService.serve(7938);
+    desktopService.wait();
 }
