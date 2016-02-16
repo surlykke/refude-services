@@ -9,160 +9,17 @@
 
 namespace org_restfulipc 
 {
-    enum State 
-    {
-        atStart = 0,
-        inDesktopEntryGroup,
-        inActionGroup
-    };
 
-    class LineReader 
-    {
-    public:
-        LineReader(std::string filePath) : lineType(Unknown), desktopFile(filePath) {}
-        bool getNextLine();
-        std::string action; 
-        std::string customHeading;
-        std::string key;
-        std::string locale;
-        std::string value;
-        enum {
-            Unknown,
-            MainHeading,
-            ActionHeading,
-            OtherHeading,
-            KeyValue,
-            EndOfFile
-        } lineType;
-
-    private:
-        void getHeadingLine();
-        void getKeyValueLine();
-        std::string getKey();
-        
-
-        void skip(const char *expected = "") ;
-        void assertAtEnd();
-
-        std::ifstream desktopFile;
-
-        std::string line;
-        int pos;
-
-    };
-
-    bool LineReader::getNextLine()
-    {
-        if (! std::getline(desktopFile, line)) {
-            lineType = EndOfFile;
-            return false;
-        }
-        else {
-            pos = 0;
-            skip();
-        
-            if (pos >= line.size() || line[pos] == '#') { 
-                return getNextLine();
-            }
-
-            if (line[pos] == '[') {
-                getHeadingLine();    
-            }
-            else {
-                getKeyValueLine();
-            }
-            return true;
-        }
-    };
-
-    void LineReader::getHeadingLine() {
-        int startOfHeading = pos + 1;
-        skip("[");
-        if (!strncmp("Desktop", line.data() + pos, 7)) {
-            // We assume a group heading starting with 'Desktop' is either 'Desktop Entry' or 
-            // 'Desktop Action <action>'. Ie. we do not allow custom group headings starting with 'Desktop'
-            skip("Desktop");
-            if (line[pos] == 'E') {
-                skip("Entry");
-                skip("]");
-                assertAtEnd();
-                lineType = MainHeading;
-            }
-            else {
-                skip("Action");
-                action = getKey();
-                skip("]");
-                lineType = ActionHeading;
-                assertAtEnd();
-            }
-        }
-        else {
-            while (pos < line.size() && line[pos] != ']') {
-                pos++;
-            }
-            customHeading = line.substr(startOfHeading, pos - startOfHeading);
-            skip("]");
-            assertAtEnd();
-        }
-
-    }
-
-    void LineReader::getKeyValueLine() {
-        key = getKey();
-        if (line[pos] == '[') {
-            int localeStart = ++pos;
-            while (line[pos] != ']') {
-                if (pos >= line.size()) throw RuntimeError("']' expected");
-                pos++;
-            }
-            locale = line.substr(localeStart, pos++ - localeStart);
-        }
-        skip("");
-        skip("=");
-        size_t end = line.size();
-        while (isspace(line[end]) && end > pos) end--;
-        value = line.substr(pos, end - pos);
-        lineType = KeyValue;
-    }
-
-    
-    
-    void LineReader::skip(const char* expected)
-    {
-        for (const char* c = expected; *c;) {
-            if (line[pos++] != *c++) {
-                throw RuntimeError("Expected: %s", expected);
-            }
-        }
-
-        while (isspace(line[pos])) pos++;
-    };
-
-    void LineReader::assertAtEnd()
-    {
-        if (line.size() > pos) throw RuntimeError("Trailing characters: %s\n", line.substr(pos).data());
-    };
-
-    std::string LineReader::getKey() 
-    {
-        int keyStart = pos;
-        
-        while (pos < line.size() && (isalpha(line[pos]) || line[pos] == '-')) {
-            pos++;
-        }
-
-        return  line.substr(keyStart, pos - keyStart);
-    }
- 
     DesktopEntryReader::DesktopEntryReader(std::string applicationsDirPath, std::string relativeFilePath) :
             json(JsonConst::EmptyObject),
-            lineReader(new LineReader(applicationsDirPath + "/" + relativeFilePath))
+            lines(applicationsDirPath + "/" + relativeFilePath)
     {
         json << desktopTemplate_json;
         read();
         
-        std::replace(relativeFilePath.begin(), relativeFilePath.end(), '/', '-') ;
-        std::string selfHref = std::string("/desktopservice/desktopEntry/") + relativeFilePath;
+        entryId = relativeFilePath;
+        std::replace(entryId.begin(), entryId.end(), '/', '-') ;
+        std::string selfHref = std::string("/desktopentry/") + entryId;
         json["_links"]["self"]["href"] = selfHref;
     }
 
@@ -172,39 +29,35 @@ namespace org_restfulipc
 
     void DesktopEntryReader::read()
     {
-        lineReader->getNextLine(); 
-        if (lineReader->lineType != LineReader::MainHeading) {
+        lines.getNextLine(); 
+        if (lines.lineType != LineType::MainHeading) {
             throw RuntimeError("'[Desktop Entry]' expected");
         }
         readKeyValues(json);
 
-        for (;;) {
-            if (lineReader->lineType == LineReader::EndOfFile) {
-                break;
-            }
-            else if (lineReader->lineType == LineReader::ActionHeading) {
-                if (json["Actions"].undefined() || json["Actions"][lineReader->action].undefined()) {
-                    throw RuntimeError("Unknown action: %s", lineReader->action.data());
+        while (lines.lineType != LineType::EndOfFile) {
+            if (lines.lineType == LineType::ActionHeading) {
+                if (json["Actions"].undefined() || json["Actions"][lines.action].undefined()) {
+                    throw RuntimeError("Unknown action: %s", lines.action.data());
                 }
-                readKeyValues(json["Actions"][lineReader->action]);
+                readKeyValues(json["Actions"][lines.action]);
             }
-            else if (lineReader->lineType == LineReader::OtherHeading) {
+            else if (lines.lineType == LineType::OtherHeading) {
                 if (json["Other_groups"].undefined()) {
                     json["Other_groups"] = JsonConst::EmptyObject;
                 }
-                json["Other_groups"][lineReader->customHeading] = JsonConst::EmptyObject;
-                readKeyValues(json["Other_groups"][lineReader->customHeading]);
+                json["Other_groups"][lines.customHeading] = JsonConst::EmptyObject;
+                readKeyValues(json["Other_groups"][lines.customHeading]);
             }
             else {
                 throw RuntimeError("Group heading expected");
             }
-            
         }
     } 
 
 
     void DesktopEntryReader::readKeyValues(Json& json) {
-        while (lineReader->getNextLine() && lineReader->lineType == LineReader::KeyValue) {
+        while (lines.getNextLine() == LineType::KeyValue) {
             readKeyValue(json);
         }
     }
@@ -213,43 +66,43 @@ namespace org_restfulipc
     bool DesktopEntryReader::readKeyValue(Json& json) 
     {
         if (keyOneOf({"Type", "Version", "Exec", "Path", "StartupWMClass", "URL"})) {
-            json[lineReader->key] = lineReader->value;
+            json[lines.key] = lines.value;
         }
         else if (keyOneOf({"Name", "GenericName", "Comment"})) {
-            if (json[lineReader->key].undefined())  {
-                json[lineReader->key] = JsonConst::EmptyObject;
+            if (json[lines.key].undefined())  {
+                json[lines.key] = JsonConst::EmptyObject;
             }
-            json[lineReader->key][lineReader->locale] = lineReader->value;
+            json[lines.key][lines.locale] = lines.value;
         }
         else if (keyOneOf({"NoDisplay", "DBusActivatable", "Terminal", "StartupNotify"})) {
-            if (lineReader->value == "true") { 
-                json[lineReader->key] = JsonConst::TRUE;
+            if (lines.value == "true") { 
+                json[lines.key] = JsonConst::TRUE;
             }
-            else if (lineReader->value == "false") {
-                json[lineReader->key] = JsonConst::FALSE;
+            else if (lines.value == "false") {
+                json[lines.key] = JsonConst::FALSE;
             }
             else {
                 throw RuntimeError("Value for must be 'true' or 'false'");
             }
         }
         else if (keyOneOf({"OnlyShowIn","NotShowIn","MimeType","Categories","Implements"})) {
-            json[lineReader->key] = JsonConst::EmptyArray;
-            for (std::string val : toList(lineReader->value)) {
-                json[lineReader->key].append(val);
+            json[lines.key] = JsonConst::EmptyArray;
+            for (std::string val : toList(lines.value)) {
+                json[lines.key].append(val);
             }
         }    
-        else if (lineReader->key == "Keywords") { 
-            if (json[lineReader->key].undefined())  {
-                json[lineReader->key] = JsonConst::EmptyObject;
+        else if (lines.key == "Keywords") { 
+            if (json[lines.key].undefined())  {
+                json[lines.key] = JsonConst::EmptyObject;
             }
-            json[lineReader->key][lineReader->locale] = JsonConst::EmptyArray;
-            for (std::string val : toList(lineReader->value)) {
-                json[lineReader->key][lineReader->locale].append(val);
+            json[lines.key][lines.locale] = JsonConst::EmptyArray;
+            for (std::string val : toList(lines.value)) {
+                json[lines.key][lines.locale].append(val);
             }
         } 
-        else if (lineReader->key == "Actions") {
+        else if (lines.key == "Actions") {
             json["Actions"] = JsonConst::EmptyObject;
-            for (std::string val : toList(lineReader->value)) {
+            for (std::string val : toList(lines.value)) {
                 json["Actions"][val] = JsonConst::EmptyObject;
             }
         }
@@ -270,7 +123,7 @@ namespace org_restfulipc
     
 
     bool DesktopEntryReader::keyOneOf(std::list<std::string> list) {
-        for (std::string val : list) if (lineReader->key == val) return true;
+        for (std::string val : list) if (lines.key == val) return true;
         return false;
     }
 

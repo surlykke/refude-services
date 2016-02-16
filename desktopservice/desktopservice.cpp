@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <ftw.h>
 #include "errorhandling.h"
+#include "jsonresource.h"
 #include "desktopentryreader.h"
 #include "desktopservice.h"
 
@@ -63,6 +64,11 @@ namespace org_restfulipc
             if (result->d_type == DT_REG || result->d_type == DT_LNK ) {
                 if (strlen(result->d_name) > 8 && !strcmp(".desktop", result->d_name + strlen(result->d_name) - 8)) {
                     DesktopEntryReader desktopEntryReader(applicationsDir, relativePath);
+                    if (!mapping(desktopEntryReader.json["_links"]["self"]["href"])) {
+                        JsonResource* jsonResource = new JsonResource();
+                        jsonResource->json = std::move(desktopEntryReader.json);
+                        map(jsonResource->json["_links"]["self"]["href"], jsonResource);
+                    }
                 }
                 else {
                 }
