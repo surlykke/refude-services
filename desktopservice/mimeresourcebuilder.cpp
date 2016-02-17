@@ -1,33 +1,23 @@
-#include <string.h>
 #include <tinyxml2.h>
-#include <json.h>
-#include <jsonwriter.h>
-#include <service.h>
-#include <jsonresource.h>
-#include <map.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include "mimeservice.h"
+#include "jsonresource.h"
 #include "rootTemplate.h"
 #include "typeTemplate.h"
 #include "subtypeTemplate.h"
+#include "mimeresourcebuilder.h"
 
 using namespace tinyxml2;
-
-namespace org_restfulipc
+namespace org_restfulipc 
 {
-
-    MimeService::MimeService(const char* mimedir) :
-        Service()
+    MimeResourceBuilder::MimeResourceBuilder(Service* service) : 
+        service(service)
     {
-        readXml(mimedir);
     }
 
-    MimeService::~MimeService() {
+    MimeResourceBuilder::~MimeResourceBuilder()
+    {
     }
 
-    void MimeService::readXml(const char* xmlFilePath)
+    void MimeResourceBuilder::build(const char* xmlFilePath)
     {
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile(xmlFilePath);
@@ -74,23 +64,23 @@ namespace org_restfulipc
     }
 
 
-    Json& MimeService::root()
+    Json& MimeResourceBuilder::root()
     {
-        JsonResource* rootResource = (JsonResource*) mapping("/mimetypes");
+        JsonResource* rootResource = (JsonResource*) service->mapping("/mimetypes");
         if (rootResource == NULL) {
             rootResource = new JsonResource();
             rootResource->json << rootTemplate_json;
-            map("/mimetypes", rootResource);
+            service->map("/mimetypes", rootResource);
             rootResource->setResponseStale();
         }
         return rootResource->json;
     }
 
-    Json& MimeService::type(const char* typeName) 
+    Json& MimeResourceBuilder::type(const char* typeName) 
     {
         char selfUri[128];
         snprintf(selfUri, 128, "/mimetypes/%s", typeName);
-        JsonResource* typeResource = (JsonResource*) mapping(selfUri);
+        JsonResource* typeResource = (JsonResource*) service->mapping(selfUri);
         if (typeResource == NULL)  {
             typeResource = new JsonResource();
             typeResource->json << typeTemplate_json;
@@ -100,13 +90,13 @@ namespace org_restfulipc
             sprintf(subtypeRef, "/mimetypes/%s/{subtype}", typeName);
             typeResource->json["_links"]["subtype"]["href"] = subtypeRef;
             typeResource->setResponseStale();
-            map(selfUri, typeResource);
+            service->map(selfUri, typeResource);
             root()["types"].append(typeName);
         }
         return typeResource->json;
     }
 
-    Json& MimeService::subtype(const char* typeName, const char* subtype)
+    Json& MimeResourceBuilder::subtype(const char* typeName, const char* subtype)
     {
         char selfUri[164];
         snprintf(selfUri, 164, "/mimetypes/%s/%s", typeName, subtype);
@@ -116,10 +106,12 @@ namespace org_restfulipc
         subtypeResource->json["subtype"] = subtype;
         subtypeResource->json["_links"]["self"]["href"] = selfUri;
         subtypeResource->setResponseStale();
-        map(selfUri, subtypeResource);
+        service->map(selfUri, subtypeResource);
         type(typeName)["subtypes"].append(subtype);
         
         return subtypeResource->json;
     }
-}
 
+
+
+}

@@ -13,4 +13,4 @@ foreach (JSON_TEMPLATE ${JSON_TEMPLATES})
 endforeach (JSON_TEMPLATE) 
 
 add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
-target_link_libraries(${PROJECT} pthread ${CMAKE_BINARY_DIR}/lib/librestfulipc.so)
+target_link_libraries(${PROJECT} pthread ${CMAKE_BINARY_DIR}/lib/librestfulipc.so tinyxml2)
