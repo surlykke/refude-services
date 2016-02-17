@@ -1,0 +1,13 @@
+{
+    "types" : [],
+    "_links" : {
+        "self" : {
+            "href" : "/mimetypes"
+        },
+        "type": [ { 
+                "href": "/mimetypes/{type}",
+                "templated": true
+            }
+        ]
+    }
+}

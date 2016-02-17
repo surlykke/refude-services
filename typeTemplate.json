@@ -1,0 +1,14 @@
+{
+    "name": "REPLACEME",
+    "subtypes": [],
+    "_links": {
+        "self" : {
+            "href": "REPLACEME"
+        },
+        "subtype": {
+            "href": "REPLACEME",
+            "templated": true
+        }
+    }
+}
+
