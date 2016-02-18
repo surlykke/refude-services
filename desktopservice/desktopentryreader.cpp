@@ -30,24 +30,25 @@ namespace org_restfulipc
     void DesktopEntryReader::read()
     {
         lines.getNextLine(); 
-        if (lines.lineType != LineType::MainHeading) {
+        if (lines.lineType != LineType::Heading || lines.heading != "Desktop Entry") {
             throw RuntimeError("'[Desktop Entry]' expected");
         }
         readKeyValues(json);
 
         while (lines.lineType != LineType::EndOfFile) {
-            if (lines.lineType == LineType::ActionHeading) {
-                if (json["Actions"].undefined() || json["Actions"][lines.action].undefined()) {
-                    throw RuntimeError("Unknown action: %s", lines.action.data());
+            if (lines.lineType == LineType::Heading && lines.heading.substr(0, 14) == "Desktop Action") {
+                std::string action = lines.heading.substr(15);
+                if (json["Actions"].undefined() || json["Actions"][action].undefined()) {
+                    throw RuntimeError("Unknown action: %s", action.data());
                 }
-                readKeyValues(json["Actions"][lines.action]);
+                readKeyValues(json["Actions"][action]);
             }
-            else if (lines.lineType == LineType::OtherHeading) {
+            else if (lines.lineType == LineType::Heading) {
                 if (json["Other_groups"].undefined()) {
                     json["Other_groups"] = JsonConst::EmptyObject;
                 }
-                json["Other_groups"][lines.customHeading] = JsonConst::EmptyObject;
-                readKeyValues(json["Other_groups"][lines.customHeading]);
+                json["Other_groups"][lines.heading] = JsonConst::EmptyObject;
+                readKeyValues(json["Other_groups"][lines.heading]);
             }
             else {
                 throw RuntimeError("Group heading expected");

@@ -6,7 +6,7 @@ namespace org_restfulipc
 {
         
     LineReader::LineReader(std::string filePath) : 
-        lineType(LineType::Unknown), 
+        lineType(), 
         desktopFile(filePath) 
     {
     }
@@ -28,69 +28,43 @@ namespace org_restfulipc
                 return getNextLine();
             }
 
-            if (line[pos] == '[') {
-                getHeadingLine();    
+            if (line[pos] == '[') { // Group heading
+                heading = getBracketContents();
+                if (pos < line.size()) {
+                    throw RuntimeError("Trailing characters : %s", line.data() + pos);
+                }
+            
+                lineType = LineType::Heading; 
             }
-            else {
-                getKeyValueLine();
+            else { // Key value line
+                int keyStart = pos;
+                while (pos < line.size() && line[pos] != '[' && line[pos] != '=' && !isspace(line[pos])) pos++;
+                key = line.substr(keyStart, pos - keyStart);
+                
+                if (line[pos] == '[') {
+                    locale = getBracketContents();
+                }
+                else {
+                    locale = "";
+                    skip();
+                }
+                
+                if (line[pos] != '=') {
+                    throw RuntimeError("'=' expected, pos = %d", pos);
+                }
+                pos++;
+                value = line.substr(pos);
+               
+                lineType = LineType::KeyValue;
             }
         }
         return lineType;
     };
 
-    void LineReader::getHeadingLine() {
-        int startOfHeading = pos + 1;
-        skip("[");
-        if (!strncmp("Desktop", line.data() + pos, 7)) {
-            // We assume a group heading starting with 'Desktop' is either 'Desktop Entry' or 
-            // 'Desktop Action <action>'. Ie. we do not allow custom group headings starting with 'Desktop'
-            skip("Desktop");
-            if (line[pos] == 'E') {
-                skip("Entry");
-                skip("]");
-                lineType = LineType::MainHeading;
-            }
-            else {
-                skip("Action");
-                action = getKey();
-                skip("]");
-                lineType = LineType::ActionHeading;
-            }
-        }
-        else {
-            while (pos < line.size() && line[pos] != ']') {
-                pos++;
-            }
-            customHeading = line.substr(startOfHeading, pos - startOfHeading);
-            skip("]");
-            lineType = LineType::OtherHeading; 
-        }
-        assertAtEnd();
-    }
-
-    void LineReader::getKeyValueLine() {
-        key = getKey();
-        if (line[pos] == '[') {
-            int localeStart = ++pos;
-            while (line[pos] != ']') {
-                if (pos >= line.size()) throw RuntimeError("']' expected");
-                pos++;
-            }
-            locale = line.substr(localeStart, pos++ - localeStart);
-        }
-        else {
-            locale = "";
-        }
-        skip("");
-        skip("=");
-        size_t end = line.size();
-        while (isspace(line[end]) && end > pos) end--;
-        value = line.substr(pos, end - pos);
-        lineType = LineType::KeyValue;
-    }
-
-    
-    
+    /**
+     * Skip chars in expected, if any, one by one.
+     * Then skip trailing whitespace. (Also if expected is an empty string.)
+     */
     void LineReader::skip(const char* expected)
     {
         for (const char* c = expected; *c;) {
@@ -102,23 +76,14 @@ namespace org_restfulipc
         while (isspace(line[pos])) pos++;
     };
 
-    void LineReader::assertAtEnd()
+    std::string LineReader::getBracketContents()
     {
-        if (line.size() > pos) throw RuntimeError("Trailing characters: %s\n", line.substr(pos).data());
-    };
-
-    std::string LineReader::getKey() 
-    {
-        int keyStart = pos;
-        
-        while (pos < line.size() && (isalpha(line[pos]) || line[pos] == '-')) {
-            pos++;
-        }
-
-        return  line.substr(keyStart, pos - keyStart);
+        // Caller must ensure pos points to a '['
+        int start = ++pos;
+        while (pos < line.size() && line[pos] != ']')  pos++;
+        std::string result = line.substr(start, pos - start);
+        skip("]");
+        return result;
     }
- 
-
-
 
 }
