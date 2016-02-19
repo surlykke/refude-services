@@ -12,15 +12,17 @@
  */
 namespace org_restfulipc 
 {
-    enum class LineType {
-        Heading,
-        KeyValue,
-        EndOfFile
-    };
-    
+   
     class LineReader 
     {
-    public:
+
+     public:
+        enum LineType {
+            Heading,
+            KeyValue,
+            EndOfFile
+        };
+        
         LineReader(std::string filePath);
         virtual ~LineReader();
         LineType getNextLine();

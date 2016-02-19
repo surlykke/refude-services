@@ -3,6 +3,8 @@
     "subtype" : "REPLACEME",
     "globs" : [],
     "aliases" : [],
+    "defaultApplication" : null,
+    "associatedApplications" : [],
     "_links" : {
         "self" : {
             "href": "REPLACEME"
