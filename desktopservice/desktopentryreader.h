@@ -9,7 +9,7 @@
 
 namespace org_restfulipc 
 {
-    class DesktopEntryReader
+    class DesktopEntryReader : private IniReader
     {
     public:
         DesktopEntryReader(std::string applicationsDir, std::string relativeFilePath);
@@ -27,8 +27,6 @@ namespace org_restfulipc
         std::list<std::string> toList(std::string value);
 
         bool keyOneOf(std::list<std::string> list);
-    
-        IniReader lines;
     };
 }
 

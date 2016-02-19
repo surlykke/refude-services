@@ -11,8 +11,9 @@ namespace org_restfulipc
 {
 
     DesktopEntryReader::DesktopEntryReader(std::string applicationsDirPath, std::string relativeFilePath) :
-            json(JsonConst::EmptyObject),
-            lines(applicationsDirPath + "/" + relativeFilePath)
+        IniReader(applicationsDirPath + "/" + relativeFilePath),
+        json(JsonConst::EmptyObject)
+            
     {
         json << desktopTemplate_json;
         read();
@@ -29,26 +30,26 @@ namespace org_restfulipc
 
     void DesktopEntryReader::read()
     {
-        lines.getNextLine(); 
-        if (lines.lineType != IniReader::Heading || lines.heading != "Desktop Entry") {
+        getNextLine(); 
+        if (lineType != Heading || heading != "Desktop Entry") {
             throw RuntimeError("'[Desktop Entry]' expected");
         }
         readKeyValues(json);
 
-        while (lines.lineType != IniReader::EndOfFile) {
-            if (lines.lineType == IniReader::Heading && lines.heading.substr(0, 14) == "Desktop Action") {
-                std::string action = lines.heading.substr(15);
+        while (lineType != EndOfFile) {
+            if (lineType == Heading && heading.substr(0, 14) == "Desktop Action") {
+                std::string action = heading.substr(15);
                 if (json["Actions"].undefined() || json["Actions"][action].undefined()) {
                     throw RuntimeError("Unknown action: %s", action.data());
                 }
                 readKeyValues(json["Actions"][action]);
             }
-            else if (lines.lineType == IniReader::Heading) {
+            else if (lineType == Heading) {
                 if (json["Other_groups"].undefined()) {
                     json["Other_groups"] = JsonConst::EmptyObject;
                 }
-                json["Other_groups"][lines.heading] = JsonConst::EmptyObject;
-                readKeyValues(json["Other_groups"][lines.heading]);
+                json["Other_groups"][heading] = JsonConst::EmptyObject;
+                readKeyValues(json["Other_groups"][heading]);
             }
             else {
                 throw RuntimeError("Group heading expected");
@@ -58,7 +59,7 @@ namespace org_restfulipc
 
 
     void DesktopEntryReader::readKeyValues(Json& json) {
-        while (lines.getNextLine() == IniReader::KeyValue) {
+        while (getNextLine() == KeyValue) {
             readKeyValue(json);
         }
     }
@@ -67,43 +68,43 @@ namespace org_restfulipc
     bool DesktopEntryReader::readKeyValue(Json& json) 
     {
         if (keyOneOf({"Type", "Version", "Exec", "Path", "StartupWMClass", "URL"})) {
-            json[lines.key] = lines.value;
+            json[key] = value;
         }
         else if (keyOneOf({"Name", "GenericName", "Comment"})) {
-            if (json[lines.key].undefined())  {
-                json[lines.key] = JsonConst::EmptyObject;
+            if (json[key].undefined())  {
+                json[key] = JsonConst::EmptyObject;
             }
-            json[lines.key][lines.locale] = lines.value;
+            json[key][locale] = value;
         }
         else if (keyOneOf({"NoDisplay", "DBusActivatable", "Terminal", "StartupNotify"})) {
-            if (lines.value == "true") { 
-                json[lines.key] = JsonConst::TRUE;
+            if (value == "true") { 
+                json[key] = JsonConst::TRUE;
             }
-            else if (lines.value == "false") {
-                json[lines.key] = JsonConst::FALSE;
+            else if (value == "false") {
+                json[key] = JsonConst::FALSE;
             }
             else {
                 throw RuntimeError("Value for must be 'true' or 'false'");
             }
         }
         else if (keyOneOf({"OnlyShowIn","NotShowIn","MimeType","Categories","Implements"})) {
-            json[lines.key] = JsonConst::EmptyArray;
-            for (std::string val : toList(lines.value)) {
-                json[lines.key].append(val);
+            json[key] = JsonConst::EmptyArray;
+            for (std::string val : toList(value)) {
+                json[key].append(val);
             }
         }    
-        else if (lines.key == "Keywords") { 
-            if (json[lines.key].undefined())  {
-                json[lines.key] = JsonConst::EmptyObject;
+        else if (key == "Keywords") { 
+            if (json[key].undefined())  {
+                json[key] = JsonConst::EmptyObject;
             }
-            json[lines.key][lines.locale] = JsonConst::EmptyArray;
-            for (std::string val : toList(lines.value)) {
-                json[lines.key][lines.locale].append(val);
+            json[key][locale] = JsonConst::EmptyArray;
+            for (std::string val : toList(value)) {
+                json[key][locale].append(val);
             }
         } 
-        else if (lines.key == "Actions") {
+        else if (key == "Actions") {
             json["Actions"] = JsonConst::EmptyObject;
-            for (std::string val : toList(lines.value)) {
+            for (std::string val : toList(value)) {
                 json["Actions"][val] = JsonConst::EmptyObject;
             }
         }
@@ -124,7 +125,7 @@ namespace org_restfulipc
     
 
     bool DesktopEntryReader::keyOneOf(std::list<std::string> list) {
-        for (std::string val : list) if (lines.key == val) return true;
+        for (std::string val : list) if (key == val) return true;
         return false;
     }
 
