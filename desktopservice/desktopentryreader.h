@@ -5,7 +5,7 @@
 #include <list>
 
 #include <json.h>
-#include "linereader.h"
+#include "inireader.h"
 
 namespace org_restfulipc 
 {
@@ -28,7 +28,7 @@ namespace org_restfulipc
 
         bool keyOneOf(std::list<std::string> list);
     
-        LineReader lines;
+        IniReader lines;
     };
 }
 

@@ -12,7 +12,7 @@
  */
 #include <algorithm>
 #include "mimeappslistreader.h"
-#include "linereader.h"
+#include "inireader.h"
 #include "errorhandling.h"
 #include "utils.h"
 
@@ -33,28 +33,28 @@ namespace org_restfulipc
         MimeAppMap tmpAssociations;
         MimeAppMap tmpBlacklist;
 
-        LineReader lineReader(pathToMimeappsListFile);
-        while (lineReader.getNextLine() != LineReader::EndOfFile) {
-            if (lineReader.lineType != LineReader::Heading) {
+        IniReader reader(pathToMimeappsListFile);
+        while (reader.getNextLine() != IniReader::EndOfFile) {
+            if (reader.lineType != IniReader::Heading) {
                 throw RuntimeError("Heading line expected");
             }
-            else if (lineReader.heading == "Added Associations") {
-                while (lineReader.getNextLine() == LineReader::KeyValue) {
-                    add(tmpAssociations[lineReader.key], lineReader.value, blacklist[lineReader.key]);
+            else if (reader.heading == "Added Associations") {
+                while (reader.getNextLine() == IniReader::KeyValue) {
+                    add(tmpAssociations[reader.key], reader.value, blacklist[reader.key]);
                 }
             }
-            else if (lineReader.heading == "Removed Associations") {
-                while (lineReader.getNextLine() == LineReader::KeyValue) {
-                    add(tmpBlacklist[lineReader.key], lineReader.value);
+            else if (reader.heading == "Removed Associations") {
+                while (reader.getNextLine() == IniReader::KeyValue) {
+                    add(tmpBlacklist[reader.key], reader.value);
                 }
             }
-            else if (lineReader.heading == "Default Applications") {
-                while (lineReader.getNextLine() == LineReader::KeyValue) {
-                    add(defaults[lineReader.key], lineReader.value);
+            else if (reader.heading == "Default Applications") {
+                while (reader.getNextLine() == IniReader::KeyValue) {
+                    add(defaults[reader.key], reader.value);
                 }
             }
             else {
-                throw RuntimeError("Unknown heading type: %s\n", lineReader.heading);
+                throw RuntimeError("Unknown heading type: %s\n", reader.heading);
             }
         }
         associations.insert(tmpAssociations.begin(), tmpAssociations.end());
