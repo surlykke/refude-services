@@ -1,11 +1,11 @@
 #include <string.h>
-#include "linereader.h"
+#include "inireader.h"
 #include "errorhandling.h"
 
 namespace org_restfulipc 
 {
         
-    LineReader::LineReader(std::string filePath) : 
+    IniReader::IniReader(std::string filePath) : 
         lineType(), 
         desktopFile(filePath) 
     {
@@ -14,11 +14,11 @@ namespace org_restfulipc
         }
     }
    
-    LineReader::~LineReader()
+    IniReader::~IniReader()
     {
     }
 
-    LineReader::LineType LineReader::getNextLine()
+    IniReader::LineType IniReader::getNextLine()
     {
         if (lineType == LineType::EndOfFile || ! std::getline(desktopFile, line)) {
             lineType = LineType::EndOfFile;
@@ -68,7 +68,7 @@ namespace org_restfulipc
      * Skip chars in expected, if any, one by one.
      * Then skip trailing whitespace. (Also if expected is an empty string.)
      */
-    void LineReader::skip(const char* expected)
+    void IniReader::skip(const char* expected)
     {
         for (const char* c = expected; *c;) {
             if (line[pos++] != *c++) {
@@ -79,7 +79,7 @@ namespace org_restfulipc
         while (isspace(line[pos])) pos++;
     };
 
-    std::string LineReader::getBracketContents()
+    std::string IniReader::getBracketContents()
     {
         // Caller must ensure pos points to a '['
         int start = ++pos;

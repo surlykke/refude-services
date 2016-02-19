@@ -1,5 +1,5 @@
-#ifndef LINEREADER_H
-#define LINEREADER_H
+#ifndef INIREADER_H
+#define INIREADER_H
 #include <string>
 #include <fstream>
 
@@ -13,7 +13,7 @@
 namespace org_restfulipc 
 {
    
-    class LineReader 
+    class IniReader 
     {
 
      public:
@@ -23,8 +23,8 @@ namespace org_restfulipc
             EndOfFile
         };
         
-        LineReader(std::string filePath);
-        virtual ~LineReader();
+        IniReader(std::string filePath);
+        virtual ~IniReader();
         LineType getNextLine();
         std::string heading;
         std::string key;
@@ -42,5 +42,5 @@ namespace org_restfulipc
 
     };
 }
-#endif /* LINEREADER_H */
+#endif /* INIREADER_H */
 
