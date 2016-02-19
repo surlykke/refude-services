@@ -8,8 +8,9 @@
 using namespace tinyxml2;
 namespace org_restfulipc 
 {
-    MimeResourceBuilder::MimeResourceBuilder(Service* service) : 
-        service(service)
+    MimeResourceBuilder::MimeResourceBuilder(Service* service, MimeappsListReader& mimeappsListReader) : 
+        service(service),
+        mimeappsListReader(mimeappsListReader)
     {
     }
 
@@ -29,10 +30,11 @@ namespace org_restfulipc
              mimetypeElement;
              mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
 
-            char mimetype[128];
+            char temp[128];
             char* saveptr;
-            strncpy(mimetype, mimetypeElement->Attribute("type"), 127);
-            char* typeName = strtok_r(mimetype, "/", &saveptr);
+            strncpy(temp, mimetypeElement->Attribute("type"), 127);
+            string mimetype(temp); 
+            char* typeName = strtok_r(temp, "/", &saveptr);
             char* subtypeName = strtok_r(NULL, "/", &saveptr);
 
             if (typeName == NULL || *typeName == '\0' || 
@@ -59,6 +61,14 @@ namespace org_restfulipc
                 subtypeJson["globs"].append(globElement->Attribute("pattern"));
             }
             
+            for (string associatedApp : mimeappsListReader.associations[mimetype]) {
+                subtypeJson["associatedApplications"].append(associatedApp);
+            }
+
+            if (! mimeappsListReader.defaults[mimetype].empty()) {
+                subtypeJson["defaultApplication"] = mimeappsListReader.defaults[mimetype][0];
+            }
+
             i++;
         } 
     }

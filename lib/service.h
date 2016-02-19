@@ -32,7 +32,7 @@ namespace org_restfulipc
         void map(const char* path, org_restfulipc::AbstractResource* resource, bool wildcarded = false);
         void unMap(const char* path);
         AbstractResource* mapping(const char* path, bool wildcarded = false);
-
+        size_t mappings();
     private:
         void startThreads();
         void listener();

@@ -94,6 +94,12 @@ namespace org_restfulipc
         resourceMappings.take(path);
     }
 
+    size_t Service::mappings()
+    {
+        return resourceMappings.size();
+    }
+   
+
     AbstractResource* Service::mapping(const char* path, bool wildcarded)
     {
         int pos = resourceMappings.find(path); 

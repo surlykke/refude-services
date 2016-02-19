@@ -9,13 +9,16 @@ namespace org_restfulipc
         lineType(), 
         desktopFile(filePath) 
     {
+        if (! desktopFile.good()) {
+            lineType = EndOfFile;
+        }
     }
    
     LineReader::~LineReader()
     {
     }
 
-    LineType LineReader::getNextLine()
+    LineReader::LineType LineReader::getNextLine()
     {
         if (lineType == LineType::EndOfFile || ! std::getline(desktopFile, line)) {
             lineType = LineType::EndOfFile;

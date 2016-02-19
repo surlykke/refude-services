@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     DesktopResourceBuilder desktopResourceBuilder(&service);
     desktopResourceBuilder.build();
 
-    MimeResourceBuilder mimeResourceBuilder(&service);
+    MimeResourceBuilder mimeResourceBuilder(&service, desktopResourceBuilder.mimeappsListReader);
     mimeResourceBuilder.build("/usr/share/mime/packages/freedesktop.org.xml");
 
     service.serve(7938);
