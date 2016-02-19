@@ -8,9 +8,8 @@
 using namespace tinyxml2;
 namespace org_restfulipc 
 {
-    MimeResourceBuilder::MimeResourceBuilder(Service* service, MimeappsListReader& mimeappsListReader) : 
-        service(service),
-        mimeappsListReader(mimeappsListReader)
+    MimeResourceBuilder::MimeResourceBuilder(Service* service) :
+        service(service)
     {
     }
 
@@ -18,7 +17,7 @@ namespace org_restfulipc
     {
     }
 
-    void MimeResourceBuilder::build(const char* xmlFilePath)
+    void MimeResourceBuilder::build(const char* xmlFilePath, MimeAppMap& associations, MimeAppMap& defaults)
     {
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile(xmlFilePath);
@@ -61,12 +60,12 @@ namespace org_restfulipc
                 subtypeJson["globs"].append(globElement->Attribute("pattern"));
             }
             
-            for (string associatedApp : mimeappsListReader.associations[mimetype]) {
+            for (string associatedApp : associations[mimetype]) {
                 subtypeJson["associatedApplications"].append(associatedApp);
             }
 
-            if (! mimeappsListReader.defaults[mimetype].empty()) {
-                subtypeJson["defaultApplication"] = mimeappsListReader.defaults[mimetype][0];
+            if (! defaults[mimetype].empty()) {
+                subtypeJson["defaultApplication"] = defaults[mimetype][0];
             }
 
             i++;

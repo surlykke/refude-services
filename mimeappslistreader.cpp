@@ -30,8 +30,8 @@ namespace org_restfulipc
 
     void MimeappsListReader::read(std::string pathToMimeappsListFile)
     {
-        AssocMap tmpAssociations;
-        AssocMap tmpBlacklist;
+        MimeAppMap tmpAssociations;
+        MimeAppMap tmpBlacklist;
 
         LineReader lineReader(pathToMimeappsListFile);
         while (lineReader.getNextLine() != LineReader::EndOfFile) {

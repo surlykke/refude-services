@@ -9,8 +9,9 @@
 namespace org_restfulipc 
 {
 
-    DesktopResourceBuilder::DesktopResourceBuilder(Service* service) : 
-        service(service)
+    DesktopResourceBuilder::DesktopResourceBuilder(Service* service, MimeappsListReader& mimeappsListReader) : 
+        service(service),
+        mimeappsListReader(mimeappsListReader)
     {
     }
 
