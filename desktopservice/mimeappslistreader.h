@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
-
+#include "utils.h"
 /**
  * Based on the algorithm outlined in <FIXME>. 
  * Users of this class should feed it mimeapps.list files in descending order of precedence
@@ -12,9 +12,6 @@
 namespace org_restfulipc
 {
     using namespace std;
-
-    typedef vector<string> AppList;  // Used for lists of applications
-    typedef map<string, AppList> AssocMap; // Used to map mimetypes to associated applications
 
     class MimeappsListReader
     {
@@ -24,14 +21,13 @@ namespace org_restfulipc
         void read(std::string pathToMimeappsListFile);
         void addAssociation(std::string desktopId, std::string mimetype);
         void resolveDefaults();
-        AssocMap associations;
-        AssocMap defaults;
+        MimeAppMap associations;
+        MimeAppMap defaults;
         
     private:
         void add(AppList& dest, string applications, const AppList& excludes = AppList());
         
-        AssocMap blacklist;
+        MimeAppMap blacklist;
     };
-
 }
 #endif /* MIMEAPPSLISTREADER_H */

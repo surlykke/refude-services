@@ -12,10 +12,10 @@ namespace org_restfulipc
     class DesktopResourceBuilder
     {
     public:
-        DesktopResourceBuilder(Service* service);
+        DesktopResourceBuilder(Service* service, MimeappsListReader& mimeappsListReader);
         virtual ~DesktopResourceBuilder();
         void build();
-        MimeappsListReader mimeappsListReader;
+        MimeappsListReader& mimeappsListReader;
     private:
         void findDirs(); 
         void findDesktopEntriesAndSubdirs(string dir, vector<string>& entries, vector<string>& subdirs);

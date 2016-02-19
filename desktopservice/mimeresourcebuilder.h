@@ -3,24 +3,23 @@
 
 #include "json.h" 
 #include "service.h"
-#include "mimeappslistreader.h"
+#include "utils.h"
 
 namespace org_restfulipc
 {
     class MimeResourceBuilder
     {
     public:
-        MimeResourceBuilder(Service* service, MimeappsListReader& mimeappsListReader);
+        MimeResourceBuilder(Service* service);
         virtual ~MimeResourceBuilder();
         
-        void build(const char* xmlFilePath);
+        void build(const char* xmlFilePath, MimeAppMap& associations, MimeAppMap& defaults);
     
     private:
         Json& root();
         Json& type(const char* typeName);
         Json& subtype(const char* typeName, const char* subtype);
         Service* service;
-        MimeappsListReader& mimeappsListReader;
     };
 }
 #endif /* MIMERESOURCEBUILDER_H */
