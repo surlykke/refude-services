@@ -32,7 +32,7 @@ namespace org_restfulipc
     {
         MimeAppMap tmpAssociations;
         MimeAppMap tmpBlacklist;
-
+        
         IniReader reader(pathToMimeappsListFile);
         while (reader.getNextLine() != IniReader::EndOfFile) {
             if (reader.lineType != IniReader::Heading) {

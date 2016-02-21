@@ -11,11 +11,8 @@ namespace org_restfulipc
     class JsonResource : public AbstractResource
     {
     public:
-        JsonResource(const char* selfLinkUri);
         JsonResource();
         virtual ~JsonResource();
-
-        void addRelatedLink(const char* relatedUri, bool templated);
 
         virtual void handleRequest(int &socket, const HttpMessage& request);
         virtual void doGet(int socket, const HttpMessage& request);
@@ -31,6 +28,26 @@ namespace org_restfulipc
 
         Buffer templateCopy;
     };
+
+    class LocalizedJsonResource : public AbstractResource
+    {
+    public:
+        LocalizedJsonResource();
+        virtual ~LocalizedJsonResource();
+
+        virtual void handleRequest(int &socket, const HttpMessage& request);
+        virtual void doGet(string locale, int socket, const HttpMessage& request);
+        Json json;
+        map<string, map<string, string> > translations;
+
+    private:
+        vector<string> getLocales(const HttpMessage& request);
+        void buildResponse(string locale);
+        map<string, Buffer> localizedResponses; 
+        std::shared_timed_mutex responseMutex;
+    };
+
+     
 
 }
 #endif // JSONRESOURCE_H

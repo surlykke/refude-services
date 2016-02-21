@@ -98,6 +98,25 @@ namespace org_restfulipc
         deleteChildren();
     }
 
+    Json Json::deepCopy()
+    {
+        Json copy;
+        memcpy(&copy, this, sizeof(Json));
+        if (mType == JsonType::Array) {
+            for (size_t i = 0; i < elements->size(); i++) {
+                copy.append((*elements)[i].deepCopy());
+            }
+        }
+        else if (mType == JsonType::Object) {
+            for (size_t i = 0; i < entries->size(); i++) {
+                copy.append(strdup(entries->list[i].key), entries->list[i].value.deepCopy());
+            }
+            entries->sorted = entries->list.size();
+        }
+
+        return copy;
+    }
+
     Json& Json::operator=(Json&& other)
     {
         deleteChildren();
@@ -173,9 +192,18 @@ namespace org_restfulipc
         return entries->find(key) > -1;
     }
 
+    const char* Json::keyAt(size_t index)
+    {
+        typeAssert("keyAt(int)", JsonType::Object);
+        if (index >= entries->size()) {
+            throw RuntimeError("Index %d out of range (size: %d)", index, size());
+        }
+        return entries->list[index].key;
+    }
+
+
     uint Json::size()
     {
-        uint length = 0;
         if (mType == JsonType::Array) {
             return elements->size();
         }
@@ -185,7 +213,6 @@ namespace org_restfulipc
         else {
             throw RuntimeError("size() can only be called on Objects or Arrays");
         }
-        return length;
     }
 
     Json& Json::append(Json&& json)

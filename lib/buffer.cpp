@@ -19,19 +19,26 @@ namespace org_restfulipc
         free(data);
     }
 
-    void Buffer::write(char* string)
+    void Buffer::write(const char* string)
     {
         size_t len = strlen(string);
         ensureCapacity(len + 1);
-        strcpy(data + used, string);
+        strncpy(data + used, string, len + 1);
         used += len;
 
     }
 
-    void Buffer::copy(char* string)
+    void Buffer::write(char ch)
     {
-        write(string);
-        used++;
+        ensureCapacity(2);
+        data[used++] = ch;
+        data[used] = '\0';
+    }
+
+    void Buffer::write(double d)
+    {
+        ensureCapacity(25);
+        used += sprintf(data + used, "%.17g", d);
     }
 
     void Buffer::ensureCapacity(int numChars)
@@ -41,6 +48,7 @@ namespace org_restfulipc
                 capacity *= 2;
             }
             while (used + numChars > capacity);
+           
             data = (char*) realloc(data, capacity);
             if (! data) throw C_Error();
         }

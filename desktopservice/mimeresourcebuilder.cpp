@@ -28,7 +28,7 @@ namespace org_restfulipc
         for (XMLElement* mimetypeElement = rootElement->FirstChildElement("mime-type");
              mimetypeElement;
              mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
-
+            
             char temp[128];
             char* saveptr;
             strncpy(temp, mimetypeElement->Attribute("type"), 127);
@@ -41,11 +41,37 @@ namespace org_restfulipc
                 std::cerr << "Warn: Invalid mimetype: " << mimetype << "\n";
             }
 
-            Json& subtypeJson = subtype(typeName, subtypeName);
+            Json subtypeJson = subtype(typeName, subtypeName);
+            map<string, map<string, string> > translations;
 
-            XMLElement* commentElement = mimetypeElement->FirstChildElement("comment");
-            if (commentElement && commentElement->GetText()) {
-                subtypeJson["comment"] = commentElement->GetText();
+            string commentTranslationKey = string("@@") + mimetype + "-comment";
+            subtypeJson["comment"] = commentTranslationKey; 
+            for (XMLElement* commentElement = mimetypeElement->FirstChildElement("comment");
+                    commentElement;
+                    commentElement = commentElement->NextSiblingElement("comment")) {
+                string locale = commentElement->Attribute("xml:lang") ?  commentElement->Attribute("xml:lang") : ""; 
+                transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
+                translations[locale][commentTranslationKey] = commentElement->GetText();
+            }
+
+            string acronymTranslationKey = string("@@") + mimetype + "-acronym";
+            subtypeJson["acronym"] = acronymTranslationKey; 
+            for (XMLElement* acronymElement = mimetypeElement->FirstChildElement("acronym");
+                    acronymElement;
+                    acronymElement = acronymElement->NextSiblingElement("acronym")) {
+                string locale = acronymElement->Attribute("xml:lang") ?  acronymElement->Attribute("xml:lang") : "";
+                transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
+                translations[locale][acronymTranslationKey] = acronymElement->GetText();
+            }
+
+            string expandedAcronymTranslationKey = string("@@") + mimetype + "-expanded-acronym";
+            subtypeJson["expanded-acronym"] = expandedAcronymTranslationKey; 
+            for (XMLElement* expandedAcronymElement = mimetypeElement->FirstChildElement("expanded-acronym");
+                    expandedAcronymElement;
+                    expandedAcronymElement = expandedAcronymElement->NextSiblingElement("expanded-acronym")) {
+                string locale = expandedAcronymElement->Attribute("xml:lang") ?  expandedAcronymElement->Attribute("xml:lang") : ""; 
+                transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
+                translations[locale][expandedAcronymTranslationKey] = expandedAcronymElement->GetText();
             }
 
             for (XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
@@ -59,7 +85,23 @@ namespace org_restfulipc
                  globElement = globElement->NextSiblingElement("glob")) {
                 subtypeJson["globs"].append(globElement->Attribute("pattern"));
             }
-            
+           
+            for (XMLElement* subclassOfElement = mimetypeElement->FirstChildElement("sub-class-of");
+                 subclassOfElement;
+                    subclassOfElement = subclassOfElement->NextSiblingElement("sub-class-of")) {
+                subtypeJson["sub-class-of"].append(subclassOfElement->Attribute("type"));
+            }
+
+            XMLElement* iconElement = mimetypeElement->FirstChildElement("icon");
+            if (iconElement) {
+                subtypeJson["icon"] = iconElement->Attribute("name");
+            }
+
+            XMLElement* genericIconElement = mimetypeElement->FirstChildElement("generic-icon");
+            if (genericIconElement) {
+                subtypeJson["generic-icon"] = genericIconElement->Attribute("name");
+            }
+
             for (string associatedApp : associations[mimetype]) {
                 subtypeJson["associatedApplications"].append(associatedApp);
             }
@@ -67,6 +109,11 @@ namespace org_restfulipc
             if (! defaults[mimetype].empty()) {
                 subtypeJson["defaultApplication"] = defaults[mimetype][0];
             }
+
+            LocalizedJsonResource* jsonResource = new LocalizedJsonResource();
+            jsonResource->json = std::move(subtypeJson);
+            jsonResource->translations = std::move(translations);
+            service->map(jsonResource->json["_links"]["self"]["href"], jsonResource);
 
             i++;
         } 
@@ -105,20 +152,19 @@ namespace org_restfulipc
         return typeResource->json;
     }
 
-    Json& MimeResourceBuilder::subtype(const char* typeName, const char* subtype)
+    Json MimeResourceBuilder::subtype(const char* typeName, const char* subtype)
     {
         char selfUri[164];
         snprintf(selfUri, 164, "/mimetypes/%s/%s", typeName, subtype);
-        JsonResource* subtypeResource = new JsonResource(); 
-        subtypeResource->json << subtypeTemplate_json;
-        subtypeResource->json["type"] = typeName;
-        subtypeResource->json["subtype"] = subtype;
-        subtypeResource->json["_links"]["self"]["href"] = selfUri;
-        subtypeResource->setResponseStale();
-        service->map(selfUri, subtypeResource);
         type(typeName)["subtypes"].append(subtype);
         
-        return subtypeResource->json;
+        Json json;
+        json << subtypeTemplate_json;
+        json["type"] = typeName;
+        json["subtype"] = subtype;
+        json["_links"]["self"]["href"] = selfUri;
+         
+        return json;
     }
 
 

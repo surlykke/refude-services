@@ -5,16 +5,16 @@ namespace org_restfulipc
 {
     struct Buffer
     {
+        Buffer(int initialCapacity = 1024);
+        ~Buffer();
+        void write(const char* string);
+        void write(char ch);
+        void write(double d);
+        void ensureCapacity(int numChars);
+
         char* data;
         int used;
         int capacity;
-
-        Buffer(int initialCapacity = 1024);
-        ~Buffer();
-        void write(char* string);
-        void copy(char* string);
-        void clear();
-        void ensureCapacity(int numChars);
     };
 
 }

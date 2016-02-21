@@ -36,10 +36,11 @@ namespace org_restfulipc
     class HttpMessageReader
     {
     public:
-        HttpMessageReader(int socket, HttpMessage& message);
+        HttpMessageReader(int socket, HttpMessage& message, bool dumpRequest = false);
         void readRequest();
         void readResponse();
-    
+        bool dumpRequest; 
+
     private:
         void readRequestLine();
         void readStatusLine();

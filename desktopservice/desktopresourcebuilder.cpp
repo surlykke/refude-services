@@ -127,9 +127,9 @@ namespace org_restfulipc
                         mimeappsListReader.addAssociation(desktopEntryReader.entryId, (const char*)mimetypes[i]);
                     }
                 }
-                JsonResource* jsonResource = new JsonResource();
+                LocalizedJsonResource* jsonResource = new LocalizedJsonResource();
                 jsonResource->json = std::move(desktopEntryReader.json);
-                jsonResource->setResponseStale();
+                jsonResource->translations = std::move(desktopEntryReader.translations);
                 service->map(jsonResource->json["_links"]["self"]["href"], jsonResource);
             }
         }

@@ -12,7 +12,8 @@ int main(int argc, char** argv)
     using namespace org_restfulipc;
     Service service;
     //WebServer webServer("/home/christian/NetBeansProjects/GenericRipcClient/public_html");
-    JsonResource resource("/service");
+    JsonResource resource;
+    resource.json << "{}";
     resource.json["time"] = time(NULL);
     resource.setResponseStale();
 

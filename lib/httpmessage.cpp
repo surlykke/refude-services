@@ -36,7 +36,8 @@ namespace org_restfulipc
         contentLength = 0;
     }
 
-    HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message) : 
+    HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message, bool dumpRequest) : 
+        dumpRequest(dumpRequest), 
         _socket(socket), 
         _message(message),
         _bufferEnd(0),
@@ -228,6 +229,9 @@ namespace org_restfulipc
         int bytesRead = read(_socket, _message.buffer + _bufferEnd, 8190 - _bufferEnd);
         if (bytesRead > 0) {
             _message.buffer[_bufferEnd + bytesRead] = '\0';
+            if (dumpRequest) {
+                printf(_message.buffer + _bufferEnd);
+            }
             _bufferEnd += bytesRead;
         }
         else 

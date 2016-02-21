@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "utils.h"
+#include "typedefs.h" 
 /**
  * Based on the algorithm outlined in <FIXME>. 
  * Users of this class should feed it mimeapps.list files in descending order of precedence

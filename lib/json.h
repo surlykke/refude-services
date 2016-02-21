@@ -45,6 +45,7 @@ namespace org_restfulipc
         Json(double number);
         ~Json();
 
+        Json deepCopy();
         Json& operator=(Json&& other);
         Json& operator=(Json& other) = delete;
         Json& operator=(JsonConst jsonConst);
@@ -62,6 +63,7 @@ namespace org_restfulipc
         Json take(int index);
         Json take(const char* key);
         bool contains(const char* key);
+        const char* keyAt(size_t index);
         uint size();
 
         Json& append(Json&& json);
@@ -87,6 +89,7 @@ namespace org_restfulipc
 
         friend class JsonReader;
         friend class JsonWriter;
+        friend class FilteringJsonWriter;
     };
 
     Json& operator<<(Json& json, const char* serialized);

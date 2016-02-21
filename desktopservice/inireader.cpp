@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string.h>
 #include "inireader.h"
 #include "errorhandling.h"
@@ -46,6 +47,7 @@ namespace org_restfulipc
                 
                 if (line[pos] == '[') {
                     locale = getBracketContents();
+                    transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
                 }
                 else {
                     locale = "";

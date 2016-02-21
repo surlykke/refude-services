@@ -17,7 +17,9 @@ int main()
     json["baa"] = JsonConst::FALSE;
     json.take("foo");
     std::cout << json.size() << "\n";
-    std::cout << JsonWriter(&json).buffer.data << "\n";
+    Buffer output;
+    JsonWriter(&output).write(json);
+    std::cout << output.data << "\n"; 
     std::cout << "\n";
 
     json = JsonConst::EmptyArray;
@@ -27,6 +29,8 @@ int main()
     json.take(2);
     Json taken = json.take(0);
     std::cout << "At 0: " << (double)taken << "\n";
-    std::cout << JsonWriter(&json).buffer.data << "\n";
+    Buffer output2;
+    JsonWriter(&output2).write(json);
+    std::cout << output2.data << "\n";
 
 }
