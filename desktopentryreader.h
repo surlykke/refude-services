@@ -9,13 +9,16 @@
 
 namespace org_restfulipc 
 {
+    using namespace std;
     class DesktopEntryReader : private IniReader
     {
     public:
         DesktopEntryReader(std::string applicationsDir, std::string relativeFilePath);
         virtual ~DesktopEntryReader();
-        std::string entryId;
+        string entryId;
         Json json;
+        map<string, map<string, string> > translations;
+        string currentTranslationKeyPrefix;
     private:
         void read();
         void readMainGroup();

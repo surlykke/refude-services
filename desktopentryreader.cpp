@@ -17,7 +17,14 @@ namespace org_restfulipc
     {
         json << desktopTemplate_json;
         read();
-        
+
+        // For localized values we use the non-locale value as a fallback 
+        for (auto p : translations) {
+            if (! p.first.empty()) {
+                translations[p.first].insert(translations[""].begin(), translations[""].end());
+            }
+        }
+
         entryId = relativeFilePath;
         std::replace(entryId.begin(), entryId.end(), '/', '-') ;
         std::string selfHref = std::string("/desktopentry/") + entryId;
@@ -71,10 +78,11 @@ namespace org_restfulipc
             json[key] = value;
         }
         else if (keyOneOf({"Name", "GenericName", "Comment"})) {
+            string translationKey = string("@@") + heading + "::" + key;  
             if (json[key].undefined())  {
-                json[key] = JsonConst::EmptyObject;
+                json[key] = translationKey; 
             }
-            json[key][locale] = value;
+            translations[locale][translationKey] = value;
         }
         else if (keyOneOf({"NoDisplay", "DBusActivatable", "Terminal", "StartupNotify"})) {
             if (value == "true") { 
@@ -94,12 +102,12 @@ namespace org_restfulipc
             }
         }    
         else if (key == "Keywords") { 
-            if (json[key].undefined())  {
-                json[key] = JsonConst::EmptyObject;
-            }
-            json[key][locale] = JsonConst::EmptyArray;
+            json[key] = JsonConst::EmptyArray;
+            int i = 1;
             for (std::string val : toList(value)) {
-                json[key][locale].append(val);
+                string translationKey = string("@@") + heading + "::" + key + "_" + to_string(i++);
+                json[key].append(translationKey);
+                translations[locale][translationKey] = val;
             }
         } 
         else if (key == "Actions") {

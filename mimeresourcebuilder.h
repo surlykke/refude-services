@@ -3,7 +3,7 @@
 
 #include "json.h" 
 #include "service.h"
-#include "utils.h"
+#include "typedefs.h"
 
 namespace org_restfulipc
 {
@@ -14,11 +14,11 @@ namespace org_restfulipc
         virtual ~MimeResourceBuilder();
         
         void build(const char* xmlFilePath, MimeAppMap& associations, MimeAppMap& defaults);
-    
+        
     private:
         Json& root();
         Json& type(const char* typeName);
-        Json& subtype(const char* typeName, const char* subtype);
+        Json subtype(const char* typeName, const char* subtype);
         Service* service;
     };
 }

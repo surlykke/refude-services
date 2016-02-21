@@ -3,11 +3,16 @@
     "subtype" : "REPLACEME",
     "globs" : [],
     "aliases" : [],
+    "sub-class-of" : [],
     "defaultApplication" : null,
     "associatedApplications" : [],
     "_links" : {
         "self" : {
             "href": "REPLACEME"
+        },
+        "application" : {
+            "templated" : true,
+            "href": "/desktopentry/{application-id}"
         }
     }
 } 
