@@ -4,6 +4,7 @@
 #include "typeTemplate.h"
 #include "subtypeTemplate.h"
 #include "mimeresourcebuilder.h"
+#include "jsonreader.h"
 
 using namespace tinyxml2;
 namespace org_restfulipc 
@@ -24,7 +25,6 @@ namespace org_restfulipc
         XMLElement* rootElement = doc->FirstChildElement("mime-info");
 
         if (!rootElement) throw RuntimeError("No 'mime-info' root-element");
-        int i = 0;
         for (XMLElement* mimetypeElement = rootElement->FirstChildElement("mime-type");
              mimetypeElement;
              mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
@@ -40,6 +40,8 @@ namespace org_restfulipc
                 subtypeName == NULL || *subtypeName == '\0') {
                 std::cerr << "Warn: Invalid mimetype: " << mimetype << "\n";
             }
+
+            typesSubtypes[typeName].push_back(subtypeName);
 
             Json subtypeJson = subtype(typeName, subtypeName);
             map<string, map<string, string> > translations;
@@ -114,50 +116,62 @@ namespace org_restfulipc
             jsonResource->json = std::move(subtypeJson);
             jsonResource->translations = std::move(translations);
             service->map(jsonResource->json["_links"]["self"]["href"], jsonResource);
-
-            i++;
         } 
-    }
 
+        vector<string> types;
+        for (auto typeSubtypePair : typesSubtypes) {
+            types.push_back(typeSubtypePair.first);
 
-    Json& MimeResourceBuilder::root()
-    {
-        JsonResource* rootResource = (JsonResource*) service->mapping("/mimetypes");
-        if (rootResource == NULL) {
-            rootResource = new JsonResource();
-            rootResource->json << rootTemplate_json;
-            service->map("/mimetypes", rootResource);
-            rootResource->setResponseStale();
+            ::sort(typeSubtypePair.second.begin(), typeSubtypePair.second.end());
+            JsonResource* typeResource = new JsonResource();
+            typeResource->json = type(typeSubtypePair.first, typeSubtypePair.second);
+            typeResource->setResponseStale();
+            service->map(typeResource->json["_links"]["self"]["href"], typeResource);
         }
-        return rootResource->json;
+        
+        JsonResource* rootResource = new JsonResource();
+        rootResource->json = root(types);
+        Buffer buffer;
+        JsonWriter(&buffer).write(rootResource->json);
+        rootResource->setResponseStale();
+        service->map(rootResource->json["_links"]["self"]["href"], rootResource);
+
     }
 
-    Json& MimeResourceBuilder::type(const char* typeName) 
+
+    Json MimeResourceBuilder::root(vector<string> types)
+    {
+        Json json = JsonReader(rootTemplate_json).read();
+        for (string _type : types) {
+            json["types"].append(_type);
+        }
+        Buffer buf;
+        JsonWriter(&buf).write(json);
+        return json;
+    }
+
+    Json MimeResourceBuilder::type(string typeName, vector<string> subtypes) 
     {
         char selfUri[128];
-        snprintf(selfUri, 128, "/mimetypes/%s", typeName);
-        JsonResource* typeResource = (JsonResource*) service->mapping(selfUri);
-        if (typeResource == NULL)  {
-            typeResource = new JsonResource();
-            typeResource->json << typeTemplate_json;
-            typeResource->json["name"] = typeName;
-            typeResource->json["_links"]["self"]["href"] = selfUri;
-            char subtypeRef[128];
-            sprintf(subtypeRef, "/mimetypes/%s/{subtype}", typeName);
-            typeResource->json["_links"]["subtype"]["href"] = subtypeRef;
-            typeResource->setResponseStale();
-            service->map(selfUri, typeResource);
-            root()["types"].append(typeName);
+        snprintf(selfUri, 128, "/mimetypes/%s", typeName.data());
+        Json json;
+        json << typeTemplate_json;
+        json["name"] = typeName;
+        for (string subtype : subtypes) {
+            json["subtypes"].append(subtype);
         }
-        return typeResource->json;
+        json["_links"]["self"]["href"] = selfUri;
+        char subtypeRef[128];
+        snprintf(subtypeRef, 128, "/mimetypes/%s/{subtype}", typeName.data());
+        json["_links"]["subtype"]["href"] = subtypeRef;
+
+        return json;
     }
 
     Json MimeResourceBuilder::subtype(const char* typeName, const char* subtype)
     {
         char selfUri[164];
         snprintf(selfUri, 164, "/mimetypes/%s/%s", typeName, subtype);
-        type(typeName)["subtypes"].append(subtype);
-        
         Json json;
         json << subtypeTemplate_json;
         json["type"] = typeName;
