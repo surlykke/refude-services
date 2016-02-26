@@ -4,10 +4,9 @@
         "self" : {
             "href" : "/mimetypes"
         },
-        "type": [ { 
+        "type": { 
                 "href": "/mimetypes/{type}",
                 "templated": true
-            }
-        ]
+        }
     }
 }
