@@ -62,7 +62,7 @@ namespace org_restfulipc
     };
 }
 
-//std::ostream& operator<<(std::ostream& out, const HttpMessage& httpRequest);
+std::ostream& operator<<(std::ostream& out, const org_restfulipc::HttpMessage& message);
 
 #endif    /* HTTPMESSAGE_H */
 

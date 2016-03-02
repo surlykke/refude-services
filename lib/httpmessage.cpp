@@ -126,7 +126,7 @@ namespace org_restfulipc
             nextChar();
         }
 
-        if (nextChar() != '\n') Status::Http400;
+        if (nextChar() != '\n') throw Status::Http400;
     }
 
     // On entry: currentPos points to character just before next header line
@@ -249,9 +249,45 @@ namespace org_restfulipc
         _currentPos = -1;    
     }
 
-
-
-    
-
 }
 
+//Method method;
+//char* path;
+//char* remainingPath;
+//char* queryString;
+//int status;
+//const char* headers[(int) Header::unknown];
+//char* body;
+//int contentLength;status
+//
+//char buffer[8192];
+
+
+using namespace org_restfulipc;
+std::ostream& operator<<(std::ostream& out, const org_restfulipc::HttpMessage& message) 
+{
+    if (message.path) {
+        out << "HTTP "  << method2String(message.method) << " " << message.path;   
+
+        if (message.remainingPath && *message.remainingPath) {
+            out << "(" << message.remainingPath << ")";
+        }
+        if (*message.queryString) {
+            out << "?" << message.queryString;
+        }
+        out << "\n";
+    }
+    else {
+        out << "Status: " << message.status << "\n";
+    }
+    for (int i = 0; i < (int)Header::unknown; i++) {
+        if (message.headers[i]) {
+            out << strVal((Header)i) << ": " << message.headers[i] << "\n";
+        }
+    }
+    if (message.body) {
+        out << message.body << "\n";
+    }
+
+    return out;
+}

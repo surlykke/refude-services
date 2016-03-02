@@ -25,6 +25,8 @@ namespace org_restfulipc
 
     Method string2Method(const char* str);
 
+    const char* method2String(Method method);
+
     int methodLength(Method method);
 
     // Those headers we care about (TODO: Need them all?)

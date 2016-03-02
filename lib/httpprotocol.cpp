@@ -24,6 +24,21 @@ namespace org_restfulipc
 
         return Method::UNKNOWN;
     }
+    
+    const char* method2String(Method method) {
+        static const char* stringVals[] = {
+            "GET",
+            "PATCH",
+            "POST",
+            "DELETE",
+            "PUT",
+            "HEAD",
+            "TRACE",
+            "OPTIONS",
+            "CONNECT",
+        };
+        return (method <= Method::CONNECT ? stringVals[(int) method] : "UNKNOWN");
+    }
 
     int methodLengths[] = { 3, 5, 4, 6, 3, 4, 5, 7, 7 };
 

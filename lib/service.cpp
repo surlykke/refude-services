@@ -170,6 +170,7 @@ namespace org_restfulipc
             do {
                 try {
                     HttpMessageReader(requestSocket, request).readRequest();
+                    std::cout << "Incoming:\n"  << request << "\n";
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex < 0) {
                         throw Status::Http404;
