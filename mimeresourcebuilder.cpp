@@ -1,7 +1,6 @@
 #include <tinyxml2.h>
 #include "jsonresource.h"
 #include "rootTemplate.h"
-#include "typeTemplate.h"
 #include "subtypeTemplate.h"
 #include "mimeresourcebuilder.h"
 #include "jsonreader.h"
@@ -20,6 +19,8 @@ namespace org_restfulipc
 
     void MimeResourceBuilder::build(const char* xmlFilePath, MimeAppMap& associations, MimeAppMap& defaults)
     {
+        map<string, vector<string> > typesSubtypes;
+
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile(xmlFilePath);
         XMLElement* rootElement = doc->FirstChildElement("mime-info");
@@ -118,55 +119,26 @@ namespace org_restfulipc
             service->map(jsonResource->json["_links"]["self"]["href"], jsonResource);
         } 
 
-        vector<string> types;
-        for (auto typeSubtypePair : typesSubtypes) {
-            types.push_back(typeSubtypePair.first);
+        Json rootJson;
+        rootJson << rootTemplate_json;
 
+        for (auto typeSubtypePair : typesSubtypes) {
+            string typeName = typeSubtypePair.first;
+            rootJson["types"].append(typeName);
+            
             ::sort(typeSubtypePair.second.begin(), typeSubtypePair.second.end());
-            JsonResource* typeResource = new JsonResource();
-            typeResource->json = type(typeSubtypePair.first, typeSubtypePair.second);
-            typeResource->setResponseStale();
-            service->map(typeResource->json["_links"]["self"]["href"], typeResource);
+            rootJson["subtypes"][typeName] = JsonConst::EmptyArray;
+            for (string subtypeName : typeSubtypePair.second) {
+                rootJson["subtypes"][typeName].append(subtypeName);
+            }
         }
         
         JsonResource* rootResource = new JsonResource();
-        rootResource->json = root(types);
-        Buffer buffer;
-        JsonWriter(&buffer).write(rootResource->json);
+        rootResource->json = std::move(rootJson);
         rootResource->setResponseStale();
         service->map(rootResource->json["_links"]["self"]["href"], rootResource);
-
     }
 
-
-    Json MimeResourceBuilder::root(vector<string> types)
-    {
-        Json json = JsonReader(rootTemplate_json).read();
-        for (string _type : types) {
-            json["types"].append(_type);
-        }
-        Buffer buf;
-        JsonWriter(&buf).write(json);
-        return json;
-    }
-
-    Json MimeResourceBuilder::type(string typeName, vector<string> subtypes) 
-    {
-        char selfUri[128];
-        snprintf(selfUri, 128, "/mimetypes/%s", typeName.data());
-        Json json;
-        json << typeTemplate_json;
-        json["name"] = typeName;
-        for (string subtype : subtypes) {
-            json["subtypes"].append(subtype);
-        }
-        json["_links"]["self"]["href"] = selfUri;
-        char subtypeRef[128];
-        snprintf(subtypeRef, 128, "/mimetypes/%s/{subtype}", typeName.data());
-        json["_links"]["subtype"]["href"] = subtypeRef;
-
-        return json;
-    }
 
     Json MimeResourceBuilder::subtype(const char* typeName, const char* subtype)
     {

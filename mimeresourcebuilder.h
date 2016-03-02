@@ -15,13 +15,9 @@ namespace org_restfulipc
     public:
         MimeResourceBuilder(Service* service);
         virtual ~MimeResourceBuilder();
-        
         void build(const char* xmlFilePath, MimeAppMap& associations, MimeAppMap& defaults);
         
     private:
-        map<string, vector<string> > typesSubtypes;
-        Json root(vector<string> types);
-        Json type(string typeName, vector<string> subtypes);
         Json subtype(const char* typeName, const char* subtype);
         Service* service;
     };
