@@ -1,11 +1,12 @@
 {
     "types" : [],
+    "subtypes" : {},
     "_links" : {
         "self" : {
             "href" : "/mimetypes"
         },
-        "type": { 
-                "href": "/mimetypes/{type}",
+        "mimetype": { 
+                "href": "/mimetypes/{type}/{subtype}",
                 "templated": true
         }
     }
