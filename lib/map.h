@@ -71,7 +71,7 @@ namespace org_restfulipc
             if (found) {
                 return pos;
             }
-            else if (pos > 0 && strncmp(key, list.at(pos - 1).key, strlen(list.at(pos - 1).key))) {
+            else if (pos > 0 && !strncmp(key, list.at(pos - 1).key, strlen(list.at(pos - 1).key))) {
                 return pos - 1;
             }
             else {

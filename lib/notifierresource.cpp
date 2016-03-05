@@ -31,13 +31,10 @@ namespace org_restfulipc {
 
         static int responseLength = strlen(response);
 
-        std::cout << "Into NotifierResource::handleRequest\n";
-
         if (request.method != Method::GET) {
             throw Status::Http405;
         }
 
-        std::cout << "Writing: " << response << "\n";
         int bytesWritten = 0;
         do {
             int bytes;
@@ -53,7 +50,6 @@ namespace org_restfulipc {
 
     void NotifierResource::addClient(int socket)
     {
-        std::cout << "Adding client: " << socket << "\n";
         std::unique_lock<std::mutex> lock(mMutex);
 
         if (mNumberOfClientSockets == mClientSocketsCapacity) {
@@ -83,7 +79,6 @@ namespace org_restfulipc {
             std::unique_lock<std::mutex> lock(mMutex);
 
             for (int i = 0; i < mNumberOfClientSockets; i++) {
-                std::cout << "Writing \n" << data << "-----\n";
                 if (write(mClientSockets[i], data, dataLength) < dataLength) {
                     // We close, both if error and if sendbuffer full, which we take to
                     // indicate the client is not consuming... The client will then have to reconnnect

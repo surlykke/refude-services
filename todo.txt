@@ -1,3 +1,4 @@
+Do redirects
 Clean & tighten up imports
 Correct license headers
 write profile docs

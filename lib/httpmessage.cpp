@@ -92,7 +92,10 @@ namespace org_restfulipc
 
         if (_message.queryString == 0)
         {
-            _message.queryString = _message.buffer + _currentPos;
+            _message.remainingPath = _message.queryString = _message.buffer + _currentPos;
+        }
+        else {
+            _message.remainingPath = _message.queryString - 1;
         }
 
         int protocolStart = _currentPos + 1;
@@ -267,15 +270,10 @@ using namespace org_restfulipc;
 std::ostream& operator<<(std::ostream& out, const org_restfulipc::HttpMessage& message) 
 {
     if (message.path) {
-        out << "HTTP "  << method2String(message.method) << " " << message.path;   
-
-        if (message.remainingPath && *message.remainingPath) {
-            out << "(" << message.remainingPath << ")";
-        }
-        if (*message.queryString) {
-            out << "?" << message.queryString;
-        }
-        out << "\n";
+        out << "HTTP "  << method2String(message.method) << "\n";   
+        out << "Path: " << message.path << "\n";
+        out << "Remaining path: " << message.remainingPath << "\n";
+        out << "Query string: " << message.queryString << "\n";
     }
     else {
         out << "Status: " << message.status << "\n";

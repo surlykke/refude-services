@@ -20,8 +20,3 @@ target_link_libraries(test_json_parser pthread ${CMAKE_BINARY_DIR}/lib/librestfu
 
 add_executable(test_notification test_notification.cpp)
 target_link_libraries(test_notification pthread ${CMAKE_BINARY_DIR}/lib/librestfulipc.so)
-
-add_executable(test_webserver test_webserver.cpp)
-target_link_libraries(test_webserver pthread ${CMAKE_BINARY_DIR}/lib/librestfulipc.so)
-
-

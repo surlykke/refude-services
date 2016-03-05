@@ -86,12 +86,23 @@ namespace org_restfulipc
     
     void Service::map(const char* path, AbstractResource* resource, bool wildcarded)
     {
-        resourceMappings.add(path, std::move(resource));
+        if (wildcarded) {
+            prefixMappings.add(path, std::move(resource));
+        }
+        else {
+            resourceMappings.add(path, std::move(resource));
+        }
     }
 
     void Service::unMap(const char* path)
     {
-        resourceMappings.take(path);
+        if (resourceMappings.find(path)) {
+            resourceMappings.take(path);
+        }
+        
+        if (prefixMappings.find(path)) {
+            prefixMappings.take(path);
+        }
     }
 
     size_t Service::mappings()
@@ -170,13 +181,35 @@ namespace org_restfulipc
             do {
                 try {
                     HttpMessageReader(requestSocket, request).readRequest();
-                    std::cout << "Incoming:\n"  << request << "\n";
+                    bool prefix = false;
                     int resourceIndex = resourceMappings.find(request.path);
+                    if (resourceIndex < 0) {
+                        prefix = true;
+                        resourceIndex = prefixMappings.find_longest_prefix(request.path);
+                    }
                     if (resourceIndex < 0) {
                         throw Status::Http404;
                     }
-                    AbstractResource *resource = resourceMappings.at(resourceIndex).value;
-                    request.remainingPath = ""; // FIXME
+                    
+                    AbstractResource *resource;
+                    if (prefix) {
+                        Pair<AbstractResource*> pair = prefixMappings.at(resourceIndex);
+                        request.remainingPath = request.path + strlen(pair.key);
+                        if (*request.remainingPath == '/') {
+                            request.remainingPath++;
+                        }
+                        else if (*request.remainingPath != '\0') {
+                            if (request.remainingPath > request.path && 
+                                (*(request.remainingPath - 1) != '/')) {
+                                throw Status::Http404;
+                            }
+                        }
+                        resource = prefixMappings.at(resourceIndex).value;
+                    }
+                    else {
+                        resource = resourceMappings.at(resourceIndex).value;
+                    }
+
                     resource->handleRequest(requestSocket, request);
                     const char* connectHeader = request.headerValue(Header::connection);
                     if (!connectHeader) connectHeader = "(null)"; 
