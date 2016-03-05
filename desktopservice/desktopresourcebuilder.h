@@ -3,12 +3,15 @@
 
 #include <string>
 #include <list>
+#include <set>
+
 #include "service.h"
 #include "mimeappslistreader.h"
 
 namespace org_restfulipc 
 {
     using namespace std;
+    class JsonResource;
     class DesktopResourceBuilder
     {
     public:
@@ -20,12 +23,16 @@ namespace org_restfulipc
         void findDirs(); 
         void findDesktopEntriesAndSubdirs(string dir, vector<string>& entries, vector<string>& subdirs);
         void build(string applicationsDir, string subDir);
-        
+
         vector<string> desktopEnvNames; 
         vector<string> configDirs; 
         vector<string> applicationsDirs;
 
         Service* service;
+
+        set<string> processedEntries;
+        JsonResource* fileHandlers;
+        JsonResource* urlHandlers;
     };
 
 }
