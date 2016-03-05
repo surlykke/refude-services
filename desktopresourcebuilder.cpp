@@ -5,14 +5,25 @@
 #include "utils.h"
 #include "desktopentryreader.h"
 #include "desktopresourcebuilder.h"
+#include "handlerTemplate.h"
+#include "jsonreader.h"
 
 namespace org_restfulipc 
 {
 
     DesktopResourceBuilder::DesktopResourceBuilder(Service* service, MimeappsListReader& mimeappsListReader) : 
+        mimeappsListReader(mimeappsListReader),
         service(service),
-        mimeappsListReader(mimeappsListReader)
+        processedEntries(),
+        fileHandlers(new JsonResource()),
+        urlHandlers(new JsonResource())
     {
+        fileHandlers->json << handlerTemplate_json;
+        fileHandlers->json["_links"]["self"]["href"] = "/desktopentry/filehandlers";
+
+        urlHandlers->json << handlerTemplate_json;
+        urlHandlers->json["_links"]["self"]["href"] = "/desktopentry/urlhandlers";
+
     }
 
     DesktopResourceBuilder::~DesktopResourceBuilder()
@@ -39,8 +50,16 @@ namespace org_restfulipc
 
             build(applicationsDir, "");
         }
-    }
 
+        fileHandlers->json["_links"]["self"]["href"] = "/desktopentry/filehandlers";
+        fileHandlers->setResponseStale();
+        service->map("/desktopentry/filehandlers", fileHandlers);
+
+        urlHandlers->json["_links"]["self"]["href"] = "/desktopentry/urlhandlers";
+        urlHandlers->setResponseStale();
+        service->map("/desktopentry/urlhandlers", urlHandlers);
+    }
+    
     void DesktopResourceBuilder::findDirs()
     {
         vector<string> DE_NAMES = split(value("XDG_CURRENT_DESKTOP"), ':');
@@ -119,19 +138,44 @@ namespace org_restfulipc
         
         for (string desktopEntry : desktopEntries) {
             string relativePath = dir.empty() ? desktopEntry : dir + "/" + desktopEntry;
-            DesktopEntryReader desktopEntryReader(applicationsDir, relativePath);
-            if (!service->mapping(desktopEntryReader.json["_links"]["self"]["href"])) {
-                if (desktopEntryReader.json.contains("MimeType")) {
-                    Json& mimetypes = desktopEntryReader.json["MimeType"];
-                    for (int i = 0; i < mimetypes.size(); i++) {
-                        mimeappsListReader.addAssociation(desktopEntryReader.entryId, (const char*)mimetypes[i]);
-                    }
-                }
-                LocalizedJsonResource* jsonResource = new LocalizedJsonResource();
-                jsonResource->json = std::move(desktopEntryReader.json);
-                jsonResource->translations = std::move(desktopEntryReader.translations);
-                service->map(jsonResource->json["_links"]["self"]["href"], jsonResource);
+            string entryId = relativePath;
+            replace(entryId.begin(), entryId.end(), '/', '-') ;
+            
+            if (processedEntries.count(entryId) >= 1) { 
+                continue;
             }
+
+            DesktopEntryReader desktopEntryReader(applicationsDir, relativePath);
+            processedEntries.insert(entryId);
+            Json& json = desktopEntryReader.json;
+            if (! (json.contains("Hidden") && (bool)json["Hidden"])) {
+                if (json.contains("MimeType")) {
+                    Json& mimetypes = json["MimeType"];
+                    for (int i = 0; i < mimetypes.size(); i++) {
+                        mimeappsListReader.addAssociation(entryId, (const char*)mimetypes[i]);
+                    }
+                }               
+              
+                if (json.contains("Exec")) {
+                    if (strcasestr(json["Exec"], "%u")) {
+                        fileHandlers->json["handlers"].append(entryId);
+                        urlHandlers->json["handlers"].append(entryId);
+                    }
+                    else if (strcasestr(json["Exec"], "%f")) {
+                        fileHandlers->json["handlers"].append(entryId);
+                    }
+                } 
+
+                LocalizedJsonResource* resource = new LocalizedJsonResource();
+                resource->json = std::move(desktopEntryReader.json);
+                resource->translations = std::move(desktopEntryReader.translations);                
+                
+                string selfRef = string("/desktopentry/") + entryId;
+                resource->json["_links"]["self"]["href"] = selfRef; 
+                service->map(selfRef.data(), resource);
+
+            }
+
         }
 
         for (string subdir : subdirs) {
@@ -139,4 +183,5 @@ namespace org_restfulipc
             build(applicationsDir, relativeDir);
         }
     }
+
 }

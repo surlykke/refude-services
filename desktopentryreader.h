@@ -18,7 +18,7 @@ namespace org_restfulipc
         string entryId;
         Json json;
         map<string, map<string, string> > translations;
-        string currentTranslationKeyPrefix;
+    
     private:
         void read();
         void readMainGroup();
@@ -30,6 +30,8 @@ namespace org_restfulipc
         std::list<std::string> toList(std::string value);
 
         bool keyOneOf(std::list<std::string> list);
+        
+        string currentTranslationKeyPrefix;
     };
 }
 
