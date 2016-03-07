@@ -3,7 +3,7 @@
     "subtype" : "REPLACEME",
     "globs" : [],
     "aliases" : [],
-    "sub-class-of" : [],
+    "subclassOf" : [],
     "defaultApplication" : null,
     "associatedApplications" : [],
     "_links" : {
