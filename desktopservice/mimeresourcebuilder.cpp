@@ -57,7 +57,7 @@ namespace org_restfulipc
                 translations[locale][commentTranslationKey] = commentElement->GetText();
             }
 
-            string acronymTranslationKey = string("@@") + mimetype + "-acronym";
+            string acronymTranslationKey = string("@@") + mimetype + "_acronym";
             subtypeJson["acronym"] = acronymTranslationKey; 
             for (XMLElement* acronymElement = mimetypeElement->FirstChildElement("acronym");
                     acronymElement;
@@ -67,8 +67,8 @@ namespace org_restfulipc
                 translations[locale][acronymTranslationKey] = acronymElement->GetText();
             }
 
-            string expandedAcronymTranslationKey = string("@@") + mimetype + "-expanded-acronym";
-            subtypeJson["expanded-acronym"] = expandedAcronymTranslationKey; 
+            string expandedAcronymTranslationKey = string("@@") + mimetype + "_expandedAcronym";
+            subtypeJson["expandedAcronym"] = expandedAcronymTranslationKey; 
             for (XMLElement* expandedAcronymElement = mimetypeElement->FirstChildElement("expanded-acronym");
                     expandedAcronymElement;
                     expandedAcronymElement = expandedAcronymElement->NextSiblingElement("expanded-acronym")) {
@@ -92,7 +92,7 @@ namespace org_restfulipc
             for (XMLElement* subclassOfElement = mimetypeElement->FirstChildElement("sub-class-of");
                  subclassOfElement;
                     subclassOfElement = subclassOfElement->NextSiblingElement("sub-class-of")) {
-                subtypeJson["sub-class-of"].append(subclassOfElement->Attribute("type"));
+                subtypeJson["subclassOf"].append(subclassOfElement->Attribute("type"));
             }
 
             XMLElement* iconElement = mimetypeElement->FirstChildElement("icon");
@@ -102,7 +102,7 @@ namespace org_restfulipc
 
             XMLElement* genericIconElement = mimetypeElement->FirstChildElement("generic-icon");
             if (genericIconElement) {
-                subtypeJson["generic-icon"] = genericIconElement->Attribute("name");
+                subtypeJson["genericIcon"] = genericIconElement->Attribute("name");
             }
 
             for (string associatedApp : associations[mimetype]) {
