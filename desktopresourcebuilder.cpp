@@ -35,19 +35,10 @@ namespace org_restfulipc
         findDirs(); 
       
         for (string configDir : configDirs) {
-            for (string desktopEnvName : desktopEnvNames) {
-                string path = configDir + "/" + desktopEnvName + "-" + "mimeapps.list";
-                mimeappsListCollector.collect(MimeappsList(path));
-            }
-
             mimeappsListCollector.collect(MimeappsList(configDir + "/" + "mimeapps.list"));
         }
 
         for (string applicationsDir : applicationsDirs) {
-            for (string desktopEnvName : desktopEnvNames) {
-                string path  = applicationsDir + "/" + desktopEnvName + "-" + "mimeapps.list";
-                mimeappsListCollector.collect(MimeappsList(path));
-            }
             mimeappsListCollector.collect(MimeappsList(applicationsDir + "/" + "mimeapps.list"));
 
             build(applicationsDir, "");
@@ -64,12 +55,6 @@ namespace org_restfulipc
     
     void DesktopResourceBuilder::findDirs()
     {
-        vector<string> DE_NAMES = split(value("XDG_CURRENT_DESKTOP"), ':');
-        for (string de_name : DE_NAMES) {
-            transform(de_name.begin(), de_name.end(), de_name.begin(), ::tolower);
-            desktopEnvNames.push_back(de_name);
-        }
-
         string xdg_config_home = value("XDG_CONFIG_HOME");
         if (xdg_config_home.empty()) xdg_config_home = value("HOME") + "/.config";
         configDirs = { xdg_config_home };

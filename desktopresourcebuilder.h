@@ -25,7 +25,6 @@ namespace org_restfulipc
         void findDesktopEntriesAndSubdirs(string dir, vector<string>& entries, vector<string>& subdirs);
         void build(string applicationsDir, string subDir);
 
-        vector<string> desktopEnvNames; 
         vector<string> configDirs; 
         vector<string> applicationsDirs;
 
