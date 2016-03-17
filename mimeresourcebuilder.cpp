@@ -114,9 +114,8 @@ namespace org_restfulipc
             }
 
             LocalizedJsonResource* jsonResource = new LocalizedJsonResource();
-            jsonResource->json = std::move(subtypeJson);
-            jsonResource->translations = std::move(translations);
-            service->map(jsonResource->json["_links"]["self"]["href"], jsonResource);
+            service->map(subtypeJson["_links"]["self"]["href"], jsonResource);
+            jsonResource->setJson(std::move(subtypeJson), std::move(translations));
         } 
 
         Json rootJson;
@@ -133,10 +132,10 @@ namespace org_restfulipc
             }
         }
         
+        const char* rootSelfUri = rootJson["_links"]["self"]["href"];
         JsonResource* rootResource = new JsonResource();
-        rootResource->json = std::move(rootJson);
-        rootResource->setResponseStale();
-        service->map(rootResource->json["_links"]["self"]["href"], rootResource);
+        service->map(rootJson["_links"]["self"]["href"], rootResource);
+        rootResource->setJson(std::move(rootJson));
     }
 
 
