@@ -6,6 +6,7 @@
 #include <set>
 
 #include "service.h"
+#include "json.h"
 #include "mimeappslistreader.h"
 
 namespace org_restfulipc 
@@ -15,10 +16,10 @@ namespace org_restfulipc
     class DesktopResourceBuilder
     {
     public:
-        DesktopResourceBuilder(Service* service, MimeappsListReader& mimeappsListReader);
+        DesktopResourceBuilder(Service* service, MimeappsListCollector& mimeappsListCollector);
         virtual ~DesktopResourceBuilder();
         void build();
-        MimeappsListReader& mimeappsListReader;
+        MimeappsListCollector& mimeappsListCollector;
     private:
         void findDirs(); 
         void findDesktopEntriesAndSubdirs(string dir, vector<string>& entries, vector<string>& subdirs);
@@ -31,8 +32,8 @@ namespace org_restfulipc
         Service* service;
 
         set<string> processedEntries;
-        JsonResource* fileHandlers;
-        JsonResource* urlHandlers;
+        Json fileHandlers;
+        Json urlHandlers;
     };
 
 }

@@ -18,68 +18,80 @@
 
 namespace org_restfulipc
 {
-
-
-    MimeappsListReader::MimeappsListReader()
+    MimeappsList::MimeappsList(std::string path)
     {
-    }
-
-    MimeappsListReader::~MimeappsListReader()
-    {
-    }
-
-    void MimeappsListReader::read(std::string pathToMimeappsListFile)
-    {
-        MimeAppMap tmpAssociations;
-        MimeAppMap tmpBlacklist;
-        
-        IniReader reader(pathToMimeappsListFile);
+        IniReader reader(path);
         while (reader.getNextLine() != IniReader::EndOfFile) {
             if (reader.lineType != IniReader::Heading) {
                 throw RuntimeError("Heading line expected");
             }
             else if (reader.heading == "Added Associations") {
                 while (reader.getNextLine() == IniReader::KeyValue) {
-                    add(tmpAssociations[reader.key], reader.value, blacklist[reader.key]);
+                    addedAssociations[reader.key]  = split(reader.value, ';');
                 }
             }
             else if (reader.heading == "Removed Associations") {
                 while (reader.getNextLine() == IniReader::KeyValue) {
-                    add(tmpBlacklist[reader.key], reader.value);
+                    removedAssociations[reader.key] = split(reader.value, ';');
                 }
             }
             else if (reader.heading == "Default Applications") {
                 while (reader.getNextLine() == IniReader::KeyValue) {
-                    add(defaults[reader.key], reader.value);
+                    defaultApps[reader.key] = split(reader.value, ';');
                 }
             }
             else {
                 throw RuntimeError("Unknown heading type: %s\n", reader.heading);
             }
         }
-        associations.insert(tmpAssociations.begin(), tmpAssociations.end());
-        blacklist.insert(tmpBlacklist.begin(), tmpBlacklist.end());
+    }
+    
+
+    MimeappsListCollector::MimeappsListCollector()
+    {
     }
 
-    void MimeappsListReader::addAssociation(std::string application, std::string mimetype)
+    MimeappsListCollector::~MimeappsListCollector()
     {
-        AppList& bl = blacklist[mimetype];
-        AppList& as = associations[mimetype];
-        if (find(bl.begin(), bl.end(), application) == bl.end() && find(as.begin(), as.end(), application) == as.end()) {
-            as.push_back(application);
+    }
+
+    void MimeappsListCollector::collect(const MimeappsList& mimeappsList)
+    {
+        for (auto pair : mimeappsList.addedAssociations) {
+            for (string desktopId : pair.second) {
+                addAssociation(pair.first, desktopId);  
+            }
+        }
+
+        for (auto pair : mimeappsList.removedAssociations) {
+            for (string desktopId : pair.second) {
+                blacklistAssociation(pair.first, desktopId);
+            }
+        }
+
+        for (auto pair : mimeappsList.defaultApps) {
+            defaults[pair.first].insert(defaults[pair.first].end(), pair.second.begin(), pair.second.end());
+        }
+
+    }
+
+    void MimeappsListCollector::addAssociation(std::string mimetype, std::string desktopId)
+    {
+        if (! contains(blacklist[mimetype], desktopId) && !contains(associations[mimetype], desktopId)) {
+            associations[mimetype].push_back(desktopId);
         }
     }
 
-    void MimeappsListReader::add(AppList& lst, string applications, const AppList& excludes)
+    void MimeappsListCollector::blacklistAssociation(std::string mimetype, std::string desktopId)
     {
-        for (string application : split(applications, ';')) {
-            if (find(excludes.begin(), excludes.end(), application) == excludes.end() &&
-                find(lst.begin(), lst.end(), application) == lst.end()) {
-                lst.push_back(application);
-            } 
+        if (! contains(blacklist[mimetype], desktopId)) {
+            blacklist[mimetype].push_back(desktopId);
         }
-
     }
 
+    bool MimeappsListCollector::contains(const AppList& applist, string desktopId)
+    {
+        return find(applist.begin(), applist.end(), desktopId) != applist.end();
+    }
 
 }

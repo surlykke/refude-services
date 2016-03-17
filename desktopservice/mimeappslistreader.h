@@ -13,21 +13,31 @@ namespace org_restfulipc
 {
     using namespace std;
 
-    class MimeappsListReader
+    class MimeappsList 
     {
     public:
-        MimeappsListReader();
-        virtual ~MimeappsListReader();
-        void read(std::string pathToMimeappsListFile);
-        void addAssociation(std::string desktopId, std::string mimetype);
-        void resolveDefaults();
-        MimeAppMap associations;
+        MimeappsList(std::string path);
+        ~MimeappsList() {}
+        MimeAppMap defaultApps;
+        MimeAppMap addedAssociations;
+        MimeAppMap removedAssociations;
+    };
+
+    class MimeappsListCollector
+    {
+    public:
+        MimeappsListCollector();
+        virtual ~MimeappsListCollector();
+        void collect(const MimeappsList& mimeappsList);
+        void addAssociation(std::string mimetype, std::string desktopId);
+        void blacklistAssociation(std::string mimetype, std::string desktopId);
+
         MimeAppMap defaults;
-        
-    private:
-        void add(AppList& dest, string applications, const AppList& excludes = AppList());
-        
+        MimeAppMap associations;
         MimeAppMap blacklist;
+       
+    private:
+        bool contains(const AppList& applist, string desktopId);
     };
 }
 #endif /* MIMEAPPSLISTREADER_H */

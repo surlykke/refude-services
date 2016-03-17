@@ -10,7 +10,9 @@ namespace org_restfulipc
         void write(const char* string);
         void write(char ch);
         void write(double d);
+        void write(int i); 
         void ensureCapacity(int numChars);
+        void clear();
 
         char* data;
         int used;

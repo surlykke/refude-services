@@ -41,6 +41,11 @@ namespace org_restfulipc
         used += sprintf(data + used, "%.17g", d);
     }
 
+    void Buffer::write(int i) {
+        ensureCapacity(10);
+        used += sprintf(data + used, "%d", i);
+    }
+    
     void Buffer::ensureCapacity(int numChars)
     {
         if (used + numChars > capacity) {
@@ -53,4 +58,10 @@ namespace org_restfulipc
             if (! data) throw C_Error();
         }
     }
+
+    void Buffer::clear()
+    {
+        used = 0;
+    }
+
 }

@@ -11,18 +11,18 @@
 namespace org_restfulipc 
 {
 
-    DesktopResourceBuilder::DesktopResourceBuilder(Service* service, MimeappsListReader& mimeappsListReader) : 
-        mimeappsListReader(mimeappsListReader),
+    DesktopResourceBuilder::DesktopResourceBuilder(Service* service, MimeappsListCollector& mimeappsListCollector) : 
+        mimeappsListCollector(mimeappsListCollector),
         service(service),
         processedEntries(),
-        fileHandlers(new JsonResource()),
-        urlHandlers(new JsonResource())
+        fileHandlers(),
+        urlHandlers()
     {
-        fileHandlers->json << handlerTemplate_json;
-        fileHandlers->json["_links"]["self"]["href"] = "/desktopentry/filehandlers";
+        fileHandlers << handlerTemplate_json;
+        fileHandlers["_links"]["self"]["href"] = "/desktopentry/filehandlers";
 
-        urlHandlers->json << handlerTemplate_json;
-        urlHandlers->json["_links"]["self"]["href"] = "/desktopentry/urlhandlers";
+        urlHandlers << handlerTemplate_json;
+        urlHandlers["_links"]["self"]["href"] = "/desktopentry/urlhandlers";
 
     }
 
@@ -36,28 +36,30 @@ namespace org_restfulipc
       
         for (string configDir : configDirs) {
             for (string desktopEnvName : desktopEnvNames) {
-                mimeappsListReader.read(configDir + "/" + desktopEnvName + "-" + "mimeapps.list");
+                string path = configDir + "/" + desktopEnvName + "-" + "mimeapps.list";
+                mimeappsListCollector.collect(MimeappsList(path));
             }
 
-            mimeappsListReader.read(configDir + "/" + "mimeapps.list");
+            mimeappsListCollector.collect(MimeappsList(configDir + "/" + "mimeapps.list"));
         }
 
         for (string applicationsDir : applicationsDirs) {
             for (string desktopEnvName : desktopEnvNames) {
-                mimeappsListReader.read(applicationsDir + "/" + desktopEnvName + "-" + "mimeapps.list");
+                string path  = applicationsDir + "/" + desktopEnvName + "-" + "mimeapps.list";
+                mimeappsListCollector.collect(MimeappsList(path));
             }
-            mimeappsListReader.read(applicationsDir + "/" + "mimeapps.list");
+            mimeappsListCollector.collect(MimeappsList(applicationsDir + "/" + "mimeapps.list"));
 
             build(applicationsDir, "");
         }
 
-        fileHandlers->json["_links"]["self"]["href"] = "/desktopentry/filehandlers";
-        fileHandlers->setResponseStale();
-        service->map("/desktopentry/filehandlers", fileHandlers);
+        JsonResource* fileHandlersResource = new JsonResource();
+        fileHandlersResource->setJson(std::move(fileHandlers));
+        service->map("/desktopentry/filehandlers", fileHandlersResource);
 
-        urlHandlers->json["_links"]["self"]["href"] = "/desktopentry/urlhandlers";
-        urlHandlers->setResponseStale();
-        service->map("/desktopentry/urlhandlers", urlHandlers);
+        JsonResource* urlHandlersResource = new JsonResource();
+        urlHandlersResource->setJson(std::move(urlHandlers));
+        service->map("/desktopentry/urlhandlers", urlHandlersResource);
     }
     
     void DesktopResourceBuilder::findDirs()
@@ -152,28 +154,25 @@ namespace org_restfulipc
                 if (json.contains("MimeType")) {
                     Json& mimetypes = json["MimeType"];
                     for (int i = 0; i < mimetypes.size(); i++) {
-                        mimeappsListReader.addAssociation(entryId, (const char*)mimetypes[i]);
+                        mimeappsListCollector.addAssociation((const char*)mimetypes[i], entryId);
                     }
                 }               
               
                 if (json.contains("Exec")) {
                     if (strcasestr(json["Exec"], "%u")) {
-                        fileHandlers->json["handlers"].append(entryId);
-                        urlHandlers->json["handlers"].append(entryId);
+                        fileHandlers["handlers"].append(entryId);
+                        urlHandlers["handlers"].append(entryId);
                     }
                     else if (strcasestr(json["Exec"], "%f")) {
-                        fileHandlers->json["handlers"].append(entryId);
+                        fileHandlers["handlers"].append(entryId);
                     }
                 } 
 
                 LocalizedJsonResource* resource = new LocalizedJsonResource();
-                resource->json = std::move(desktopEntryReader.json);
-                resource->translations = std::move(desktopEntryReader.translations);                
-                
                 string selfRef = string("/desktopentry/") + entryId;
-                resource->json["_links"]["self"]["href"] = selfRef; 
+                desktopEntryReader.json["_links"]["self"]["href"] = selfRef; 
                 service->map(selfRef.data(), resource);
-
+                resource->setJson(std::move(desktopEntryReader.json), std::move(desktopEntryReader.translations));
             }
 
         }
