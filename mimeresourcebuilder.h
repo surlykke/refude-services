@@ -1,11 +1,9 @@
 #ifndef MIMERESOURCEBUILDER_H
 #define MIMERESOURCEBUILDER_H
-#include <string>
-#include <map>
-#include <vector>
+#include "typedefs.h"
 #include "json.h" 
 #include "service.h"
-#include "typedefs.h"
+#include "mimetyperesource.h"
 
 namespace org_restfulipc
 {
@@ -13,13 +11,12 @@ namespace org_restfulipc
     class MimeResourceBuilder
     {
     public:
-        MimeResourceBuilder(Service* service);
+        MimeResourceBuilder();
         virtual ~MimeResourceBuilder();
-        void build(const char* xmlFilePath, MimeAppMap& associations, MimeAppMap& defaults);
-        
+        JsonResource::ptr rootResource;
+        map<string, MimetypeResource::ptr> mimetypeResources;
     private:
-        Json subtype(const char* typeName, const char* subtype);
-        Service* service;
+        void build();
     };
 }
 #endif /* MIMERESOURCEBUILDER_H */

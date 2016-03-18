@@ -18,21 +18,36 @@
 
 namespace org_restfulipc
 {
-    MimeappsList::MimeappsList(std::string path)
+    template<typename AppSomething> 
+    void writeHlp(ostream& out, string header, AppSomething& appSomething) 
     {
-        IniReader reader(path);
+        out << header << "\n";
+        for (const auto& it : appSomething) {
+            out << it.first << "=";
+            for (string entryId : it.second) {
+                out << entryId << ";";
+            }
+            out << "\n";
+        }
+    }
+
+
+    MimeappsList::MimeappsList(std::string path):
+    filePath(path)
+    {
+        IniReader reader(filePath);
         while (reader.getNextLine() != IniReader::EndOfFile) {
             if (reader.lineType != IniReader::Heading) {
                 throw RuntimeError("Heading line expected");
             }
             else if (reader.heading == "Added Associations") {
                 while (reader.getNextLine() == IniReader::KeyValue) {
-                    addedAssociations[reader.key]  = split(reader.value, ';');
+                    addedAssociations[reader.key]  = splitToSet(reader.value, ';');
                 }
             }
             else if (reader.heading == "Removed Associations") {
                 while (reader.getNextLine() == IniReader::KeyValue) {
-                    removedAssociations[reader.key] = split(reader.value, ';');
+                    removedAssociations[reader.key] = splitToSet(reader.value, ';');
                 }
             }
             else if (reader.heading == "Default Applications") {
@@ -45,53 +60,12 @@ namespace org_restfulipc
             }
         }
     }
-    
 
-    MimeappsListCollector::MimeappsListCollector()
+    void MimeappsList::write()
     {
+        std::ofstream stream(filePath);
+        writeHlp(stream, "[Default Applications]", defaultApps); 
+        writeHlp(stream, "[Added Associations]", addedAssociations);
+        writeHlp(stream, "[Removed Associations]", removedAssociations);
     }
-
-    MimeappsListCollector::~MimeappsListCollector()
-    {
-    }
-
-    void MimeappsListCollector::collect(const MimeappsList& mimeappsList)
-    {
-        for (auto pair : mimeappsList.addedAssociations) {
-            for (string desktopId : pair.second) {
-                addAssociation(pair.first, desktopId);  
-            }
-        }
-
-        for (auto pair : mimeappsList.removedAssociations) {
-            for (string desktopId : pair.second) {
-                blacklistAssociation(pair.first, desktopId);
-            }
-        }
-
-        for (auto pair : mimeappsList.defaultApps) {
-            defaults[pair.first].insert(defaults[pair.first].end(), pair.second.begin(), pair.second.end());
-        }
-
-    }
-
-    void MimeappsListCollector::addAssociation(std::string mimetype, std::string desktopId)
-    {
-        if (! contains(blacklist[mimetype], desktopId) && !contains(associations[mimetype], desktopId)) {
-            associations[mimetype].push_back(desktopId);
-        }
-    }
-
-    void MimeappsListCollector::blacklistAssociation(std::string mimetype, std::string desktopId)
-    {
-        if (! contains(blacklist[mimetype], desktopId)) {
-            blacklist[mimetype].push_back(desktopId);
-        }
-    }
-
-    bool MimeappsListCollector::contains(const AppList& applist, string desktopId)
-    {
-        return find(applist.begin(), applist.end(), desktopId) != applist.end();
-    }
-
 }

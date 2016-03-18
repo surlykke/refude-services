@@ -1,12 +1,13 @@
 {
     "_links" : {
         "self" : {
-            "href" : "REPLACEME"
+            "href" : "/handlers"
         },
         "application" : {
             "templated" : true,
             "href": "/desktopentry/{application-id}"
         }
     },
-    "handlers" : []
+    "fileHandlers" : [],
+    "urlHandlers" : []
 }

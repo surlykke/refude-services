@@ -5,6 +5,7 @@
 #include <list>
 
 #include <json.h>
+#include <jsonresource.h>
 #include "inireader.h"
 
 namespace org_restfulipc 
@@ -13,11 +14,10 @@ namespace org_restfulipc
     class DesktopEntryReader : private IniReader
     {
     public:
-        DesktopEntryReader(std::string applicationsDir, std::string relativeFilePath);
+        DesktopEntryReader(string desktopFilePath);
         virtual ~DesktopEntryReader();
-        string entryId;
         Json json;
-        map<string, map<string, string> > translations;
+        Translations translations;
     
     private:
         void read();
@@ -30,8 +30,6 @@ namespace org_restfulipc
         std::list<std::string> toList(std::string value);
 
         bool keyOneOf(std::list<std::string> list);
-        
-        string currentTranslationKeyPrefix;
     };
 }
 

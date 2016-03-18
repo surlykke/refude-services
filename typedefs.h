@@ -2,14 +2,16 @@
 #define TYPEDEFS_H
 
 #include <map>
+#include <set>
+#include <list>
 #include <string>
 
 namespace org_restfulipc
 {
     using namespace std;
 
-    typedef vector<string> AppList;  // Used for lists of applications
-    typedef map<string, AppList> MimeAppMap; // Used to map mimetypes to associated applications
+    typedef map<string, vector<string> > AppLists;
+    typedef map<string, set<string> > AppSets;
 
 }
 
