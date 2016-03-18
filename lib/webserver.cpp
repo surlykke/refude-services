@@ -76,14 +76,16 @@ namespace org_restfulipc
         if (rootFd < 0) throw C_Error();
     }
 
-    void WebServer::handleRequest(int& socket, const HttpMessage& request)
+    void WebServer::handleRequest(int& socket, int matchedPathLength, const HttpMessage& request)
     {
         const char* filePath;
-        if (strcmp("", request.remainingPath) == 0 || strcmp("/", request.remainingPath) == 0) {
+        int pathLength = strlen(request.path);
+        if (matchedPathLength == pathLength || 
+                (matchedPathLength == pathLength - 1 && request.path[matchedPathLength] == '/' )) {
             filePath = "index.html";
         }
         else {
-            filePath = request.remainingPath;
+            filePath = request.path + matchedPathLength + 1;
         }
 
         FileWriter(socket, rootFd, filePath).writeFile();

@@ -22,9 +22,7 @@ int main()
         buf[bufSize++] = '\0';
         std::cout << "Parsing " << buf << "\n";
         Json json = JsonReader(buf).read();
-        Buffer serialized;
-        JsonWriter(&serialized).write(json);
-        std::cout << serialized.data << "\n";
+        std::cout << JsonWriter(json).buffer.data << "\n";
     }
     catch (RuntimeError re) {
         std::cout << "Caught error: " << re.errorMsg << "\n";

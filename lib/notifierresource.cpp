@@ -20,7 +20,7 @@ namespace org_restfulipc {
         mClientSocketsCapacity = 128;
     }
 
-    void NotifierResource::handleRequest(int &socket, const HttpMessage &request)
+    void NotifierResource::handleRequest(int &socket, int matchedPathLength, const HttpMessage &request)
     {
         static const char* response =
                 "HTTP/1.1 200 OK\r\n"

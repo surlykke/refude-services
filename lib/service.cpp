@@ -5,21 +5,15 @@
  * Created on 14. februar 2015, 19:10
  */
 
-#include <poll.h>
-#include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
-
-#include <string.h>
-#include <stdio.h>
-#include <error.h>
-#include <errno.h>
+#include <sys/socket.h>
 #include <unistd.h>
-#include <iostream>
+#include <poll.h>
 
 #include "httpmessage.h"
 #include "abstractresource.h"
 #include "service.h"
-#include "errorhandling.h"
 
 namespace org_restfulipc
 {
@@ -60,11 +54,6 @@ namespace org_restfulipc
 
     void Service::serve(const char* socketPath) 
     {
-        if (strlen(socketPath) >= UNIX_PATH_MAX - 1)
-        {
-            throw std::runtime_error("Socket path too long");
-        }
-
         struct sockaddr_un sockaddr;
         memset(&sockaddr, 0, sizeof(struct sockaddr_un));
         sockaddr.sun_family = AF_UNIX;
@@ -84,13 +73,13 @@ namespace org_restfulipc
         }
     }
     
-    void Service::map(const char* path, AbstractResource* resource, bool wildcarded)
+    void Service::map(const char* path, AbstractResource::ptr resource, bool wildcarded)
     {
         if (wildcarded) {
-            prefixMappings.add(path, std::move(resource));
+            prefixMappings.add(path, resource);
         }
         else {
-            resourceMappings.add(path, std::move(resource));
+            resourceMappings.add(path, resource);
         }
     }
 
@@ -111,7 +100,7 @@ namespace org_restfulipc
     }
    
 
-    AbstractResource* Service::mapping(const char* path, bool wildcarded)
+    AbstractResource::ptr Service::mapping(const char* path, bool wildcarded)
     {
         int pos = resourceMappings.find(path); 
         if (pos < 0) {
@@ -159,8 +148,6 @@ namespace org_restfulipc
                 tv.tv_sec = 0;  
                 tv.tv_usec = 200000;  
                 setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv , sizeof(struct timeval));
-
-
                 requestSockets.enqueue(requestSocket);
             }
         }
@@ -181,36 +168,33 @@ namespace org_restfulipc
             do {
                 try {
                     HttpMessageReader(requestSocket, request).readRequest();
-                    bool prefix = false;
+                    std::cout << request;
+                    AbstractResource::ptr handler; 
+                    uint matchedPathLength;
                     int resourceIndex = resourceMappings.find(request.path);
-                    if (resourceIndex < 0) {
-                        prefix = true;
-                        resourceIndex = prefixMappings.find_longest_prefix(request.path);
+                    if (resourceIndex > -1) {
+                        handler = resourceMappings.at(resourceIndex).value;
+                        matchedPathLength = strlen(request.path);
                     }
-                    if (resourceIndex < 0) {
+                    else { 
+                        resourceIndex = prefixMappings.find_longest_prefix(request.path);
+                        if (resourceIndex >= 0) {
+                            Pair<AbstractResource::ptr> pair = prefixMappings.at(resourceIndex);
+                            matchedPathLength = strlen(pair.key);
+                            if (request.path[matchedPathLength] == '\0' || request.path[matchedPathLength] == '/') {
+                                handler = pair.value;
+                            }
+                        }
+                    }
+
+                    if (! handler) {
                         throw Status::Http404;
                     }
                     
-                    AbstractResource *resource;
-                    if (prefix) {
-                        Pair<AbstractResource*> pair = prefixMappings.at(resourceIndex);
-                        request.remainingPath = request.path + strlen(pair.key);
-                        if (*request.remainingPath == '/') {
-                            request.remainingPath++;
-                        }
-                        else if (*request.remainingPath != '\0') {
-                            if (request.remainingPath > request.path && 
-                                (*(request.remainingPath - 1) != '/')) {
-                                throw Status::Http404;
-                            }
-                        }
-                        resource = prefixMappings.at(resourceIndex).value;
-                    }
-                    else {
-                        resource = resourceMappings.at(resourceIndex).value;
-                    }
+                    //std::cout << "Incoming:" << request << "\n";
+                    
+                    handler->handleRequest(requestSocket, matchedPathLength, request);
 
-                    resource->handleRequest(requestSocket, request);
                     const char* connectHeader = request.headerValue(Header::connection);
                     if (!connectHeader) connectHeader = "(null)"; 
                     if (requestSocket > -1 &&

@@ -3,52 +3,54 @@
 #include "rootTemplate.h"
 #include "subtypeTemplate.h"
 #include "mimeresourcebuilder.h"
+#include "mimetyperesource.h"
 #include "jsonreader.h"
+#include "utils.h"
 
 using namespace tinyxml2;
 namespace org_restfulipc 
 {
-    MimeResourceBuilder::MimeResourceBuilder(Service* service) :
-        service(service)
+    MimeResourceBuilder::MimeResourceBuilder() :
+        rootResource(),
+        mimetypeResources()
     {
+        rootResource = make_shared<JsonResource>();
+        build();
     }
 
     MimeResourceBuilder::~MimeResourceBuilder()
     {
     }
 
-    void MimeResourceBuilder::build(const char* xmlFilePath, MimeAppMap& associations, MimeAppMap& defaults)
+    void MimeResourceBuilder::build()
     {
-        map<string, vector<string> > typesSubtypes;
-
+        map<string, set<string> > mimetypes; 
         XMLDocument* doc = new XMLDocument;
-        doc->LoadFile(xmlFilePath);
+        doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
         XMLElement* rootElement = doc->FirstChildElement("mime-info");
 
         if (!rootElement) throw RuntimeError("No 'mime-info' root-element");
         for (XMLElement* mimetypeElement = rootElement->FirstChildElement("mime-type");
              mimetypeElement;
              mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
-            
-            char temp[128];
-            char* saveptr;
-            strncpy(temp, mimetypeElement->Attribute("type"), 127);
-            string mimetype(temp); 
-            char* typeName = strtok_r(temp, "/", &saveptr);
-            char* subtypeName = strtok_r(NULL, "/", &saveptr);
-
-            if (typeName == NULL || *typeName == '\0' || 
-                subtypeName == NULL || *subtypeName == '\0') {
-                std::cerr << "Warn: Invalid mimetype: " << mimetype << "\n";
+           
+            string mimetype = mimetypeElement->Attribute("type");
+            vector<string> tmp = split(mimetype, '/');
+            if (tmp.size() != 2 || tmp[0].empty() || tmp[1].empty()) {
+                std::cerr << "Incomprehensible mimetype: " << mimetype;
+                continue;
             }
+            string typeName = tmp[0];
+            string subtypeName = tmp[1];
 
-            typesSubtypes[typeName].push_back(subtypeName);
-
-            Json subtypeJson = subtype(typeName, subtypeName);
-            map<string, map<string, string> > translations;
+            Json json;
+            json << subtypeTemplate_json;
+            json["type"] = typeName;
+            json["subtype"] = subtypeName;
+            Translations translations;
 
             string commentTranslationKey = string("@@") + mimetype + "-comment";
-            subtypeJson["comment"] = commentTranslationKey; 
+            json["comment"] = commentTranslationKey; 
             for (XMLElement* commentElement = mimetypeElement->FirstChildElement("comment");
                     commentElement;
                     commentElement = commentElement->NextSiblingElement("comment")) {
@@ -58,7 +60,7 @@ namespace org_restfulipc
             }
 
             string acronymTranslationKey = string("@@") + mimetype + "_acronym";
-            subtypeJson["acronym"] = acronymTranslationKey; 
+            json["acronym"] = acronymTranslationKey; 
             for (XMLElement* acronymElement = mimetypeElement->FirstChildElement("acronym");
                     acronymElement;
                     acronymElement = acronymElement->NextSiblingElement("acronym")) {
@@ -68,7 +70,7 @@ namespace org_restfulipc
             }
 
             string expandedAcronymTranslationKey = string("@@") + mimetype + "_expandedAcronym";
-            subtypeJson["expandedAcronym"] = expandedAcronymTranslationKey; 
+            json["expandedAcronym"] = expandedAcronymTranslationKey; 
             for (XMLElement* expandedAcronymElement = mimetypeElement->FirstChildElement("expanded-acronym");
                     expandedAcronymElement;
                     expandedAcronymElement = expandedAcronymElement->NextSiblingElement("expanded-acronym")) {
@@ -80,78 +82,48 @@ namespace org_restfulipc
             for (XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
                  aliasElement;
                  aliasElement = aliasElement->NextSiblingElement("alias")) {
-                subtypeJson["aliases"].append(aliasElement->Attribute("type"));
+                json["aliases"].append(aliasElement->Attribute("type"));
             }
 
             for (XMLElement* globElement = mimetypeElement->FirstChildElement("glob");
                  globElement;
                  globElement = globElement->NextSiblingElement("glob")) {
-                subtypeJson["globs"].append(globElement->Attribute("pattern"));
+                json["globs"].append(globElement->Attribute("pattern"));
             }
            
             for (XMLElement* subclassOfElement = mimetypeElement->FirstChildElement("sub-class-of");
                  subclassOfElement;
                     subclassOfElement = subclassOfElement->NextSiblingElement("sub-class-of")) {
-                subtypeJson["subclassOf"].append(subclassOfElement->Attribute("type"));
+                json["subclassOf"].append(subclassOfElement->Attribute("type"));
             }
 
             XMLElement* iconElement = mimetypeElement->FirstChildElement("icon");
             if (iconElement) {
-                subtypeJson["icon"] = iconElement->Attribute("name");
+                json["icon"] = iconElement->Attribute("name");
             }
 
             XMLElement* genericIconElement = mimetypeElement->FirstChildElement("generic-icon");
             if (genericIconElement) {
-                subtypeJson["genericIcon"] = genericIconElement->Attribute("name");
+                json["genericIcon"] = genericIconElement->Attribute("name");
             }
 
-            for (string associatedApp : associations[mimetype]) {
-                subtypeJson["associatedApplications"].append(associatedApp);
-            }
+            mimetypeResources[mimetype] = make_shared<MimetypeResource>();
+            mimetypeResources[mimetype]->setJson(std::move(json), std::move(translations));
 
-            if (! defaults[mimetype].empty()) {
-                subtypeJson["defaultApplication"] = defaults[mimetype][0];
-            }
-
-            LocalizedJsonResource* jsonResource = new LocalizedJsonResource();
-            service->map(subtypeJson["_links"]["self"]["href"], jsonResource);
-            jsonResource->setJson(std::move(subtypeJson), std::move(translations));
+            mimetypes[typeName].insert(subtypeName);
         } 
 
-        Json rootJson;
+        Json rootJson; 
         rootJson << rootTemplate_json;
-
-        for (auto typeSubtypePair : typesSubtypes) {
-            string typeName = typeSubtypePair.first;
-            rootJson["types"].append(typeName);
-            
-            ::sort(typeSubtypePair.second.begin(), typeSubtypePair.second.end());
-            rootJson["subtypes"][typeName] = JsonConst::EmptyArray;
-            for (string subtypeName : typeSubtypePair.second) {
-                rootJson["subtypes"][typeName].append(subtypeName);
+        for (const auto& it : mimetypes) {
+            Json& subtypeArray = rootJson["mimetypes"][it.first] = JsonConst::EmptyArray;
+            for (const string& subtype : it.second) {
+                subtypeArray.append(subtype);
             }
         }
-        
-        const char* rootSelfUri = rootJson["_links"]["self"]["href"];
-        JsonResource* rootResource = new JsonResource();
-        service->map(rootJson["_links"]["self"]["href"], rootResource);
+
         rootResource->setJson(std::move(rootJson));
     }
-
-
-    Json MimeResourceBuilder::subtype(const char* typeName, const char* subtype)
-    {
-        char selfUri[164];
-        snprintf(selfUri, 164, "/mimetypes/%s/%s", typeName, subtype);
-        Json json;
-        json << subtypeTemplate_json;
-        json["type"] = typeName;
-        json["subtype"] = subtype;
-        json["_links"]["self"]["href"] = selfUri;
-         
-        return json;
-    }
-
 
 
 }

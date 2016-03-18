@@ -18,10 +18,11 @@ namespace org_restfulipc
     class GenericResource : public AbstractResource
     {
     public:
-        GenericResource(const char* doc = "", NotifierResource *notifierResource = 0);
+        typedef std::shared_ptr<GenericResource> ptr;
+        GenericResource(const char* doc = "", NotifierResource::ptr notifierResource = 0);
         virtual ~GenericResource();
 
-        virtual void handleRequest(int &socket, const HttpMessage& request);
+        virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
         virtual void doGet(int socket, const HttpMessage& request);
         virtual void doPatch(int socket, const HttpMessage& request);
         void update(const char* data);
@@ -31,7 +32,7 @@ namespace org_restfulipc
         char* _respPtr;
         int _responseLength;
         std::shared_timed_mutex responseMutex;
-        NotifierResource *notifierResource;
+        NotifierResource::ptr notifierResource;
     };
 }
 

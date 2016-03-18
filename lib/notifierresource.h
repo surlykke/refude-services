@@ -10,7 +10,7 @@ namespace org_restfulipc {
     class NotifierResource : public AbstractResource
     {
     public:
-
+        typedef std::shared_ptr<NotifierResource> ptr;
         enum class Event : int
         {
             Updated,
@@ -19,7 +19,7 @@ namespace org_restfulipc {
 
         NotifierResource();
 
-        virtual void handleRequest(int &socket, const HttpMessage& request);
+        virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
         void notifyClients(Event event, const char* pathOfResource);
 
     private:

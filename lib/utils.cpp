@@ -1,11 +1,13 @@
 #include <string.h>
+#include <algorithm>
 #include "utils.h"
 
 namespace org_restfulipc
 {
+    
     vector<string> split(string str, char c)
     {
-        std::vector<std::string> result;
+        std::vector<string> result;
         int k = 0;
         for (int i = 0; i < str.size(); i++) {
             if (str[i] == c) {
@@ -22,9 +24,17 @@ namespace org_restfulipc
         return result;
     }
 
-    string value(const char* envVarName)
+    set<string> splitToSet(string str, char c) {
+        vector<string> vals = split(str, c);
+        set<string> result;
+        result.insert(vals.begin(), vals.end());
+        return result; 
+    }
+
+    string value(const string& envVarName, const string& fallback)
     {
-        return getenv(envVarName) && strlen(getenv(envVarName)) > 0 ? getenv(envVarName) : "";
+        const char* val = getenv(envVarName.data());
+        return (val && *val) ? val : fallback;
     }
 
 }

@@ -8,11 +8,11 @@
 #ifndef SERVICELISTENER_H
 #define SERVICELISTENER_H
 
-#include <linux/un.h>
 #include <thread>
 #include <vector>
-#include <map.h>
+#include "map.h"
 #include "shortmtqueue.h"
+#include "abstractresource.h"
 
 namespace org_restfulipc
 {
@@ -29,10 +29,13 @@ namespace org_restfulipc
         
         void wait();
 
-        void map(const char* path, org_restfulipc::AbstractResource* resource, bool wildcarded = false);
+        void map(const char* path, AbstractResource::ptr resource, bool wildcarded = false);
         void unMap(const char* path);
-        AbstractResource* mapping(const char* path, bool wildcarded = false);
+        AbstractResource::ptr mapping(const char* path, bool wildcarded = false);
         size_t mappings();
+    protected:
+        Map<AbstractResource::ptr> resourceMappings;
+        Map<AbstractResource::ptr> prefixMappings;
     private:
         void startThreads();
         void listener();
@@ -42,8 +45,6 @@ namespace org_restfulipc
         int mNumThreads;
         int listenSocket;
         ShortMtQueue<16> requestSockets;
-        Map<AbstractResource*> resourceMappings;
-        Map<AbstractResource*> prefixMappings;
         bool shuttingDown;
     };
 

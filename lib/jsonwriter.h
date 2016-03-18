@@ -14,26 +14,26 @@ namespace org_restfulipc
 
     struct JsonWriter
     {
-        JsonWriter(Buffer* buffer);
+        JsonWriter(const Json& json);
         ~JsonWriter();
+
+        Buffer buffer;
+
+    protected:
+        JsonWriter();
         void write(const Json& json);
-
-        Buffer* buffer;
-
-    private:
         virtual void writeString(const char *string);
-
     };
 
     struct FilteringJsonWriter : public JsonWriter
     {
-        FilteringJsonWriter(Buffer* buffer, map<string, string>* replacements, string marker = "@@");
+        FilteringJsonWriter(Json& json, map<string, string>* replacements, string marker = "@@");
         virtual ~FilteringJsonWriter();
 
         map<string, string>* replacements;
         string marker;
 
-    private:
+    protected:
         virtual void writeString(const char *string);
     };
  

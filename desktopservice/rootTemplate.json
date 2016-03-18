@@ -1,6 +1,5 @@
 {
-    "types" : [],
-    "subtypes" : {},
+    "mimetypes" : {},
     "_links" : {
         "self" : {
             "href" : "/mimetypes"

@@ -10,12 +10,10 @@
 namespace org_restfulipc 
 {
 
-    DesktopEntryReader::DesktopEntryReader(std::string applicationsDirPath, std::string relativeFilePath) :
-        IniReader(applicationsDirPath + "/" + relativeFilePath),
+    DesktopEntryReader::DesktopEntryReader(std::string desktopFilePath) : 
+        IniReader(desktopFilePath),
         json(JsonConst::EmptyObject),
-        translations(),
-        currentTranslationKeyPrefix()
-            
+        translations()
     {
         json << desktopTemplate_json;
         read();
@@ -26,11 +24,6 @@ namespace org_restfulipc
                 translations[p.first].insert(translations[""].begin(), translations[""].end());
             }
         }
-
-        /*entryId = relativeFilePath;
-        std::replace(entryId.begin(), entryId.end(), '/', '-') ;
-        std::string selfHref = std::string("/desktopentry/") + entryId;
-        json["_links"]["self"]["href"] = selfHref;*/
     }
 
     DesktopEntryReader::~DesktopEntryReader() 

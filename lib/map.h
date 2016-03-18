@@ -45,12 +45,19 @@ namespace org_restfulipc
 
         Map(): list(), sorted(0) {}
 
+        V& add(const char* key, V& value, bool ownKey = false)
+        {
+            if (!key) throw RuntimeError("NULL is not allowed as map key");
+            list.push_back({strdup(key), value});
+            return list.back().value;
+        }
+       
         V& add(const char* key, V&& value, bool ownKey = false)
         {
             if (!key) throw RuntimeError("NULL is not allowed as map key");
             list.push_back({strdup(key), std::move(value)});
             return list.back().value;
-        }
+        } 
 
         int find(const char* key)
         {
@@ -99,6 +106,12 @@ namespace org_restfulipc
             list.erase(list.begin() + pos);
             sorted--;
             return tmp;
+        }
+
+        void clear() 
+        {
+            list.erase(list.begin(), list.end());
+            sorted = 0;
         }
    
         size_t size() 

@@ -8,7 +8,7 @@ using namespace std;
 namespace org_restfulipc
 {
 
-    GenericResource::GenericResource(const char* doc, NotifierResource* notifierResource) :
+    GenericResource::GenericResource(const char* doc, NotifierResource::ptr notifierResource) :
         AbstractResource(),
         notifierResource(notifierResource),
         _response(),
@@ -23,7 +23,7 @@ namespace org_restfulipc
     {
     }
 
-    void GenericResource::handleRequest(int &socket, const HttpMessage& request)
+    void GenericResource::handleRequest(int &socket, int matchedPathLength, const HttpMessage& request)
     {
         if (request.method == Method::GET)    
         {

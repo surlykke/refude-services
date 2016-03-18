@@ -13,10 +13,10 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     char json[256];
-    GenericResource resource("{}");
+    GenericResource::ptr resource = make_shared<GenericResource>("{}");
 
     Service service;
-    service.map("/res", &resource);
+    service.map("/res", resource);
     for (int i = 0; i < 10; i++) {
         sprintf(json,
                 "{\n"
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
                 "}\n",
                 time(NULL));
         cout << i << "\n";
-        resource.update(json);
+        resource->update(json);
         sleep(1);
     }
     

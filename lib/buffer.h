@@ -5,7 +5,13 @@ namespace org_restfulipc
 {
     struct Buffer
     {
-        Buffer(int initialCapacity = 1024);
+        Buffer(int initialCapacity = 0);
+        Buffer(Buffer& other) = delete;
+        Buffer(Buffer&& other);
+
+        Buffer& operator=(Buffer& other) = delete;
+        Buffer& operator=(Buffer&& other);
+
         ~Buffer();
         void write(const char* string);
         void write(char ch);
@@ -17,6 +23,8 @@ namespace org_restfulipc
         char* data;
         int used;
         int capacity;
+
+        bool operator==(Buffer& other);
     };
 
 }

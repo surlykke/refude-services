@@ -11,6 +11,7 @@
 #include <map>
 #include <string.h>
 #include <vector>
+#include <memory>
 
 #include "httpprotocol.h"
 #include "httpmessage.h"
@@ -21,9 +22,10 @@ namespace org_restfulipc
     class AbstractResource
     {
     public:
+        typedef std::shared_ptr<AbstractResource> ptr;
         AbstractResource(): path("") {}
         virtual ~AbstractResource() {}
-        virtual void handleRequest(int &socket, const HttpMessage& request) = 0;
+        virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request) = 0;
         const char* path;
     };
 

@@ -21,7 +21,6 @@ namespace org_restfulipc
 
         Method method;
         char* path;
-        char* remainingPath;
         char* queryString;
         int status;
         const char* headers[(int) Header::unknown];
@@ -62,7 +61,8 @@ namespace org_restfulipc
     };
 }
 
-std::ostream& operator<<(std::ostream& out, const org_restfulipc::HttpMessage& message);
+using namespace org_restfulipc;
+std::ostream& operator<<(std::ostream& out, const HttpMessage& message);
 
 #endif    /* HTTPMESSAGE_H */
 

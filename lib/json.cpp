@@ -1,16 +1,16 @@
-#include <sstream>
-
+#include <sstream> 
 #include "jsonreader.h"
 #include "json.h"
+#include "stacktrace.h"
 
 namespace org_restfulipc
 {
 
-    const char* Json::typeAsString() {
+    const char* Json::typeAsString() const {
         return typeAsString(mType);
     }
 
-    const char* Json::typeAsString(JsonType type)
+    const char* Json::typeAsString(const JsonType type) const
     {
         static const char* typeNames[] = { 
             "Undefined", 
@@ -28,6 +28,11 @@ namespace org_restfulipc
         return mType == JsonType::Undefined;
     }
 
+    JsonType Json::type()
+    {
+        return mType;
+    }
+
 
     void Json::deleteChildren()
     {
@@ -38,7 +43,7 @@ namespace org_restfulipc
             delete elements;
         }
         else if (mType == JsonType::String) {
-            delete string;
+            delete str;
         }
     }
 
@@ -76,13 +81,13 @@ namespace org_restfulipc
         
     Json::Json(const char* string) :
         mType(JsonType::String), 
-        string(strdup(string))
+        str(strdup(string))
     {
     }
 
     Json::Json(std::string string) :
         mType(JsonType::String),
-        string(strdup(string.data()))
+        str(strdup(string.data()))
     {
     } 
         
@@ -161,17 +166,12 @@ namespace org_restfulipc
         return (*entries)[index];
     }
 
-    Json& Json::operator[](char *index)
-    {
-        return operator[]((const char*) index);
-    }
-
     Json& Json::operator[](std::string index)
     {
         return operator[](index.data());
     }
 
-    Json& Json::operator[](int index)
+    Json& Json::operator[](int index) const
     {
         typeAssert("operator[int]", JsonType::Array);
         return (*elements)[index];
@@ -186,13 +186,13 @@ namespace org_restfulipc
     }
 
 
-    bool Json::contains(const char* key)
+    bool Json::contains(const char* key) const
     {
         typeAssert("contains(const char*)", JsonType::Object);
         return entries->find(key) > -1;
     }
 
-    const char* Json::keyAt(size_t index)
+    const char* Json::keyAt(size_t index) const
     {
         typeAssert("keyAt(int)", JsonType::Object);
         if (index >= entries->size()) {
@@ -202,7 +202,7 @@ namespace org_restfulipc
     }
 
 
-    uint Json::size()
+    uint Json::size() const
     {
         if (mType == JsonType::Array) {
             return elements->size();
@@ -236,8 +236,9 @@ namespace org_restfulipc
         return elements->at(index);
     }
 
-    void Json::typeAssert(const char* operation, JsonType type) {
+    void Json::typeAssert(const char* operation, JsonType type) const {
         if (type != mType) {
+//            print_stacktrace();
             throw RuntimeError("Attempting %s on json of type %s", operation, typeAsString());
         }
     }
@@ -249,28 +250,28 @@ namespace org_restfulipc
     }
 
 
-    org_restfulipc::Json::operator bool()
+    org_restfulipc::Json::operator bool() const
     {
         typeAssert("operator bool()", JsonType::Boolean);
         return boolean;
     }
 
-    org_restfulipc::Json::operator long()
+    org_restfulipc::Json::operator long() const
     {
         typeAssert("operator long()", JsonType::Number);
         return (long)number;
     }
 
-    org_restfulipc::Json::operator double()
+    org_restfulipc::Json::operator double() const
     {
         typeAssert("operator double()", JsonType::Number);
         return number;
     }
 
-    org_restfulipc::Json::operator const char *()
+    org_restfulipc::Json::operator const char *() const
     {
         typeAssert("operator const char*()", JsonType::String);
-        return string;
+        return str;
     }
 
     Json& operator<<(Json& json, const char* serialized)
@@ -280,5 +281,6 @@ namespace org_restfulipc
         json = reader.read();
         return json;
     }
+
 
 }

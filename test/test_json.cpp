@@ -28,7 +28,5 @@ int main()
         json.append("yxy", 3);
     }
     std::cout << "Start sorting\n";
-    Buffer output;
-    JsonWriter(&output).write(json);
-    std::cout << output.data << "\n";
+    std::cout << JsonWriter(json).buffer.data << "\n";
 }

@@ -13,10 +13,12 @@ namespace org_restfulipc
     public:
         AbstractJsonResource();
         virtual ~AbstractJsonResource();
-        virtual void handleRequest(int &socket, const HttpMessage& request);
+        virtual void handleRequest(int &socket, int matchedPathLength,  const HttpMessage& request);
 
     protected:
         virtual void doGet(int socket, const HttpMessage& request);
+        void writeFully(int socket, const char* data, int nbytes);
+
         virtual void doPatch(int socket, const HttpMessage& request);
         virtual bool responseReady(const HttpMessage& request) = 0;
         virtual void prepareResponse(const HttpMessage& request) = 0;
@@ -29,6 +31,7 @@ namespace org_restfulipc
     class JsonResource : public AbstractJsonResource
     {
     public:
+        typedef std::shared_ptr<JsonResource> ptr;
         JsonResource();
         virtual ~JsonResource();
         void setJson(Json&& json);
@@ -41,25 +44,28 @@ namespace org_restfulipc
         Buffer buf;
     };
 
+    // Translations holds, for each locale, a map from untranslated to translated string
+    typedef map<string, map<string, string> > Translations;
+
     class LocalizedJsonResource : public AbstractJsonResource
     {
     public:
+        typedef std::shared_ptr<LocalizedJsonResource> ptr; 
         LocalizedJsonResource();
         virtual ~LocalizedJsonResource();
-        void setJson(Json&& json, map<string, map<string, string> >&& translations);
+        void setJson(Json&& json, Translations&& translations);
+        Json json;
+        Translations translations;
 
     protected:
-        bool responseReady(const HttpMessage& request) override;
-        void prepareResponse(const HttpMessage& request) override;
-        Buffer& getResponse(const HttpMessage& request) override;
+        virtual bool responseReady(const HttpMessage& request);
+        virtual void prepareResponse(const HttpMessage& request);
+        virtual Buffer& getResponse(const HttpMessage& request);
+        Map<Buffer> localizedResponses; 
 
     private:
-        void buildResponse(string locale);
         string getLocaleToServe(const char* acceptLanguageHeader);
-        Json json;
-        map<string, map<string, string> > translations;
 
-        map<string, Buffer> localizedResponses; 
     };
 
      

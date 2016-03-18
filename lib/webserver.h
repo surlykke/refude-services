@@ -7,9 +7,10 @@ namespace org_restfulipc {
     class WebServer : public AbstractResource
     {
     public:
+        typedef std::shared_ptr<WebServer> ptr;
         WebServer(const char* html_root);
 
-        virtual void handleRequest(int &socket, const HttpMessage& request);
+        virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
 
     private:
         int rootFd;

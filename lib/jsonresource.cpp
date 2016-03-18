@@ -16,7 +16,7 @@ AbstractJsonResource::~AbstractJsonResource()
 {
 }
 
-void AbstractJsonResource::handleRequest(int& socket, const HttpMessage& request)
+void AbstractJsonResource::handleRequest(int& socket, int matchedPathLength, const HttpMessage& request)
 {
     if (request.method == Method::GET)
     {
@@ -32,6 +32,15 @@ void AbstractJsonResource::handleRequest(int& socket, const HttpMessage& request
     }  
 }
 
+void AbstractJsonResource::writeFully(int socket, const char* data, int nbytes){
+    int bytesWritten = 0; 
+    while (bytesWritten < nbytes) {
+        int n = write(socket, data + bytesWritten, nbytes - bytesWritten);
+        if (n < 0) throw C_Error();
+        bytesWritten += n;
+    }
+}
+
 void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
 {
     for (;;) { 
@@ -39,12 +48,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
             std::shared_lock<std::shared_timed_mutex> lock(responseMutex);
             if (responseReady(request)) {
                 Buffer& buf = getResponse(request);
-                int bytesWritten = 0; 
-                while (bytesWritten < buf.used) {
-                    int n = write(socket, buf.data + bytesWritten, buf.used - bytesWritten);
-                    if (n < 0) throw C_Error();
-                    bytesWritten += n;
-                }
+                writeFully(socket, buf.data, buf.used);
                 return;
             }
         } 
@@ -60,7 +64,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
 
     void AbstractJsonResource::doPatch(int socket, const HttpMessage& request)
     {
-        throw Status::Http405; // FIXME
+        throw Status::Http405; 
     }
 
 
@@ -88,13 +92,11 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
         std::unique_lock<std::shared_timed_mutex> lock(responseMutex);
         buf.clear();
         buf.write(responseTemplate);
-        Buffer body;
-        JsonWriter writer(&body);
-        writer.write(json);
+        JsonWriter writer(json);
         buf.write("Content-Length: ");
-        buf.write(body.used);
+        buf.write(writer.buffer.used);
         buf.write("\r\n\r\n");
-        buf.write(body.data);
+        buf.write(writer.buffer.data);
     }
 
 //---------------------------------------------------------------------------------------
@@ -111,10 +113,10 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
     {
     }
 
-    void LocalizedJsonResource::setJson(Json&& json, map<string, map<string, string> >&& translations)
+    void LocalizedJsonResource::setJson(Json&& json, Translations&& translations)
     {
         std::unique_lock<std::shared_timed_mutex> lock(responseMutex);
-        localizedResponses.erase(localizedResponses.begin(), localizedResponses.end());
+        localizedResponses.clear();
         this->json = std::move(json);
         this->translations = std::move(translations);
     }
@@ -123,7 +125,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
     bool LocalizedJsonResource::responseReady(const HttpMessage& request)
     {
         string localeToServe = getLocaleToServe(request.headers[(int)Header::accept_language]);
-        return localizedResponses.find(localeToServe) != localizedResponses.end();
+        return localizedResponses.find(localeToServe.data()) > -1;
     }
 
     void LocalizedJsonResource::prepareResponse(const HttpMessage& request)
@@ -135,21 +137,21 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
             "Access-Control-Allow-Origin: http://localhost:8383\r\n"; // FIXME
 
         string locale = getLocaleToServe(request.headers[(int)Header::accept_language]);
-        localizedResponses[locale].write(responseTemplate);
-        Buffer body;
-        FilteringJsonWriter jsonWriter(&body, &(translations[locale]));
-        jsonWriter.write(json);
+        Buffer& buf = localizedResponses[locale.data()];
+        buf.write(responseTemplate);
+        FilteringJsonWriter jsonWriter(json, &(translations[locale]));
         
-        localizedResponses[locale].write("Content-Length: ");
-        localizedResponses[locale].write(body.used);
-        localizedResponses[locale].write("\r\n\r\n");
-        localizedResponses[locale].write(body.data);
+        buf.write("Content-Length: ");
+        buf.write(jsonWriter.buffer.used);
+        buf.write("\r\n\r\n");
+        buf.write(jsonWriter.buffer.data);
 
     }
 
     Buffer& LocalizedJsonResource::getResponse(const HttpMessage& request)
     {
-        return localizedResponses[getLocaleToServe(request.headers[(int) Header::accept_language])];
+        string locale = getLocaleToServe(request.headers[(int) Header::accept_language]);
+        return localizedResponses[locale.data()];
     }
 
 

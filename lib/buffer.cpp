@@ -10,13 +10,33 @@ namespace org_restfulipc
         capacity(initialCapacity),
         data(0)
     {
-        data = (char*) malloc(initialCapacity);
-        if (!data) throw C_Error();
+        if (initialCapacity > 0)  {
+            data = (char*) malloc(initialCapacity);
+            if (!data) throw C_Error();
+        }
+    }
+
+    Buffer::Buffer(Buffer&& other)
+    {
+        memcpy(this, &other, sizeof(Buffer));
+        memset(&other, 0, sizeof(Buffer));
+    }
+
+    Buffer& Buffer::operator=(Buffer&& other)
+    {
+        if (data) {
+            delete data;
+        }
+        memcpy(this, &other, sizeof(Buffer));
+        memset(&other, 0, sizeof(Buffer));
+        return *this;
     }
 
     Buffer::~Buffer()
     {
-        free(data);
+        if (data) {
+            free(data);
+        }
     }
 
     void Buffer::write(const char* string)
@@ -25,7 +45,6 @@ namespace org_restfulipc
         ensureCapacity(len + 1);
         strncpy(data + used, string, len + 1);
         used += len;
-
     }
 
     void Buffer::write(char ch)
@@ -49,6 +68,9 @@ namespace org_restfulipc
     void Buffer::ensureCapacity(int numChars)
     {
         if (used + numChars > capacity) {
+            if (capacity == 0) {
+                capacity = 1;
+            }
             do {
                 capacity *= 2;
             }
@@ -62,6 +84,12 @@ namespace org_restfulipc
     void Buffer::clear()
     {
         used = 0;
+    }
+
+    bool Buffer::operator==(Buffer& other)
+    {
+        return used == other.used &&
+               ( used == 0 || strcmp(data, other.data) == 0);
     }
 
 }
