@@ -151,7 +151,7 @@ namespace org_restfulipc
                 requestSockets.enqueue(requestSocket);
             }
         }
-
+        std::cout << "Leaving listener\n";
     }
 
     void Service::worker()

@@ -1,23 +1,25 @@
 #include <sys/uio.h>
 #include <unistd.h>
+#include <asm-generic/socket.h>
+#include <sys/socket.h>
 
 #include "notifierresource.h"
 #include "errorhandling.h"
 
 namespace org_restfulipc {
 
+    static const char* eventLine[] = 
+    {
+        "event:created", 
+        "event:updated", 
+        "event:removed"
+    }; 
+
     NotifierResource::NotifierResource() :
         AbstractResource(),
-        mClientSockets(0),
-        mNumberOfClientSockets(0),
-        mClientSocketsCapacity(0),
+        mClientSockets(),
         mMutex()
     {
-        if (!(mClientSockets = (int*) calloc(128, sizeof(int)))) {
-            throw C_Error();
-        }
-        mNumberOfClientSockets = 0;
-        mClientSocketsCapacity = 128;
     }
 
     void NotifierResource::handleRequest(int &socket, int matchedPathLength, const HttpMessage &request)
@@ -28,8 +30,12 @@ namespace org_restfulipc {
                 "Content-Type: text/event-stream\r\n"
                 "Transfer-Encoding: chunked\r\n"
                 "\r\n";
-
         static int responseLength = strlen(response);
+
+        struct timeval tv;
+        tv.tv_sec = 0;  
+        tv.tv_usec = 0;  
+        setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv , sizeof(struct timeval));
 
         if (request.method != Method::GET) {
             throw Status::Http405;
@@ -46,62 +52,60 @@ namespace org_restfulipc {
         while (bytesWritten < responseLength);
 
         addClient(socket);
+        socket = -1;
     }
 
     void NotifierResource::addClient(int socket)
     {
         std::unique_lock<std::mutex> lock(mMutex);
-
-        if (mNumberOfClientSockets == mClientSocketsCapacity) {
-            if (!(mClientSockets = (int*) realloc(mClientSockets, 2*mClientSocketsCapacity))) {
-                throw C_Error();
-            }
-            mClientSocketsCapacity = 2*mClientSocketsCapacity;
-        }
-
-        mClientSockets[mNumberOfClientSockets++] = socket;
+        mClientSockets.push_back(socket);
     }
 
 
-    void NotifierResource::notifyClients(Event event, const char* pathOfResource)
+    void NotifierResource::notifyClients(NotificationEvent event, const char* data)
     {
-        char data[300];
-        const char* eventLine = event == Event::Updated ? "event:updated\n" : "event:removed\n";
-        const char* dataPrefix = "data:";
-
-        int pathLength = strlen(pathOfResource);
-        if ( pathLength > 256) {
+        static const char* notificationTemplate =
+            "%x\r\n"        // chunk length
+            "%s\n"          // event 
+            "data:%s\n"     // data
+            "\n"
+            "\r\n";
+        
+        char notification[300];
+        
+        if (strlen(data) > 256) {
             throw RuntimeError("Path too long");
         }
-        int chunkLength = strlen(eventLine) + strlen(dataPrefix) + pathLength + 2;
-        int dataLength = sprintf(data, "%x\r\n%s%s%s\n\n\r\n", chunkLength, eventLine, dataPrefix, pathOfResource);
+        
+        int dataLength = sprintf(notification, 
+                                 notificationTemplate,
+                                 strlen(eventLine[(int)event]) + strlen(data) + 8,
+                                 eventLine[(int)event],
+                                 data); 
+
         {
             std::unique_lock<std::mutex> lock(mMutex);
 
-            for (int i = 0; i < mNumberOfClientSockets; i++) {
-                if (write(mClientSockets[i], data, dataLength) < dataLength) {
-                    // We close, both if error and if sendbuffer full, which we take to
-                    // indicate the client is not consuming... The client will then have to reconnnect
-                    while (close(mClientSockets[i]) < 0 && errno == EINTR);
-                    mClientSockets[i] = -1;
+            for (auto it = mClientSockets.begin(); it != mClientSockets.end(); it++) {
+                try {
+                    sendFully(*it, notification, dataLength);
+                }
+                catch (C_Error c_error) {
+                    // We close both if client closes and if any error occurs.
+                    while (close(*it) < 0 && errno == EINTR);
+                    *it = -1;
                 }
             }
-
-
+            
             // Reap the closed and compactify
-            int closed = 0;
-            for (int i = 0; i < mNumberOfClientSockets; i++) {
-                if (mClientSockets[i] == -1) {
-                    closed++;
+            for (auto it =  mClientSockets.begin(); it != mClientSockets.end(); ) {
+                if (*it == -1) {
+                    it = mClientSockets.erase(it);
                 }
                 else {
-                    mClientSockets[i - closed] = mClientSockets[i];
+                    it++;
                 }
             }
-            mNumberOfClientSockets = mNumberOfClientSockets - closed;
         }
-
     }
-
-
 }

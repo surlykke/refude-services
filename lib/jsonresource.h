@@ -17,7 +17,6 @@ namespace org_restfulipc
 
     protected:
         virtual void doGet(int socket, const HttpMessage& request);
-        void writeFully(int socket, const char* data, int nbytes);
 
         virtual void doPatch(int socket, const HttpMessage& request);
         virtual bool responseReady(const HttpMessage& request) = 0;

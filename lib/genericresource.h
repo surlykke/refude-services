@@ -19,7 +19,7 @@ namespace org_restfulipc
     {
     public:
         typedef std::shared_ptr<GenericResource> ptr;
-        GenericResource(const char* doc = "", NotifierResource::ptr notifierResource = 0);
+        GenericResource(string id, const char* doc = "", NotifierResource::ptr notifierResource = 0);
         virtual ~GenericResource();
 
         virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
@@ -28,6 +28,7 @@ namespace org_restfulipc
         void update(const char* data);
 
     private:
+        string eventData;
         char _response[8192]; // FIXME
         char* _respPtr;
         int _responseLength;

@@ -2,33 +2,34 @@
 #define NOTIFIERRESOURCE_H
 
 #include <mutex>
+#include <vector>
 
 #include "abstractresource.h"
-
+using namespace std;
 namespace org_restfulipc {
+
+    enum class NotificationEvent : int
+    {
+            Created,
+            Updated,
+            Removed
+    };
+
 
     class NotifierResource : public AbstractResource
     {
     public:
-        typedef std::shared_ptr<NotifierResource> ptr;
-        enum class Event : int
-        {
-            Updated,
-            Removed
-        };
-
+        typedef shared_ptr<NotifierResource> ptr;
         NotifierResource();
 
         virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
-        void notifyClients(Event event, const char* pathOfResource);
+        void notifyClients(NotificationEvent event, const char* resourceIdentification);
 
     private:
         void addClient(int socket);
 
-        int* mClientSockets;
-        int  mNumberOfClientSockets;
-        int  mClientSocketsCapacity;
-        std::mutex mMutex;
+        vector<int> mClientSockets;
+        mutex mMutex;
     };
 
 }

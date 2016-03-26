@@ -32,15 +32,6 @@ void AbstractJsonResource::handleRequest(int& socket, int matchedPathLength, con
     }  
 }
 
-void AbstractJsonResource::writeFully(int socket, const char* data, int nbytes){
-    int bytesWritten = 0; 
-    while (bytesWritten < nbytes) {
-        int n = write(socket, data + bytesWritten, nbytes - bytesWritten);
-        if (n < 0) throw C_Error();
-        bytesWritten += n;
-    }
-}
-
 void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
 {
     for (;;) { 
@@ -48,7 +39,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
             std::shared_lock<std::shared_timed_mutex> lock(responseMutex);
             if (responseReady(request)) {
                 Buffer& buf = getResponse(request);
-                writeFully(socket, buf.data, buf.used);
+                sendFully(socket, buf.data, buf.used);
                 return;
             }
         } 

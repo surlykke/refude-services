@@ -23,10 +23,12 @@ namespace org_restfulipc
     {
     public:
         typedef std::shared_ptr<AbstractResource> ptr;
-        AbstractResource(): path("") {}
+        AbstractResource() {}
         virtual ~AbstractResource() {}
         virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request) = 0;
-        const char* path;
+    
+    protected:
+        void sendFully(int socket, const char* data, int nbytes);
     };
 
 }
