@@ -47,7 +47,7 @@ void MimetypeResource::doPatch(int socket, const HttpMessage& request)
     else {
         string thisMimetype = (string)json["type"] + '/' + (string)json["subtype"];
         service->setDefaultApplication(thisMimetype, (string)mergeJson["defaultApplication"]);
-        writeFully(socket, successfulResponse, strlen(successfulResponse));        
+        sendFully(socket, successfulResponse, strlen(successfulResponse));        
     }
 }
 

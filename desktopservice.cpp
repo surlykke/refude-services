@@ -118,6 +118,8 @@ using namespace std::chrono;
            
             if (somethingChanged) {
                 std::cout << "Something changed\n";
+
+                buildResources();
             }
             // FIXME
         }
@@ -181,6 +183,14 @@ using namespace std::chrono;
 
     void DesktopService::buildResources()
     {
+        mimetypeResources.clear();
+        desktopResources.clear();
+        associations.clear();
+        defaults.clear();
+        
+        resourceMappings.clear();
+        prefixMappings.clear();
+
         collectMimetypes();
         
         for (auto it = systemApplicationDirRoots.rbegin(); it != systemApplicationDirRoots.rend(); it++) {
