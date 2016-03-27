@@ -5,7 +5,7 @@
             "href" : "/mimetypes"
         },
         "mimetype": { 
-                "href": "/mimetypes/{type}/{subtype}",
+                "href": "/mimetypes/{mimetype}",
                 "templated": true
         }
     }
