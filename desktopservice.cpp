@@ -100,7 +100,7 @@ using namespace std::chrono;
             for (;;) {
                 /* Installations or saves from an editor may produce several inotify events, so 
                  * after receiving an event we continue consuming events until nothing has happened
-                 * for a second. (TODO: Is 1 second the right value here?)
+                 * for a tenth of a second. (TODO: Is this the right value here?)
                  */
                 read(wd, buf, LEN);
                 std::cout << "Read notification, ev->name: " << ev->name << "\n";
@@ -116,7 +116,7 @@ using namespace std::chrono;
                     }
                 }
 
-                int pollRes = poll(&pollfd, 1, 1000);
+                int pollRes = poll(&pollfd, 1, 100);
                 if (pollRes < 0) {
                     throw C_Error();
                 }
