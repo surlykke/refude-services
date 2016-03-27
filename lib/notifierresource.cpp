@@ -64,9 +64,10 @@ namespace org_restfulipc {
 
     void NotifierResource::notifyClients(const char* event, const char* data)
     {
+        std::cout << "Notifying clients: event:" << event << ", data:" << data << "\n";
         static const char* notificationTemplate =
             "%x\r\n"        // chunk length
-            "%s\n"          // event 
+            "event:%s\n"          // event 
             "data:%s\n"     // data
             "\n"
             "\r\n";
@@ -76,10 +77,11 @@ namespace org_restfulipc {
         if (strlen(data) > 256) {
             throw RuntimeError("Path too long");
         }
-        
+       
+        int chunkLength = strlen(event) + strlen(data) + 14; 
         int dataLength = sprintf(notification, 
                                  notificationTemplate,
-                                 strlen(event) + strlen(data) + 8,
+                                 chunkLength, 
                                  event,
                                  data); 
 

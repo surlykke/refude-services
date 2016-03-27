@@ -34,7 +34,7 @@ namespace org_restfulipc
         JsonResource();
         virtual ~JsonResource();
         void setJson(Json&& json);
-
+    
         virtual bool responseReady(const HttpMessage& request) { return true; }
         virtual void prepareResponse(const HttpMessage& request) {};
         virtual Buffer& getResponse(const HttpMessage& request) { return buf; }
