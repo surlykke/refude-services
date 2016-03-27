@@ -10,6 +10,5 @@ set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(lib)
 add_subdirectory(test)
-add_subdirectory(qt)
 add_subdirectory(desktopservice)
 add_subdirectory(stupidwebserver)
