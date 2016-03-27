@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "notifierresource.h"
 #include "mimetyperesource.h"
 #include "service.h"
 #include "typedefs.h"
@@ -32,6 +33,7 @@ namespace org_restfulipc
         bool setDefaultApplication(string mimetype, string desktopEntryId);
 
     private:
+        void setupNotification();
         void findDirs();
         vector<string> directoryTree(string directory);
         vector<string> desktopFiles(string directory);
@@ -47,7 +49,9 @@ namespace org_restfulipc
         void addAssociationsToMimeAndDesktopResources();
         void buildFileAndUrlHandlerResource();
         void mapResources();
-        
+
+        NotifierResource::ptr notifier;
+
         string usersConfigDir;   // eg. ~/.config
         vector<string> systemConfigDirs; // eg. /etc/xdg
         string usersApplicationDirRoot;  // eg. ~/.local/share/applications

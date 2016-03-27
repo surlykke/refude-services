@@ -6,7 +6,8 @@
 
 #include "abstractresource.h"
 using namespace std;
-namespace org_restfulipc {
+namespace org_restfulipc 
+{
 
     enum class NotificationEvent : int
     {
@@ -23,7 +24,7 @@ namespace org_restfulipc {
         NotifierResource();
 
         virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
-        void notifyClients(NotificationEvent event, const char* resourceIdentification);
+        void notifyClients(const char* event, const char* resourceIdentification);
 
     private:
         void addClient(int socket);

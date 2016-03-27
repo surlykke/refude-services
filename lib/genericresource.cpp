@@ -8,9 +8,8 @@ using namespace std;
 namespace org_restfulipc
 {
 
-    GenericResource::GenericResource(string id, const char* doc, NotifierResource::ptr notifierResource) :
+    GenericResource::GenericResource(const char* doc, NotifierResource::ptr notifierResource) :
         AbstractResource(),
-        eventData(id),
         notifierResource(notifierResource),
         _response(),
         _respPtr(_response),
@@ -77,7 +76,7 @@ namespace org_restfulipc
         }
 
         if (notifierResource) {
-            notifierResource->notifyClients(NotificationEvent::Updated, eventData.data());
+            notifierResource->notifyClients("updated", "-");
         }
     }
 }

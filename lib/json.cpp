@@ -159,6 +159,44 @@ namespace org_restfulipc
         return *this;
     }
 
+    bool Json::operator==(const Json& other) const
+    {
+        if (other.mType != mType) {
+            return false;
+        }
+        switch (mType) {
+        case JsonType::Undefined: return false;
+        case JsonType::String: return strcmp(str, other.str) == 0;
+        case JsonType::Number: return number == other.number;
+        case JsonType::Boolean: return boolean == other.boolean;
+        case JsonType::Object: 
+            if (size() != other.size()) {
+                return false;
+            }
+            for (int i = 0; i < size(); i++) {
+                if (strcmp(entries->at(i).key, other.entries->at(i).key) ||
+                    entries->at(i).value.operator!=(other.entries->at(i).value)) {
+                    return false;
+                }
+            }
+            return true;
+        case JsonType::Array: 
+            for (int i = 0; i < size(); i++) {
+                if (elements->at(i) != other.elements->at(i)) {
+                    return false;
+                }
+            }
+            return true;
+        case JsonType::Null:
+            return true;
+        }
+    }
+
+    bool Json::operator!=(const Json& other) const
+    {
+        return !operator==(other);
+    }
+
 
     Json& Json::operator[](const char *index)
     {

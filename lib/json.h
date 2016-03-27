@@ -47,6 +47,8 @@ namespace org_restfulipc
         Json& operator=(Json&& other);
         Json& operator=(Json& other) = delete;
         Json& operator=(JsonConst jsonConst);
+        bool operator==(const Json& other) const;
+        bool operator!=(const Json& other) const;
 
         Json& operator[](const char* index);
         Json& operator[](std::string index);

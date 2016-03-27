@@ -62,7 +62,7 @@ namespace org_restfulipc {
     }
 
 
-    void NotifierResource::notifyClients(NotificationEvent event, const char* data)
+    void NotifierResource::notifyClients(const char* event, const char* data)
     {
         static const char* notificationTemplate =
             "%x\r\n"        // chunk length
@@ -79,8 +79,8 @@ namespace org_restfulipc {
         
         int dataLength = sprintf(notification, 
                                  notificationTemplate,
-                                 strlen(eventLine[(int)event]) + strlen(data) + 8,
-                                 eventLine[(int)event],
+                                 strlen(event) + strlen(data) + 8,
+                                 event,
                                  data); 
 
         {

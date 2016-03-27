@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     using namespace org_restfulipc;
     Service service;
     NotifierResource::ptr notifier = make_shared<NotifierResource>();
-    GenericResource::ptr resource = make_shared<GenericResource>("{\"resourcePath\": \"/res\"}", "", notifier);
+    GenericResource::ptr resource = make_shared<GenericResource>("", notifier);
     service.map("/res", resource, true);
     service.map("/notify", notifier);
     service.serve(7938);

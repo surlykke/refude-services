@@ -9,7 +9,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(lib)
-add_subdirectory(examples/dynamic)
 add_subdirectory(test)
 add_subdirectory(qt)
 add_subdirectory(desktopservice)
