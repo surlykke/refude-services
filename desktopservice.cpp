@@ -11,6 +11,7 @@
 #include "mimeresourcebuilder.h"
 #include "mimeappslistreader.h"
 #include "desktopentryreader.h"
+#include "notifierresource.h"
 
 #define LEN (sizeof(struct inotify_event) + NAME_MAX + 1)
 
@@ -18,10 +19,17 @@ namespace org_restfulipc {
 using namespace std::chrono;
     DesktopService::DesktopService() : Service() 
     {
+        setupNotification(); 
         findDirs();
         buildResources();
         watchThread = thread(&DesktopService::watcher, this, setupWatches());
     }
+
+    void DesktopService::setupNotification()
+    {
+        notifier = make_shared<NotifierResource>();
+    }
+
 
     void DesktopService::findDirs()
     {
@@ -95,6 +103,7 @@ using namespace std::chrono;
                  * for a second. (TODO: Is 1 second the right value here?)
                  */
                 read(wd, buf, LEN);
+                std::cout << "Read notification, ev->name: " << ev->name << "\n";
                 if (ev->mask & IN_ISDIR) {
                     somethingChanged = true;
                 }
@@ -172,7 +181,7 @@ using namespace std::chrono;
 
     int DesktopService::addWatch(int wd, string dir)
     {
-        static int flags = IN_CREATE | IN_DELETE | IN_MODIFY;
+        static int flags = IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO;
         std::cout << "Adding watch for " << dir << "\n";
         int watch = inotify_add_watch(wd, dir.data(), flags) ;
         if (watch < 0) throw C_Error();
@@ -183,13 +192,18 @@ using namespace std::chrono;
 
     void DesktopService::buildResources()
     {
+        std::map<string, LocalizedJsonResource::ptr > oldDesktopResources = desktopResources;
+        std::map<string, MimetypeResource::ptr > oldMimetypeResources = mimetypeResources;
+        JsonResource::ptr oldRootMimeResource = rootMimeResource;
+        JsonResource::ptr oldHandlerResource = handlerResource;
+        
         mimetypeResources.clear();
         desktopResources.clear();
         associations.clear();
         defaults.clear();
-        
-        resourceMappings.clear();
-        prefixMappings.clear();
+
+        resourceMappings.clear(); 
+        map("/notify", notifier);
 
         collectMimetypes();
         
@@ -209,7 +223,39 @@ using namespace std::chrono;
         buildFileAndUrlHandlerResource();
         mapResources();
 
-        std::cout << "Resources built, mappedResources: " << mappings() << "\n";
+        for (auto pair : desktopResources) {
+            if (oldDesktopResources.find(pair.first) != oldDesktopResources.end()) {
+                if (oldDesktopResources[pair.first]->json != pair.second->json) {
+                    notifier->notifyClients("desktopresource-updated", pair.first.data());
+                }
+            }
+            else {
+                notifier->notifyClients("desktopresource-added", pair.first.data());
+            }
+        }
+
+        for (auto pair : oldDesktopResources) {
+            if (desktopResources.find(pair.first) == desktopResources.end()) {
+                notifier->notifyClients("desktopresource-removed", pair.first.data());
+            }
+        }
+
+        for (auto pair : mimetypeResources) {
+            if (oldMimetypeResources.find(pair.first) != oldMimetypeResources.end()) {
+                if (oldMimetypeResources[pair.first]->json != pair.second->json) {
+                    notifier->notifyClients("mimetype-updated", pair.first.data());
+                }
+            }
+            else {
+                notifier->notifyClients("mimetype-added", pair.first.data());
+            }
+        }
+
+        for (auto pair : oldMimetypeResources) {
+            if (mimetypeResources.find(pair.first) == mimetypeResources.end()) {
+                notifier->notifyClients("mimetype-removed", pair.first.data());
+            }
+        }
 
     }
 
@@ -315,6 +361,7 @@ using namespace std::chrono;
 
     void DesktopService::mapResources()
     {
+        map("/notify", notifier);
         for (auto& p : desktopResources) {
             string selfUri = string("/desktopentry") + '/' + p.first;
             p.second->json["_links"]["self"]["href"] = selfUri;
