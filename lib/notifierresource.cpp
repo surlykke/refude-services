@@ -64,7 +64,6 @@ namespace org_restfulipc {
 
     void NotifierResource::notifyClients(const char* event, const char* data)
     {
-        std::cout << "Notifying clients: event:" << event << ", data:" << data << "\n";
         static const char* notificationTemplate =
             "%x\r\n"        // chunk length
             "event:%s\n"          // event 

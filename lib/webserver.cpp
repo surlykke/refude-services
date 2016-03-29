@@ -4,7 +4,7 @@
 #include <sys/sendfile.h>
 #include <stdio.h>
 #include <unistd.h>
-
+#include <magic.h>
 #include "httpprotocol.h"
 #include "errorhandling.h"
 #include "webserver.h"
@@ -13,9 +13,10 @@ namespace org_restfulipc
 {
     struct FileWriter
     {
-        FileWriter(int socket, int dirFd, const char* filePath) :
+        FileWriter(int socket, int dirFd, const char* filePath, const char* mimetype) :
             socket(socket),
-            fd(0)
+            fd(0),
+            mimetype(mimetype)
         {
             if (*filePath == '/') {
                 filePath++;
@@ -29,7 +30,6 @@ namespace org_restfulipc
                     throw C_Error();
                 }
             }
-
         }
 
         ~FileWriter()
@@ -47,7 +47,7 @@ namespace org_restfulipc
                     "Content-Length: %d\r\n"
                     "\r\n";
             char header[strlen(headerTemplate) + 256];
-            sprintf(header, headerTemplate, "text/html; charset=UTF-8", filesize);
+            sprintf(header, headerTemplate, mimetype, filesize);
             int bytesTotal = strlen(header);
             for (int byteswritten = 0;  byteswritten < bytesTotal; ) {
                 int bytes = write(socket, header, bytesTotal - byteswritten);
@@ -66,20 +66,35 @@ namespace org_restfulipc
 
         int socket;
         int fd;
+        const char* mimetype;
     };
 
-    WebServer::WebServer(const char* html_root) :
+    WebServer::WebServer(const char* rootDir) :
         AbstractResource(),
+        rootDir(rootDir),
         rootFd(-1)
     {
-        rootFd = open(html_root, O_CLOEXEC | O_DIRECTORY | O_NOATIME | O_RDONLY);
+        rootFd = open(rootDir, O_CLOEXEC | O_DIRECTORY | O_RDONLY);
         if (rootFd < 0) throw C_Error();
+        if (!(magic_cookie = magic_open(MAGIC_MIME))) throw C_Error();
+        if (magic_load(magic_cookie, NULL)) {
+            throw RuntimeError("Cannot load magic database - %s\n", magic_error(magic_cookie));
+        }
+        // FIXME deallocate in destructor...
     }
 
     void WebServer::handleRequest(int& socket, int matchedPathLength, const HttpMessage& request)
     {
-        const char* filePath;
+        const char* relativePath = filePath(matchedPathLength, request);
+        string fullPath = rootDir + relativePath;
+        const char* mimetype = magic_file(magic_cookie, fullPath.data());
+        FileWriter(socket, rootFd, relativePath, mimetype).writeFile();
+    }
+
+    const char* WebServer::filePath(int matchedPathLength, const HttpMessage& request)
+    {
         int pathLength = strlen(request.path);
+        const char* filePath;
         if (matchedPathLength == pathLength || 
                 (matchedPathLength == pathLength - 1 && request.path[matchedPathLength] == '/' )) {
             filePath = "index.html";
@@ -88,6 +103,18 @@ namespace org_restfulipc
             filePath = request.path + matchedPathLength + 1;
         }
 
-        FileWriter(socket, rootFd, filePath).writeFile();
+        return filePath;
     }
+
+    const char* WebServer::mimetype(const char* filePath)
+    {
+        // FIXME
+    	const char *actual_file = "/usr/share/icons/oxygen/32x32/categories/preferences-desktop.png";
+	const char *magic_full;
+	magic_t magic_cookie;
+	/*MAGIC_MIME tells magic to return a mime of the file, but you can specify different things*/
+
+    }
+
+
 }

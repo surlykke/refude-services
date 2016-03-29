@@ -21,6 +21,7 @@
 #include "mimetyperesource.h"
 #include "service.h"
 #include "typedefs.h"
+#include "iconresource.h"
 
 namespace org_restfulipc 
 {
@@ -65,6 +66,8 @@ namespace org_restfulipc
         AppLists defaults;
 
         thread watchThread;
+
+        IconResource::ptr iconResource;
     };
 }
 #endif /* DESKTOPSERVICE_H */

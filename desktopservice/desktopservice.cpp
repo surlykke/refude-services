@@ -19,6 +19,7 @@ namespace org_restfulipc {
 using namespace std::chrono;
     DesktopService::DesktopService() : Service() 
     {
+        iconResource = make_shared<IconResource>();
         setupNotification(); 
         findDirs();
         buildResources();
@@ -377,6 +378,7 @@ using namespace std::chrono;
         map("/mimetypes", rootMimeResource);
 
         map("/desktopentry/handlers", handlerResource);
+        map("/theme-icon/default", iconResource, true);
     }
 
     bool DesktopService::setDefaultApplication(string mimetype, string desktopEntryId)

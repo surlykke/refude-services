@@ -76,6 +76,7 @@ namespace org_restfulipc
     void Service::map(const char* path, AbstractResource::ptr resource, bool wildcarded)
     {
         if (wildcarded) {
+            std::cout << "Prefixmapping to: " << path << "\n";
             prefixMappings.add(path, resource);
         }
         else {
@@ -171,15 +172,19 @@ namespace org_restfulipc
                     std::cout << request;
                     AbstractResource::ptr handler; 
                     uint matchedPathLength;
+                    std::cout << "Looking for " << request.path << " in mappings\n";
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex > -1) {
+                        std::cout << "found\n";
                         handler = resourceMappings.at(resourceIndex).value;
                         matchedPathLength = strlen(request.path);
                     }
                     else { 
+                        std::cout << "Looking for " << request.path << " in prefixMappings\n";
                         resourceIndex = prefixMappings.find_longest_prefix(request.path);
                         if (resourceIndex >= 0) {
                             Pair<AbstractResource::ptr> pair = prefixMappings.at(resourceIndex);
+                            std::cout << "Found: " << pair.key << "\n";
                             matchedPathLength = strlen(pair.key);
                             if (request.path[matchedPathLength] == '\0' || request.path[matchedPathLength] == '/') {
                                 handler = pair.value;
