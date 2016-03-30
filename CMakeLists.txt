@@ -9,6 +9,3 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(lib)
-add_subdirectory(test)
-add_subdirectory(desktopservice)
-add_subdirectory(stupidwebserver)
