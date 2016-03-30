@@ -11,10 +11,10 @@
  * Created on 18. februar 2016, 10:38
  */
 #include <algorithm>
+#include <ripc/errorhandling.h>
 #include "mimeappslistreader.h"
 #include "inireader.h"
-#include "errorhandling.h"
-#include "utils.h"
+#include <ripc/utils.h>
 
 namespace org_restfulipc
 {

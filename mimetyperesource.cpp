@@ -12,9 +12,9 @@
  */
 
 #include "mimetyperesource.h"
-#include "json.h"
-#include "jsonwriter.h"
-#include "buffer.h"
+#include <ripc/json.h>
+#include <ripc/jsonwriter.h>
+#include <ripc/buffer.h>
 
 #include "desktopservice.h"
 namespace org_restfulipc

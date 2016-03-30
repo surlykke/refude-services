@@ -1,6 +1,6 @@
 #ifndef ICONRESOURCE_H
 #define ICONRESOURCE_H
-#include "webserver.h"
+#include <ripc/webserver.h>
 
 namespace org_restfulipc
 {

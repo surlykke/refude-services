@@ -4,8 +4,8 @@
 #include <string>
 #include <list>
 
-#include <json.h>
-#include <jsonresource.h>
+#include <ripc/json.h>
+#include <ripc/jsonresource.h>
 #include "inireader.h"
 
 namespace org_restfulipc 

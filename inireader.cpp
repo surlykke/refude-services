@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <string.h>
 #include "inireader.h"
-#include "errorhandling.h"
+#include <ripc/errorhandling.h>
 
 namespace org_restfulipc 
 {

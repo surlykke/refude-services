@@ -17,9 +17,9 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "notifierresource.h"
+#include <ripc/notifierresource.h>
+#include <ripc/service.h>
 #include "mimetyperesource.h"
-#include "service.h"
 #include "typedefs.h"
 #include "iconresource.h"
 

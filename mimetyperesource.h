@@ -1,7 +1,7 @@
 #ifndef MYMETYPERESOURCE_H
 #define MYMETYPERESOURCE_H
 
-#include "jsonresource.h"
+#include <ripc/jsonresource.h>
 
 namespace org_restfulipc 
 {

@@ -1,12 +1,12 @@
 #include <tinyxml2.h>
-#include "jsonresource.h"
+#include <ripc/jsonresource.h>
+#include <ripc/jsonreader.h>
+#include <ripc/utils.h>
+
 #include "rootTemplate.h"
 #include "subtypeTemplate.h"
 #include "mimeresourcebuilder.h"
 #include "mimetyperesource.h"
-#include "jsonreader.h"
-#include "utils.h"
-
 using namespace tinyxml2;
 namespace org_restfulipc 
 {

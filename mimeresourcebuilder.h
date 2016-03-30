@@ -1,8 +1,9 @@
 #ifndef MIMERESOURCEBUILDER_H
 #define MIMERESOURCEBUILDER_H
+#include <ripc/json.h>
+#include <ripc/service.h>
+
 #include "typedefs.h"
-#include "json.h" 
-#include "service.h"
 #include "mimetyperesource.h"
 
 namespace org_restfulipc

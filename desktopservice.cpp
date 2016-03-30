@@ -3,15 +3,15 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <poll.h>
-#include "utils.h"
-#include "json.h"
+#include <ripc/json.h>
+#include <ripc/utils.h>
+#include <ripc/notifierresource.h>
 #include "handlerTemplate.h"
 
 #include "desktopservice.h"
 #include "mimeresourcebuilder.h"
 #include "mimeappslistreader.h"
 #include "desktopentryreader.h"
-#include "notifierresource.h"
 
 #define LEN (sizeof(struct inotify_event) + NAME_MAX + 1)
 
