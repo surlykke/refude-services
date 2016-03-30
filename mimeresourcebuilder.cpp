@@ -1,6 +1,5 @@
 #include <tinyxml2.h>
 #include <ripc/jsonresource.h>
-#include <ripc/jsonreader.h>
 #include <ripc/utils.h>
 
 #include "rootTemplate.h"

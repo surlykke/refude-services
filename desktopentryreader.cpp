@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include <ripc/errorhandling.h>
 #include <ripc/json.h>
-#include <ripc/jsonwriter.h>
 
 #include "desktopentryreader.h"
 #include "desktopTemplate.h"

@@ -13,7 +13,6 @@
 
 #include "mimetyperesource.h"
 #include <ripc/json.h>
-#include <ripc/jsonwriter.h>
 #include <ripc/buffer.h>
 
 #include "desktopservice.h"
