@@ -5,7 +5,6 @@
 #include <utility>
 #include <algorithm>
 #include "errorhandling.h"
-#include "jsonwriter.h"
 
 using namespace std;
 

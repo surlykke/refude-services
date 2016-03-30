@@ -1,5 +1,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
+#include <algorithm>
 #include "jsonwriter.h"
 #include "jsonresource.h"
 #include "utils.h"
@@ -115,7 +116,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
 
     bool LocalizedJsonResource::responseReady(const HttpMessage& request)
     {
-        string localeToServe = getLocaleToServe(request.headers[(int)Header::accept_language]);
+        const string localeToServe = getLocaleToServe(request.headers[(int)Header::accept_language]);
         return localizedResponses.find(localeToServe.data()) > -1;
     }
 

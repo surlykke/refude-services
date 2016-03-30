@@ -2,12 +2,14 @@
 #define JSONRESOURCE_H
 
 #include <shared_mutex>
+#include "map.h"
 #include "abstractresource.h"
 #include "json.h"
 #include "buffer.h"
 
 namespace org_restfulipc
 {
+    using namespace std;
     class AbstractJsonResource : public AbstractResource
     {
     public:

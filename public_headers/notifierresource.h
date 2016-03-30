@@ -9,14 +9,6 @@ using namespace std;
 namespace org_restfulipc 
 {
 
-    enum class NotificationEvent : int
-    {
-            Created,
-            Updated,
-            Removed
-    };
-
-
     class NotifierResource : public AbstractResource
     {
     public:

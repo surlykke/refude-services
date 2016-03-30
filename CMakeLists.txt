@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.1.0)
-set(PROJECT "RestfulIpc")
+set(PROJECT "restfulipc")
 project(${PROJECT})
 
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}") 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOMOC ON)
 
-add_subdirectory(lib)
+include(GNUInstallDirs)
+
+file(GLOB SOURCE_FILES impl/*.cpp impl/shortmtqueue.h impl/map.h impl/stacktrace.h)
+file(GLOB PUBLIC_HEADERS public_headers/*.h)
+
+include_directories(public_headers private_headers)
+
+add_library(${PROJECT} SHARED ${SOURCE_FILES} )
+
+install(FILES ${PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_FULL_INCLUDEDIR}/ripc)
+install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_LIBDIR})

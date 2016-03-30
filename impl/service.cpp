@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <poll.h>
+#include <mutex>
+#include <condition_variable>
 
 #include "httpmessage.h"
 #include "abstractresource.h"
@@ -18,12 +20,59 @@
 namespace org_restfulipc
 {
 
+    struct ThreadSafeQueue
+    {
+
+        ThreadSafeQueue() : elements(), count(0), m() { }
+
+        void enqueue(int s) {
+           {
+                unique_lock<mutex> lock(m);
+
+                while (count >= 16) {
+                    notFull.wait(lock);
+                }
+
+                for (int i = count; i > 0; i--) {
+                    elements[i] = elements[i - 1];
+                }
+
+                elements[0] = s;
+                count++;
+            }
+
+            notEmpty.notify_one();
+        }
+
+        int dequeue() {
+            int result;
+            {
+                unique_lock<mutex> lock(m);
+
+                while (count <= 0) {
+                    notEmpty.wait(lock);
+                }
+
+                result = elements[--count];
+            }
+            notFull.notify_one();
+
+            return result;
+        }
+
+        int elements[16];
+        int count;
+
+        mutex m;
+        condition_variable notFull;
+        condition_variable notEmpty;
+    };
 
     Service::Service() :
         threads(),
         mNumThreads(5),
         listenSocket(-1),
-        requestSockets(),
+        requestSockets(new ThreadSafeQueue()),
         resourceMappings(),
         prefixMappings(),
         shuttingDown(false)
@@ -133,7 +182,7 @@ namespace org_restfulipc
             int pollRes = poll(&pollfd, 1, 250);
             if (shuttingDown) {
                 for (int i = 1; i < threads.size(); i++) {
-                    requestSockets.enqueue(-1); // Tell workers to quit
+                    requestSockets->enqueue(-1); // Tell workers to quit
                 }
 
                 return;
@@ -149,7 +198,7 @@ namespace org_restfulipc
                 tv.tv_sec = 0;  
                 tv.tv_usec = 200000;  
                 setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv , sizeof(struct timeval));
-                requestSockets.enqueue(requestSocket);
+                requestSockets->enqueue(requestSocket);
             }
         }
         std::cout << "Leaving listener\n";
@@ -161,7 +210,7 @@ namespace org_restfulipc
         HttpMessage request;
 
         for (;;) {
-            requestSocket = requestSockets.dequeue();
+            requestSocket = requestSockets->dequeue();
             if (requestSocket < 0) {
                 return;
             }

@@ -2,9 +2,10 @@
 #define JSON_H
 #include <memory>
 #include <string>
+#include <vector>
 #include <stdint.h>
-#include "errorhandling.h"
 #include "map.h"
+#include "errorhandling.h"
 
 namespace org_restfulipc
 {
@@ -29,7 +30,6 @@ namespace org_restfulipc
         Null
 
     };
-
 
     class Json
     {

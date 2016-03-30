@@ -11,12 +11,12 @@
 #include <thread>
 #include <vector>
 #include "map.h"
-#include "shortmtqueue.h"
 #include "abstractresource.h"
 
 namespace org_restfulipc
 {
     class AbstractResource;
+    class ThreadSafeQueue;
 
     class Service
     {
@@ -44,7 +44,7 @@ namespace org_restfulipc
         std::vector<std::thread> threads;
         int mNumThreads;
         int listenSocket;
-        ShortMtQueue<16> requestSockets;
+        ThreadSafeQueue* requestSockets;
         bool shuttingDown;
     };
 
