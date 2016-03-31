@@ -1,15 +1,11 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+* Copyright (c) 2015, 2016 Christian Surlykke
+*
+* This file is part of the refude-services project. 
+* It is distributed under the GPL v2 license.
+* Please refer to the LICENSE file for a copy of the license.
+*/
 
-/* 
- * File:   mimeappslistreader.cpp
- * Author: Christian Surlykke
- * 
- * Created on 18. februar 2016, 10:38
- */
 #include <algorithm>
 #include <ripc/errorhandling.h>
 #include "mimeappslistreader.h"

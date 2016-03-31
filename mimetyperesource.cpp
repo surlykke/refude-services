@@ -1,15 +1,11 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+* Copyright (c) 2015, 2016 Christian Surlykke
+*
+* This file is part of the refude-services project. 
+* It is distributed under the GPL v2 license.
+* Please refer to the LICENSE file for a copy of the license.
+*/
 
-/* 
- * File:   mymetyperesource.cpp
- * Author: Christian Surlykke
- * 
- * Created on 17. marts 2016, 20:24
- */
 
 #include "mimetyperesource.h"
 #include <ripc/json.h>
