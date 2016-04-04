@@ -21,7 +21,7 @@ namespace org_restfulipc
     template<class V>
     struct Pair
     {
-        const char* key;
+        char* key;
         V value;
     };
 
@@ -104,19 +104,39 @@ namespace org_restfulipc
             return list.at(pos).value;
         }
 
+        V& operator[](const string& key) 
+        {
+            return operator[](key.data());
+        }
+       
         V take(const char* key)
         {
             bool found;
             int pos = search(key, found);
             if (!found) throw RuntimeError("Key not found: %s", key);
             V tmp = std::move(list[pos].value);
+            free(list[pos].key);
             list.erase(list.begin() + pos);
             sorted--;
             return tmp;
         }
 
+        void erase(const char* key) 
+        {
+            bool found;
+            int pos = search(key, found);
+            if (found) {
+                free(list[pos].key);
+                list.erase(list.begin() + pos);
+                sorted--; 
+            }
+        }
+
         void clear() 
         {
+            for (auto it = list.begin(); it != list.end(); it++) {
+                free(it->key);
+            }
             list.erase(list.begin(), list.end());
             sorted = 0;
         }
@@ -127,7 +147,7 @@ namespace org_restfulipc
             return list.size();
         }
 
-        const Pair<V> & at(size_t pos) 
+        Pair<V> & at(size_t pos) 
         {
             sort();
             return list.at(pos);
@@ -147,8 +167,47 @@ namespace org_restfulipc
             sorted = list.size();
         }
 
+        vector<const char*> keys() 
+        {
+            vector<const char*> res;
+            for (int i = 0; i < size(); i++) {
+                res.push_back(list.at(i).key);
+            }
+            return res;
+        }
+
+        vector<V*> values() 
+        {
+            vector<V*> res;
+            for (int i = 0; i < size(); i++) {
+                res.push_back(&(list.at(i).value));
+            }
+            return res;
+        }
+
+        vector<const char*> keys(const char* prefix) {
+            bool dummy; 
+            int prefixLength = strlen(prefix);
+            int pos = search(prefix, dummy);
+            vector<const char*> res;
+            while (pos < size() && !strncmp(prefix, list.at(pos).key, prefixLength)) {
+                res.push_back(list.at(pos).key);
+                pos++;
+            }
+
+            return res;
+        }
+
     private:
         
+        /**
+         * 
+         * @param key The key to search for
+         * @param found Will be set to true if key is found, false otherwise
+         * @return The position of the first key which is lexically greater than or
+         *         equal to the given key or, if none such exists, size().
+         *         This returned value is where the given key would be inserted in the map.
+         */ 
         int search(const char * key, bool& found) 
         {
             sort();

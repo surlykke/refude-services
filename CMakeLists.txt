@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}")
 
 include(GNUInstallDirs)
 
-file(GLOB SOURCE_FILES impl/*.cpp impl/shortmtqueue.h impl/map.h impl/stacktrace.h)
+file(GLOB SOURCE_FILES impl/*.cpp impl/shortmtqueue.h impl/map.h)
 file(GLOB PUBLIC_HEADERS public_headers/*.h)
 
 include_directories(public_headers private_headers)

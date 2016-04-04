@@ -19,6 +19,7 @@ namespace org_restfulipc
     vector<string> split(string str, char c);
     set<string> splitToSet(string str, char c);
     string value(const string& envVarName, const string& fallback = "");
+    string replaceAll(const string oldString, char ch, char replaceCh);
 }
 #endif /* UTILS_H */
 

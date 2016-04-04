@@ -85,22 +85,36 @@ namespace org_restfulipc
         buffer.write('"');
     }
 
-    FilteringJsonWriter::FilteringJsonWriter(Json& json, map<string, string>* replacements, string marker) :
-        JsonWriter(),
+    FilteringJsonWriter::FilteringJsonWriter(Json& json, 
+            const char* marker, 
+            Json& replacements, 
+            Json& fallbackReplacements, 
+            const char* lastResort) :
+        marker(marker),
         replacements(replacements),
-        marker(marker)
+        fallbackReplacements(fallbackReplacements),
+        lastResort(lastResort)
     {
         write(json);
     }
-
+ 
+    
     FilteringJsonWriter::~FilteringJsonWriter()
     {
     }
 
     void FilteringJsonWriter::writeString(const char* str)
     {
-        if (! strncmp(marker.data(), str, marker.size())) {
-            str = (*replacements)[str].data();
+        if (! strncmp(marker, str, strlen(marker))) {
+            if (replacements.contains(str)) {
+                str = (const char*)replacements[str];
+            }
+            else if (fallbackReplacements.contains(str)) {
+                str = (const char*) fallbackReplacements[str];
+            }
+            else {
+                str = lastResort;
+            }
         }
         buffer.write('"');
         for (const char *c = str; *c; c++) {

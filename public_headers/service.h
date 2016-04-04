@@ -32,11 +32,10 @@ namespace org_restfulipc
 
         void map(const char* path, AbstractResource::ptr resource, bool wildcarded = false);
         void unMap(const char* path);
-        AbstractResource::ptr mapping(const char* path, bool wildcarded = false);
-        size_t mappings();
-    protected:
+        AbstractResource::ptr mapping(const char* path, bool prefix = false);
         Map<AbstractResource::ptr> resourceMappings;
         Map<AbstractResource::ptr> prefixMappings;
+ 
     private:
         void startThreads();
         void listener();

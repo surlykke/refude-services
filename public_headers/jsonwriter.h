@@ -35,11 +35,17 @@ namespace org_restfulipc
 
     struct FilteringJsonWriter : public JsonWriter
     {
-        FilteringJsonWriter(Json& json, map<string, string>* replacements, string marker = "@@");
+        FilteringJsonWriter(Json& json, 
+                            const char* marker, 
+                            Json& replacements, 
+                            Json& fallbackReplacements,
+                            const char* lastResort);
         virtual ~FilteringJsonWriter();
 
-        map<string, string>* replacements;
-        string marker;
+        const char* marker;
+        Json& replacements;
+        Json& fallbackReplacements;
+        const char* lastResort;
 
     protected:
         virtual void writeString(const char *string);

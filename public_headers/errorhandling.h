@@ -36,7 +36,6 @@
  *    RuntimeError
  *      We use this for pretty much everything else.
  */
-
 namespace org_restfulipc
 {
     struct RuntimeError : public std::exception
@@ -44,7 +43,11 @@ namespace org_restfulipc
         RuntimeError(const char* fmt, ...);
         virtual ~RuntimeError() {};
         virtual const char* what() const noexcept { return errorMsg;}
+        void printStackTrace(int fd = 2);
         char errorMsg[1024];
+    private:
+        void* frames[128];
+        int numFrames;
     };
 
     struct C_Error : public RuntimeError

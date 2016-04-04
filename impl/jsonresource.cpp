@@ -88,16 +88,22 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
             "Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE, PUT, PATCH\r\n"
             "Access-Control-Allow-Origin: http://localhost:8383\r\n"; // FIXME
             
-
         std::unique_lock<std::shared_timed_mutex> lock(responseMutex);
+        this->json = move(json);
         buf.clear();
         buf.write(responseTemplate);
-        JsonWriter writer(json);
+        JsonWriter writer(this->json);
         buf.write("Content-Length: ");
         buf.write(writer.buffer.used);
         buf.write("\r\n\r\n");
         buf.write(writer.buffer.data);
     }
+
+    bool JsonResource::equal(const Json& json)
+    {
+        return this->json == json;
+    }
+
 
 //---------------------------------------------------------------------------------------
 
@@ -113,7 +119,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
     {
     }
 
-    void LocalizedJsonResource::setJson(Json&& json, Translations&& translations)
+    void LocalizedJsonResource::setJson(Json&& json, Json&& translations)
     {
         std::unique_lock<std::shared_timed_mutex> lock(responseMutex);
         localizedResponses.clear();
@@ -139,13 +145,11 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
         string locale = getLocaleToServe(request.headers[(int)Header::accept_language]);
         Buffer& buf = localizedResponses[locale.data()];
         buf.write(responseTemplate);
-        FilteringJsonWriter jsonWriter(json, &(translations[locale]));
-        
+        FilteringJsonWriter jsonWriter(json, "@@", translations[locale], translations[""], "");
         buf.write("Content-Length: ");
         buf.write(jsonWriter.buffer.used);
         buf.write("\r\n\r\n");
         buf.write(jsonWriter.buffer.data);
-
     }
 
     Buffer& LocalizedJsonResource::getResponse(const HttpMessage& request)
@@ -186,7 +190,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
         }
 
         for (string locale : locales) {
-            if (translations.find(locale) != translations.end()) {
+            if (translations.contains(locale.data())) {
                 return locale;
             }
         }

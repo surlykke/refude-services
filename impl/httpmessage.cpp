@@ -151,7 +151,7 @@ namespace org_restfulipc
      *  - multiline header definitions
      *  - Illegal chars in names/values
      */    
-    bool HttpMessageReader::readHeaderLine()
+    void HttpMessageReader::readHeaderLine()
     {
         int startOfHeaderLine = _currentPos;
         int startOfHeaderValue = -1;
@@ -191,7 +191,6 @@ namespace org_restfulipc
 
     void HttpMessageReader::readBody()
     {
-
         errno = 0;
         _message.contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
         if (errno != 0) throw C_Error();
@@ -237,7 +236,7 @@ namespace org_restfulipc
         }
         else 
         {
-            throw errno;
+            throw C_Error();
         }
         
     }

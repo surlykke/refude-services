@@ -45,4 +45,10 @@ namespace org_restfulipc
         return (val && *val) ? val : fallback;
     }
 
+    string replaceAll(const string oldString, char ch, char replaceCh)
+    {
+        string result = oldString;
+        replace(result.begin(), result.end(), ch, replaceCh);
+        return result;
+    }
 }

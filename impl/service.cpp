@@ -127,7 +127,6 @@ namespace org_restfulipc
     void Service::map(const char* path, AbstractResource::ptr resource, bool wildcarded)
     {
         if (wildcarded) {
-            std::cout << "Prefixmapping to: " << path << "\n";
             prefixMappings.add(path, resource);
         }
         else {
@@ -146,21 +145,11 @@ namespace org_restfulipc
         }
     }
 
-    size_t Service::mappings()
+    AbstractResource::ptr Service::mapping(const char* path, bool prefix)
     {
-        return resourceMappings.size();
-    }
-   
-
-    AbstractResource::ptr Service::mapping(const char* path, bool wildcarded)
-    {
-        int pos = resourceMappings.find(path); 
-        if (pos < 0) {
-            return NULL;
-        }
-        else {
-            return resourceMappings.at(pos).value;
-        }
+        Map<AbstractResource::ptr>& map = prefix ? prefixMappings : resourceMappings;
+        int pos = map.find(path); 
+        return pos < 0 ? NULL : map.at(pos).value;
     }
 
 
@@ -203,7 +192,6 @@ namespace org_restfulipc
                 requestSockets->enqueue(requestSocket);
             }
         }
-        std::cout << "Leaving listener\n";
     }
 
     void Service::worker()
@@ -219,23 +207,20 @@ namespace org_restfulipc
 
             do {
                 try {
-                    HttpMessageReader(requestSocket, request).readRequest();
-                    std::cout << request;
+                    HttpMessageReader reader(requestSocket, request);
+                    //reader.dumpRequest = true;
+                    reader.readRequest();
                     AbstractResource::ptr handler; 
                     uint matchedPathLength;
-                    std::cout << "Looking for " << request.path << " in mappings\n";
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex > -1) {
-                        std::cout << "found\n";
                         handler = resourceMappings.at(resourceIndex).value;
                         matchedPathLength = strlen(request.path);
                     }
                     else { 
-                        std::cout << "Looking for " << request.path << " in prefixMappings\n";
                         resourceIndex = prefixMappings.find_longest_prefix(request.path);
                         if (resourceIndex >= 0) {
                             Pair<AbstractResource::ptr> pair = prefixMappings.at(resourceIndex);
-                            std::cout << "Found: " << pair.key << "\n";
                             matchedPathLength = strlen(pair.key);
                             if (request.path[matchedPathLength] == '\0' || request.path[matchedPathLength] == '/') {
                                 handler = pair.value;
@@ -247,7 +232,6 @@ namespace org_restfulipc
                         throw Status::Http404;
                     }
                     
-                    //std::cout << "Incoming:" << request << "\n";
                     
                     handler->handleRequest(requestSocket, matchedPathLength, request);
 
@@ -266,9 +250,22 @@ namespace org_restfulipc
                     close(requestSocket);
                     requestSocket = -1;
                 }
-                catch (int errorNumber) {
+                catch (C_Error c_Error) {
+                    if (c_Error.errorNumber) { // We can get here with errorNumber == 0 if it's 
+                                               // a 'benign' error - i.e. connection timed out
+                       std::cerr << "Worker caught RuntimeError: " << c_Error.what() << "\n";
+                        c_Error.printStackTrace();
+                    }
+                    else {
+                    }
                     close(requestSocket);
                     requestSocket = -1;
+                }
+                catch (RuntimeError runtimeError) {
+                    close(requestSocket);
+                    requestSocket = -1;
+                    std::cerr << "Worker caught RuntimeError: " << runtimeError.what() << "\n";
+                    runtimeError.printStackTrace();
                 }
             }
             while (requestSocket > -1);

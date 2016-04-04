@@ -5,11 +5,11 @@
 * It is distributed under the LGPL 2.1 license.
 * Please refer to the LICENSE file for a copy of the license.
 */
-
+#include <stdio.h>
+#include <stdarg.h>
 #include <sstream> 
 #include "jsonreader.h"
 #include "json.h"
-#include "stacktrace.h"
 
 namespace org_restfulipc
 {
@@ -208,7 +208,7 @@ namespace org_restfulipc
 
     Json& Json::operator[](const char *index)
     {
-        typeAssert("operator[const char*]", JsonType::Object);
+        typeAssert(JsonType::Object, "operator[\"%s\"]", index);
         return (*entries)[index];
     }
 
@@ -219,13 +219,20 @@ namespace org_restfulipc
 
     Json& Json::operator[](int index) const
     {
-        typeAssert("operator[int]", JsonType::Array);
+        typeAssert(JsonType::Array, "operator[%d]", index);
         return (*elements)[index];
     }
 
+    vector<const char*> Json::keys() const
+    {
+        typeAssert(JsonType::Object, "keys()");
+        return entries->keys();
+    }
+
+
     Json Json::take(int index)
     {
-        typeAssert("take(int)", JsonType::Array);
+        typeAssert(JsonType::Array, "take(%d)", index);
         Json tmp = std::move((*elements)[index]);
         elements->erase(elements->begin() + index);
         return tmp;
@@ -234,13 +241,13 @@ namespace org_restfulipc
 
     bool Json::contains(const char* key) const
     {
-        typeAssert("contains(const char*)", JsonType::Object);
+        typeAssert(JsonType::Object, "contains(\"%s\")", key);
         return entries->find(key) > -1;
     }
 
     const char* Json::keyAt(size_t index) const
     {
-        typeAssert("keyAt(int)", JsonType::Object);
+        typeAssert(JsonType::Object, "keyAt(%d)", index);
         if (index >= entries->size()) {
             throw RuntimeError("Index %d out of range (size: %d)", index, size());
         }
@@ -263,13 +270,13 @@ namespace org_restfulipc
 
     Json& Json::append(Json&& json)
     {
-        typeAssert("append(Json&&)", JsonType::Array);
+        typeAssert(JsonType::Array, "append(Json&&)");
         elements->push_back(std::move(json));
         return elements->back();
     }
 
     Json& Json::append(const char* key, Json&& json) {
-        typeAssert("append(const char*, Json&&)", JsonType::Object);
+        typeAssert(JsonType::Object, "append(\"%s\", Json&&)", key);
         return entries->add(key, std::move(json));
     }
 
@@ -277,46 +284,39 @@ namespace org_restfulipc
 
     Json& Json::insertAt(int index, Json&& json)
     {
-        typeAssert("insertAt(index, Json&&)", JsonType::Array);
+        typeAssert(JsonType::Array, "insertAt(%d, Json&&)", index);
         elements->insert(elements->begin() + index, std::move(json));
         return elements->at(index);
     }
 
-    void Json::typeAssert(const char* operation, JsonType type) const {
-        if (type != mType) {
-//            print_stacktrace();
-            throw RuntimeError("Attempting %s on json of type %s", operation, typeAsString());
-        }
-    }
-
     Json Json::take(const char* key)
     {
-        typeAssert("take(const char*)", JsonType::Object);
+        typeAssert(JsonType::Object, "take(\"%s\")", key);
         return entries->take(key);
     }
 
 
     org_restfulipc::Json::operator bool() const
     {
-        typeAssert("operator bool()", JsonType::Boolean);
+        typeAssert(JsonType::Boolean, "operator bool()");
         return boolean;
     }
 
     org_restfulipc::Json::operator long() const
     {
-        typeAssert("operator long()", JsonType::Number);
+        typeAssert(JsonType::Number, "operator long()");
         return (long)number;
     }
 
     org_restfulipc::Json::operator double() const
     {
-        typeAssert("operator double()", JsonType::Number);
+        typeAssert(JsonType::Number, "operator double()");
         return number;
     }
 
     org_restfulipc::Json::operator const char *() const
     {
-        typeAssert("operator const char*()", JsonType::String);
+        typeAssert(JsonType::String, "operator const char*()");
         return str;
     }
 
@@ -326,6 +326,20 @@ namespace org_restfulipc
         JsonReader reader(serialized);
         json = reader.read();
         return json;
+    }
+
+    void Json::typeAssert(JsonType otherType, const char* operationDescFmt, ...) const {
+        if (otherType != mType) {
+            char operatorDescription[1024];
+            va_list args;
+            va_start(args, operationDescFmt);
+            vsprintf(operatorDescription, operationDescFmt, args);
+            va_end(args);
+            throw RuntimeError("Attempting '%s' on json of type '%s'. Type should have been '%s'", 
+                               operatorDescription,
+                               typeAsString(),
+                               typeAsString(otherType));
+        }
     }
 
 

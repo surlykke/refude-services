@@ -67,10 +67,10 @@ void runAsServer()
         while (true) {
             char c;
             if (recv(connectionSocket, &c, 1, 0) <= 0) {
-                throw errno;
+                throw C_Error();
             }
             if (send(connectionSocket, &c, 1, 0) <= 0) {
-                throw errno;
+                throw C_Error();
             }
         }
     }

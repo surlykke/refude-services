@@ -44,17 +44,15 @@ namespace org_restfulipc
         JsonResource();
         virtual ~JsonResource();
         void setJson(Json&& json);
-    
+        bool equal(const Json& json);
         virtual bool responseReady(const HttpMessage& request) { return true; }
         virtual void prepareResponse(const HttpMessage& request) {};
         virtual Buffer& getResponse(const HttpMessage& request) { return buf; }
  
     private:
+        Json json;
         Buffer buf;
     };
-
-    // Translations holds, for each locale, a map from untranslated to translated string
-    typedef map<string, map<string, string> > Translations;
 
     class LocalizedJsonResource : public AbstractJsonResource
     {
@@ -62,9 +60,9 @@ namespace org_restfulipc
         typedef std::shared_ptr<LocalizedJsonResource> ptr; 
         LocalizedJsonResource();
         virtual ~LocalizedJsonResource();
-        void setJson(Json&& json, Translations&& translations);
+        void setJson(Json&& json, Json&& translations);
         Json json;
-        Translations translations;
+        Json translations;
 
     protected:
         virtual bool responseReady(const HttpMessage& request);

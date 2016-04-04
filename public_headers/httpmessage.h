@@ -45,7 +45,7 @@ namespace org_restfulipc
         void readRequestLine();
         void readStatusLine();
         void readHeaderLines();
-        bool readHeaderLine();
+        void readHeaderLine();
         void readHeaders();
         void readBody();
         char currentChar();
