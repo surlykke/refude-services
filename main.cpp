@@ -8,10 +8,11 @@
 
 #include <iostream>
 #include "desktopservice.h"
-
+#include <string>
 using namespace org_restfulipc;
 int main(int argc, char *argv[])
 {
+    std::cout << "new string:" << std::string() << "\n";
     std::cout << "create service..\n";
     DesktopService service;
     std::cout << "Serving 7938\n";

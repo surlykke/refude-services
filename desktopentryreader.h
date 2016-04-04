@@ -25,7 +25,7 @@ namespace org_restfulipc
         DesktopEntryReader(string desktopFilePath);
         virtual ~DesktopEntryReader();
         Json json;
-        Translations translations;
+        Json translations;
     
     private:
         void read();

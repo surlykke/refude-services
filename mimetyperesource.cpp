@@ -10,46 +10,59 @@
 #include "mimetyperesource.h"
 #include <ripc/json.h>
 #include <ripc/buffer.h>
+#include <ripc/jsonwriter.h>
 
+#include "mimeappslistreader.h"
 #include "desktopservice.h"
 namespace org_restfulipc
 {
 
-MimetypeResource::MimetypeResource() : LocalizedJsonResource()
-{
-}
-
-MimetypeResource::~MimetypeResource()
-{
-}
-
-void MimetypeResource::doPatch(int socket, const HttpMessage& request)
-{
-    static const char* successfulResponse =
-         "HTTP/1.1 204 No Content\r\n"
-         "\r\n";
-
-    Json mergeJson;
-    mergeJson << request.body;
-    if (mergeJson.type() != JsonType::Object) {
-        throw Status::Http406;
+    MimetypeResource::MimetypeResource() : LocalizedJsonResource()
+    {
     }
-    else if (mergeJson.size() != 1 ||
-             !mergeJson.contains("defaultApplication") ||
-             mergeJson["defaultApplication"].type() != JsonType::String) {
-        throw Status::Http422; // FIXME Some error message here
+
+    MimetypeResource::~MimetypeResource()
+    {
     }
-    else {
-        string thisMimetype = (string)json["type"] + '/' + (string)json["subtype"];
-        service->setDefaultApplication(thisMimetype, (string)mergeJson["defaultApplication"]);
-        sendFully(socket, successfulResponse, strlen(successfulResponse));        
+
+    void MimetypeResource::doPatch(int socket, const HttpMessage& request)
+    {
+        std::cout << "Patching\n";
+        static const char* successfulResponse =
+            "HTTP/1.1 204 No Content\r\n"
+            "\r\n";
+
+        Json mergeJson;
+        mergeJson << request.body;
+        std::cout << "MergeJson:\n" << JsonWriter(mergeJson).buffer.data << "\n";
+        if (mergeJson.type() != JsonType::Object) {
+            throw Status::Http406;
+        }
+        else if (mergeJson.size() != 1 ||
+                !mergeJson.contains("defaultApplication") ||
+                mergeJson["defaultApplication"].type() != JsonType::String) {
+            throw Status::Http422; // FIXME Some error message here
+        }
+        else {
+            string thisMimetype = (string)json["type"] + '/' + (string)json["subtype"];
+            string defaultApplication = (string)mergeJson["defaultApplication"];
+            MimeappsList mimeappsList(Directories().usersConfigDir + "/mimeapps.list");
+            auto& defaultAppsForMime = mimeappsList.defaultApps[thisMimetype];
+            for (auto it = defaultAppsForMime.begin(); it != defaultAppsForMime.end();) {
+                if (*it == defaultApplication) {
+                    it = defaultAppsForMime.erase(it);
+                }
+                else {
+                    it++;
+                }
+            }
+            defaultAppsForMime.insert(defaultAppsForMime.begin(), defaultApplication);
+            mimeappsList.write();
+        }
     }
-}
 
-void MimetypeResource::setService(DesktopService* service)
-{
-    this->service = service;
-}
-
-
+    void MimetypeResource::setService(DesktopService* service)
+    {
+        this->service = service;
+    }
 }

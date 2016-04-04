@@ -9,6 +9,7 @@
 #include <tinyxml2.h>
 #include <ripc/jsonresource.h>
 #include <ripc/utils.h>
+#include <ripc/jsonwriter.h>
 
 #include "rootTemplate.h"
 #include "subtypeTemplate.h"
@@ -18,23 +19,44 @@ using namespace tinyxml2;
 namespace org_restfulipc 
 {
     MimeResourceBuilder::MimeResourceBuilder() :
-        rootResource(),
-        mimetypeResources()
+        root(), 
+        jsons(), 
+        localeTranslations()
     {
-        rootResource = make_shared<JsonResource>();
-        build();
     }
 
     MimeResourceBuilder::~MimeResourceBuilder()
     {
     }
 
+    // Caller must ensure that mimetypeElement->FirstChildElement exists...
+    void handleLocalizedXmlElement(XMLElement* mimetypeElement, const char* elementName, Json& json, Json& translations)
+    {
+        const char* mimetype = mimetypeElement->Attribute("type");
+        string translationKey = string("@@") + mimetype + "-" + elementName;
+        json[elementName] = translationKey;
+        for (XMLElement* element = mimetypeElement->FirstChildElement(elementName);
+                element;
+                element = element->NextSiblingElement(elementName)) {
+            
+            string locale = element->Attribute("xml:lang") ?  element->Attribute("xml:lang") : ""; 
+            transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
+           
+            if (translations[locale].undefined()) {
+                translations[locale] = JsonConst::EmptyObject;
+            }
+            translations[locale][translationKey] = element->GetText();
+        }
+    }
+
     void MimeResourceBuilder::build()
     {
-        map<string, set<string> > mimetypes; 
+        root << rootTemplate_json;
+        
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
         XMLElement* rootElement = doc->FirstChildElement("mime-info");
+        
 
         if (!rootElement) throw RuntimeError("No 'mime-info' root-element");
         for (XMLElement* mimetypeElement = rootElement->FirstChildElement("mime-type");
@@ -49,41 +71,33 @@ namespace org_restfulipc
             }
             string typeName = tmp[0];
             string subtypeName = tmp[1];
-
-            Json json;
+            string url = string("/mimetype/") + mimetype;
+            Json& json = jsons[url];
             json << subtypeTemplate_json;
             json["type"] = typeName;
             json["subtype"] = subtypeName;
-            Translations translations;
+            json["_links"]["self"]["href"] = url;
+
+            if (root["mimetypes"][typeName].undefined()) {
+                root["mimetypes"][typeName] = JsonConst::EmptyArray;
+            }
+            root["mimetypes"][typeName].append(subtypeName);
+ 
+
+            Json& translations = localeTranslations[url];
+            translations = JsonConst::EmptyObject;
 
             string commentTranslationKey = string("@@") + mimetype + "-comment";
-            json["comment"] = commentTranslationKey; 
-            for (XMLElement* commentElement = mimetypeElement->FirstChildElement("comment");
-                    commentElement;
-                    commentElement = commentElement->NextSiblingElement("comment")) {
-                string locale = commentElement->Attribute("xml:lang") ?  commentElement->Attribute("xml:lang") : ""; 
-                transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
-                translations[locale][commentTranslationKey] = commentElement->GetText();
+            if (mimetypeElement->FirstChildElement("comment")) {
+                handleLocalizedXmlElement(mimetypeElement, "comment", json, translations);
             }
 
-            string acronymTranslationKey = string("@@") + mimetype + "_acronym";
-            json["acronym"] = acronymTranslationKey; 
-            for (XMLElement* acronymElement = mimetypeElement->FirstChildElement("acronym");
-                    acronymElement;
-                    acronymElement = acronymElement->NextSiblingElement("acronym")) {
-                string locale = acronymElement->Attribute("xml:lang") ?  acronymElement->Attribute("xml:lang") : "";
-                transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
-                translations[locale][acronymTranslationKey] = acronymElement->GetText();
+            if (mimetypeElement->FirstChildElement("acronym")) {
+                handleLocalizedXmlElement(mimetypeElement, "acronym", json, translations);
             }
-
-            string expandedAcronymTranslationKey = string("@@") + mimetype + "_expandedAcronym";
-            json["expandedAcronym"] = expandedAcronymTranslationKey; 
-            for (XMLElement* expandedAcronymElement = mimetypeElement->FirstChildElement("expanded-acronym");
-                    expandedAcronymElement;
-                    expandedAcronymElement = expandedAcronymElement->NextSiblingElement("expanded-acronym")) {
-                string locale = expandedAcronymElement->Attribute("xml:lang") ?  expandedAcronymElement->Attribute("xml:lang") : ""; 
-                transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
-                translations[locale][expandedAcronymTranslationKey] = expandedAcronymElement->GetText();
+            
+            if (mimetypeElement->FirstChildElement("expanded-acronym")) {
+                handleLocalizedXmlElement(mimetypeElement, "expanded-acronym", json, translations);
             }
 
             for (XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
@@ -113,24 +127,70 @@ namespace org_restfulipc
             if (genericIconElement) {
                 json["genericIcon"] = genericIconElement->Attribute("name");
             }
-
-            mimetypeResources[mimetype] = make_shared<MimetypeResource>();
-            mimetypeResources[mimetype]->setJson(std::move(json), std::move(translations));
-
-            mimetypes[typeName].insert(subtypeName);
         } 
+    }
 
-        Json rootJson; 
-        rootJson << rootTemplate_json;
-        for (const auto& it : mimetypes) {
-            Json& subtypeArray = rootJson["mimetypes"][it.first] = JsonConst::EmptyArray;
-            for (const string& subtype : it.second) {
-                subtypeArray.append(subtype);
+    void MimeResourceBuilder::addAssociationsAndDefaults(const AppSets& associations, const AppLists& defaults)
+    {
+        for (auto& p : associations) {
+            string url = string("/mimetype/") + p.first;
+            if (jsons.find(url.data()) > 0) {
+                for (const string& entryId : p.second) {
+                    jsons[url]["associatedApplications"].append(entryId);
+                }
             }
         }
 
-        rootResource->setJson(std::move(rootJson));
+        for (const auto& it : defaults) {
+            if (it.second.size() > 0) {
+                string url = "/mimetype/" + it.first;
+                if (jsons.find(url.data()) >= 0) {
+                    jsons[url]["defaultApplication"] = it.second[0];
+                }
+            }
+        }
     }
 
+    void MimeResourceBuilder::mapResources(Service& service, NotifierResource::ptr notifier)
+    {
+        for (const char* url : service.resourceMappings.keys("/mimetype/")) {
+            if (jsons.find(url) < 0) {
+                const char* mimetype = url + strlen("/mimetype/");
+                service.unMap(url);
+                notifier->notifyClients("mimetype-removed", mimetype);
+            }
+        }
+
+        for (const char* url : jsons.keys()) {
+            const char* mimetype = url + strlen("/mimetype/");
+            MimetypeResource::ptr res = dynamic_pointer_cast<MimetypeResource>(service.mapping(url));
+            if (res) {
+                if (res->json != jsons[url] || res->translations != localeTranslations[url]) {
+                    res->setJson(move(jsons[url]), move(localeTranslations[url]));
+                    notifier->notifyClients("mimetype-updated", mimetype);
+                }
+            }
+            else {
+                res = make_shared<MimetypeResource>();
+                res->setJson(move(jsons[url]), move(localeTranslations[url]));
+                service.map(url, res);
+                notifier->notifyClients("mimetype-added", mimetype);
+            }
+        }
+
+        JsonResource::ptr rootResource = dynamic_pointer_cast<JsonResource>(service.mapping("/mimetypes"));
+        if (rootResource) {
+            if (! rootResource->equal(root)) {
+                rootResource->setJson(move(root));
+                notifier->notifyClients("mimetypelist-updated", "");
+            }
+        }
+        else {
+            rootResource = make_shared<JsonResource>();
+            rootResource->setJson(move(root));
+            service.map("/mimetypes", rootResource);
+            notifier->notifyClients("mimetypelist-added", "");
+        }
+    }
 
 }

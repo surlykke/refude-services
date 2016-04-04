@@ -20,17 +20,10 @@ namespace org_restfulipc
     DesktopEntryReader::DesktopEntryReader(std::string desktopFilePath) : 
         IniReader(desktopFilePath),
         json(JsonConst::EmptyObject),
-        translations()
+        translations(JsonConst::EmptyObject)
     {
         json << desktopTemplate_json;
         read();
-
-        // For localized values we use the non-locale value as a fallback 
-        for (auto p : translations) {
-            if (! p.first.empty()) {
-                translations[p.first].insert(translations[""].begin(), translations[""].end());
-            }
-        }
     }
 
     DesktopEntryReader::~DesktopEntryReader() 
@@ -76,6 +69,10 @@ namespace org_restfulipc
 
     bool DesktopEntryReader::readKeyValue(Json& json) 
     {
+        if (translations[locale].undefined()) {
+            translations[locale] = JsonConst::EmptyObject;
+        }
+
         if (keyOneOf({"Type", "Version", "Exec", "Path", "StartupWMClass", "URL"})) {
             json[key] = value;
         }

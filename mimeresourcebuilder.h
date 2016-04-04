@@ -10,10 +10,10 @@
 #define MIMERESOURCEBUILDER_H
 #include <ripc/json.h>
 #include <ripc/service.h>
+#include <ripc/notifierresource.h>
+#include <ripc/json.h>
 
 #include "typedefs.h"
-#include "mimetyperesource.h"
-
 namespace org_restfulipc
 {
     using namespace std;
@@ -22,10 +22,14 @@ namespace org_restfulipc
     public:
         MimeResourceBuilder();
         virtual ~MimeResourceBuilder();
-        JsonResource::ptr rootResource;
-        map<string, MimetypeResource::ptr> mimetypeResources;
-    private:
         void build();
+        void addAssociationsAndDefaults(const AppSets& associations, const AppLists& defaults);
+        void mapResources(Service& service, NotifierResource::ptr notifier);
+    
+    private:
+        Json root;
+        Map<Json> jsons;
+        Map<Json> localeTranslations;
     };
 }
 #endif /* MIMERESOURCEBUILDER_H */
