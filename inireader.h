@@ -26,6 +26,7 @@ namespace org_restfulipc
 
      public:
         enum LineType {
+            AtStart,
             Heading,
             KeyValue,
             EndOfFile

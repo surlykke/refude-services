@@ -8,20 +8,30 @@
 
 #ifndef ICONRESOURCE_H
 #define ICONRESOURCE_H
+#include <vector>
+#include <string>
 #include <ripc/webserver.h>
+
+#include "icontheme.h"
 
 namespace org_restfulipc
 {
+    using namespace std;
     class IconResource : public WebServer
     {
     public:
         typedef std::shared_ptr<IconResource> ptr;
-        IconResource();
+        IconResource(IconThemeCollection&& iconThemeCollection);
         virtual ~IconResource();
         virtual const char* filePath(int matchedPathLength, const HttpMessage& request);
 
     private:
-
+        void parseQueryString(const HttpMessage& request, map<string, vector<string>>& queryParameters);
+        string nextQueryStringToken(const HttpMessage& request, int& pos);
+        const char* findPathOfClosest(const vector<IconInstance>& instances, int size);
+        string parent(string themeName);
+        
+        IconThemeCollection iconThemeCollection;
     };
 }
 #endif /* ICONRESOURCE_H */

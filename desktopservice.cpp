@@ -23,6 +23,7 @@
 
 #include "desktopservice.h"
 #include "desktopentryresourcesbuilder.h"
+#include "iconresourcebuilder.h"
 
 #define LEN (sizeof(struct inotify_event) + NAME_MAX + 1)
 
@@ -34,11 +35,14 @@ using namespace std::chrono;
         notifier(),
         watchThread()
     {
-        notifier = make_shared<NotifierResource>();
+        /*notifier = make_shared<NotifierResource>();
         map("/notify", notifier); 
         std::cout << "Building resources from constructor..\n";
         buildResources();
-        watchThread = thread(&DesktopService::watcher, this, setupWatches());
+        watchThread = thread(&DesktopService::watcher, this, setupWatches());*/
+        IconResourceBuilder iconResourceBuilder;
+        iconResourceBuilder.buildResources();
+        iconResourceBuilder.mapResources(*this);
     }
 
 

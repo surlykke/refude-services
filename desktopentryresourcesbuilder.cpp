@@ -108,7 +108,7 @@ namespace org_restfulipc
         }
     }
 
-    vector<string> DesktopEntryResourceBuilder::desktopFiles(string directory)
+   vector<string> DesktopEntryResourceBuilder::desktopFiles(string directory)
     {
         vector<string> files;
         DIR* dir = opendir(directory.data());
@@ -132,7 +132,7 @@ namespace org_restfulipc
        
         closedir(dir);
         return files;
-    }
+    } 
     
     void DesktopEntryResourceBuilder::readDesktopFiles(vector<string> applicationsDirs)
     {

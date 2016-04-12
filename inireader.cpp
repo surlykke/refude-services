@@ -15,7 +15,7 @@ namespace org_restfulipc
 {
         
     IniReader::IniReader(std::string filePath) : 
-        lineType(), 
+        lineType(AtStart), 
         desktopFile(filePath) 
     {
         if (! desktopFile.good()) {
