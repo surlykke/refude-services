@@ -21,17 +21,18 @@ namespace org_restfulipc
     {
     public:
         typedef std::shared_ptr<IconResource> ptr;
-        IconResource(IconThemeCollection&& iconThemeCollection);
+        IconResource(IconThemeCollection&& iconThemeCollection, map<string, IconInstance>&& usrSharePixmapIcons);
         virtual ~IconResource();
-        virtual const char* filePath(int matchedPathLength, const HttpMessage& request);
+        virtual PathMimetypePair findFile(int matchedPathLength, const HttpMessage& request);
 
     private:
         void parseQueryString(const HttpMessage& request, map<string, vector<string>>& queryParameters);
         string nextQueryStringToken(const HttpMessage& request, int& pos);
-        const char* findPathOfClosest(const vector<IconInstance>& instances, int size);
+        const IconInstance* findPathOfClosest(const vector<IconInstance>& instances, int size);
         string parent(string themeName);
         
         IconThemeCollection iconThemeCollection;
+        map<string, IconInstance> usrSharePixmapsIcons;
     };
 }
 #endif /* ICONRESOURCE_H */

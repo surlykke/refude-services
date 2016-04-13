@@ -24,8 +24,7 @@ namespace org_restfulipc
         defaults(),
         desktopJsons(),
         translations(),
-        handlers(), 
-        directories()
+        handlers()
     {
     }
 
@@ -36,18 +35,18 @@ namespace org_restfulipc
     void DesktopEntryResourceBuilder::buildJsons()
     {
 
-        for (auto it = directories.systemApplicationDirRoots.rbegin(); it != directories.systemApplicationDirRoots.rend(); it++) {
-            readDesktopFiles(directories.directoryTree(*it));
-            readMimeappsListFile(*it);
+        for (const string& applicationsDir : append(xdg::data_dirs(), "/applications")) {
+            readDesktopFiles(directoryTree(applicationsDir));
+            readMimeappsListFile(applicationsDir);
         }
 
-        readDesktopFiles(directories.directoryTree(directories.usersApplicationDirRoot));
+        readDesktopFiles(directoryTree(xdg::data_home() + "/applications"));
 
-        for (string configDir : directories.systemConfigDirs) {
+        for (string configDir : xdg::config_dirs()) {
             readMimeappsListFile(configDir);
         }
 
-        readMimeappsListFile(directories.usersConfigDir);
+        readMimeappsListFile(xdg::config_home());
 
         for (auto& p : associations) {
             for (const string& entryId : p.second) {

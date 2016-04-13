@@ -46,7 +46,7 @@ namespace org_restfulipc
         else {
             string thisMimetype = (string)json["type"] + '/' + (string)json["subtype"];
             string defaultApplication = (string)mergeJson["defaultApplication"];
-            MimeappsList mimeappsList(Directories().usersConfigDir + "/mimeapps.list");
+            MimeappsList mimeappsList(xdg::config_home() + "/mimeapps.list");
             auto& defaultAppsForMime = mimeappsList.defaultApps[thisMimetype];
             for (auto it = defaultAppsForMime.begin(); it != defaultAppsForMime.end();) {
                 if (*it == defaultApplication) {

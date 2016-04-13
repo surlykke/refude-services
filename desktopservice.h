@@ -18,7 +18,7 @@
 #include "mimetyperesource.h"
 #include "typedefs.h"
 #include "iconresource.h"
-#include "directories.h"
+#include "xdg.h"
 
 namespace org_restfulipc 
 {
@@ -36,7 +36,6 @@ namespace org_restfulipc
         void watcher(int wd);
         void buildResources();
         
-        Directories directories;
         NotifierResource::ptr notifier;
         thread watchThread;
 

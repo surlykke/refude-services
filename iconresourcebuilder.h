@@ -24,8 +24,7 @@ namespace org_restfulipc
         void mapResources(DesktopService& desktopService);
 
         IconThemeCollection iconThemeCollection;
-    private:
-
+        map<string, IconInstance> usrSharePixmapsIcons;
     };
 
 }

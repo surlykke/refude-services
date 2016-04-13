@@ -12,9 +12,11 @@
 namespace org_restfulipc 
 {
 
-    IconResource::IconResource(IconThemeCollection&& iconThemeCollection) : 
+    IconResource::IconResource(IconThemeCollection&& iconThemeCollection, 
+                               map<string, IconInstance>&& usrSharePixmapIcons) : 
         WebServer("/"),
-        iconThemeCollection(iconThemeCollection)
+        iconThemeCollection(iconThemeCollection),
+        usrSharePixmapsIcons(usrSharePixmapIcons)
     {
     }
 
@@ -22,20 +24,10 @@ namespace org_restfulipc
     {
     }
 
-    const char* IconResource::filePath(int matchedPathLength, const HttpMessage& request)
+    PathMimetypePair IconResource::findFile(int matchedPathLength, const HttpMessage& request)
     {
-        std::cout << "IconResource::filePath, queryString: " << request.queryString << "\n";
         map<string, vector<string>> queryParameters;
         parseQueryString(request, queryParameters); 
-
-        std::cout << "queryparameters:\n";
-        for (const auto& p : queryParameters) {
-            std::cout << p.first << " -> ";
-            for (const string& value : p.second) {
-                std::cout << value << " ";
-            }
-            std::cout << "\n";
-        }
 
         vector<string> names;
         string themeName;
@@ -59,23 +51,33 @@ namespace org_restfulipc
             size = 32; // FIXME
         }
 
-        std::cout << "themeName: " << themeName << ", size: " << size << "\n";
-
         while (! themeName.empty()) {
             if (iconThemeCollection.find(themeName) == iconThemeCollection.end()) {
-                std::cout << "theme not found";
                 throw Status::Http404;
             }
 
             IconTheme& iconTheme = iconThemeCollection[themeName];
-            for (string name : queryParameters["name"]) {
+            for (const string& name : queryParameters["name"]) {
                 if (iconTheme.find(name) != iconTheme.end()) {
-                    return findPathOfClosest(iconTheme[name], size);
+                    const IconInstance* instance =  findPathOfClosest(iconTheme[name], size);
+                    if (instance) {
+                        return {instance->path.data(), instance->mimetype.data()};
+                    }
                 }
             }
 
             themeName = parent(themeName);
         }
+
+        // So no icons in theme or it's ancestors. We look for an icon in
+        // /usr/share/pixmaps, where some applicationicons can be found
+        for (const string& name : queryParameters["name"]) {
+            if (usrSharePixmapsIcons.find(name) != usrSharePixmapsIcons.end()) {
+                return {usrSharePixmapsIcons[name].path.data(), usrSharePixmapsIcons[name].mimetype.data()};
+            }
+        }
+
+        // Abandon all hope
         std::cout << "Nothing found\n";
         throw Status::Http404;
     }
@@ -106,7 +108,7 @@ namespace org_restfulipc
         return string(request.queryString + start, pos - start);
     }
 
-    const char* IconResource::findPathOfClosest(const vector<IconInstance>& instances, int size)
+    const IconInstance* IconResource::findPathOfClosest(const vector<IconInstance>& instances, int size)
     {
         int bestDistanceSoFar = numeric_limits<int>::max();
         const IconInstance* candidate = NULL;
@@ -119,7 +121,7 @@ namespace org_restfulipc
                 distance = size - instance.maxSize;
             }
             else {
-                return instance.path.data(); // No reason to look further..
+                return &instance; // No reason to look further..
             }
 
             if (distance < bestDistanceSoFar) {
@@ -128,12 +130,7 @@ namespace org_restfulipc
             }
         }
         
-        if (candidate) {
-            return candidate->path.data();
-        }
-        else {
-            throw Status::Http404;
-        }
+        return candidate;
     }
 
     string IconResource::parent(string themeName)

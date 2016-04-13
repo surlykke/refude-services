@@ -10,6 +10,7 @@
 #include "indexthemereader.h"
 
 #include "themereader.h"
+#include "iconcollector.h"
 namespace org_restfulipc
 {
     ThemeReader::ThemeReader(IconTheme& iconTheme, const string& dirPath) :
@@ -17,7 +18,7 @@ namespace org_restfulipc
         dirPath(dirPath)
     {
         read();
-        std::cout << "Collected " << iconTheme.size() << " icons\n";
+        std::cout << "Collected " << iconTheme.size() << " icons from " << dirPath << "\n";
     }
 
     ThemeReader::~ThemeReader()
@@ -32,61 +33,18 @@ namespace org_restfulipc
         }
         
         indexThemeReader.read();
-        for (const auto& p : indexThemeReader.iconDirectories) {
-            collectIcons(dirPath, p.second);
-        }
-    }
-
-    void ThemeReader::collectIcons(string iconThemeDirectoryPath, const IconDirectory& iconDirectory)
-    {
-        string absPath = iconThemeDirectoryPath + "/" + iconDirectory.path;
-
-        vector<string> files;
-        DIR* dir = opendir(absPath.data());
-        if (dir == NULL) {
-            std::cerr << "Warning: " << absPath.data() << " does not exist\n";
-            return;
-        }
-        
-        for (;;) {
-            errno = 0;
-            struct dirent* dirent = readdir(dir);
-            if (errno && !dirent) { 
-                throw C_Error();
-            }
-            else if (!dirent) {
-                break;
-            } 
-            else if ( dirent->d_type == DT_REG) {
-                string fileName = dirent->d_name;
-                if (fileName.size() <= 4) {
-                    continue;
-                }
-
-                string fileEnding = fileName.substr(fileName.size() - 4, 4);
-                IconInstance instance;
-                if (fileEnding == ".png") {
-                    instance.mimetype = "image/png";
-                }
-                else if (fileEnding == ".xpm") {
-                    instance.mimetype = "image/x-xpixmap";
-                }
-                else if (fileEnding == ".svg") {
-                    instance.mimetype = "image/svg+xml";
-                }
-                else {
-                    continue;
-                }
-                string iconName = fileName.substr(0, fileName.size() - 4); // All endings '.png', '.xpm', and '.svg' 
-                                                                           // have same length.
-                instance.path = absPath + "/" + dirent->d_name;
-                instance.maxSize = iconDirectory.maxSize;
-                instance.minSize = iconDirectory.minSize;
-                iconTheme[iconName].push_back(instance);
+        for (const IconDirectory& p : indexThemeReader.iconDirectories) {
+            string path = dirPath + '/' + p.path; 
+            IconCollector iconCollector(path);
+            for (auto& pair : iconCollector.collectedIcons) {
+                const string& iconName = pair.first;
+                IconInstance& iconInstance = pair.second;
+               
+                iconInstance.minSize = p.minSize;
+                iconInstance.maxSize = p.maxSize;
+                
+                iconTheme[iconName].push_back(move(iconInstance));
             }
         }
-       
-        closedir(dir);
     }
-
 }

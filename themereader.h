@@ -25,7 +25,6 @@ namespace org_restfulipc
         IconTheme& iconTheme;
     private:
         void read();
-        void collectIcons(string iconThemeDirectoryPath, const IconDirectory& iconDirectory);
    
         const string& dirPath; 
     };

@@ -34,15 +34,12 @@ namespace org_restfulipc
         }
         while (lineType == Heading) {
             if (declaredDirectories.count(heading) > 0) {
-                readDirectoryGroup();
+                iconDirectories.push_back(readDirectoryGroup());
             }
             else {
                 throw RuntimeError("Directory group '%' not listed in 'Directories'");
             }
         }
-
-        std::cout << "index.theme read, json:\n" << JsonWriter(json).buffer.data 
-                  << "\n\ntranslations:\n" << JsonWriter(translations).buffer.data << "\n";
     }
 
     bool IndexThemeReader::readKeyValue(Json& json) 
@@ -72,7 +69,7 @@ namespace org_restfulipc
         }
     }
 
-    void IndexThemeReader::readDirectoryGroup()
+    IconDirectory IndexThemeReader::readDirectoryGroup()
     {
         IconDirectory iconDirectory;
         string sizeType = "Threshold";
@@ -120,8 +117,8 @@ namespace org_restfulipc
             iconDirectory.minSize = size - threshold;
             iconDirectory.maxSize = size + threshold;
         }
-
-        iconDirectories[iconDirectory.path] = iconDirectory;
+        
+        return iconDirectory;
     }
 
     bool IndexThemeReader::oneOf(string str, std::list<std::string> list) {

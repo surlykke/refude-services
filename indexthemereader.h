@@ -35,10 +35,10 @@ namespace org_restfulipc
         void read();
         Json json;
         Json translations;
-        map<string, IconDirectory> iconDirectories;
+        vector<IconDirectory> iconDirectories;
     private:
         bool readKeyValue(Json& json);
-        void readDirectoryGroup();
+        IconDirectory readDirectoryGroup();
         bool oneOf(string str, std::list<std::string> list);
         
         set<string> declaredDirectories;

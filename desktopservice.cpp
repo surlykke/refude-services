@@ -16,7 +16,7 @@
 #include <ripc/notifierresource.h>
 #include "handlerTemplate.h"
 
-#include "directories.h"
+#include "xdg.h"
 #include "mimeresourcebuilder.h"
 #include "desktopentryreader.h"
 #include "mimeappslistreader.h"
@@ -31,15 +31,13 @@ namespace org_restfulipc {
 using namespace std::chrono;
     DesktopService::DesktopService() : 
         Service(),
-        directories(),
         notifier(),
         watchThread()
     {
-        /*notifier = make_shared<NotifierResource>();
+        notifier = make_shared<NotifierResource>();
         map("/notify", notifier); 
-        std::cout << "Building resources from constructor..\n";
         buildResources();
-        watchThread = thread(&DesktopService::watcher, this, setupWatches());*/
+        watchThread = thread(&DesktopService::watcher, this, setupWatches());
         IconResourceBuilder iconResourceBuilder;
         iconResourceBuilder.buildResources();
         iconResourceBuilder.mapResources(*this);
@@ -60,20 +58,6 @@ using namespace std::chrono;
                  * for a tenth of a second. (TODO: Is this the right value here?)
                  */
                 read(wd, buf, LEN);
-                std::cout << "Inotify event: " << ev->name << "\n";
-                std::cout <<
-                    "IN_ACCESS: " << (ev->mask & IN_ACCESS) << "\n" << 
-                    "IN_ATTRIB: " << (ev->mask & IN_ATTRIB)  << "\n" << 
-                    "IN_CLOSE_WRITE: " << (ev->mask & IN_CLOSE_WRITE)  << "\n" << 
-                    "IN_CLOSE_NOWRITE: " << (ev->mask & IN_CLOSE_NOWRITE)  << "\n" << 
-                    "IN_CREATE: " << (ev->mask & IN_CREATE)  << "\n" << 
-                    "IN_DELETE: " << (ev->mask & IN_DELETE)  << "\n" << 
-                    "IN_DELETE_SELF: " << (ev->mask & IN_DELETE_SELF) << "\n" << 
-                    "IN_MODIFY: " << (ev->mask & IN_MODIFY)  << "\n" << 
-                    "IN_MOVE_SELF: " << (ev->mask & IN_MOVE_SELF) << "\n" << 
-                    "IN_MOVED_FROM: " << (ev->mask & IN_MOVED_FROM)  << "\n" << 
-                    "IN_MOVED_TO: " << (ev->mask & IN_MOVED_TO)  << "\n" << 
-                    "IN_OPEN: " << (ev->mask & IN_OPEN)  << "\n";
 
                 if (ev->mask & IN_ISDIR) {
                     somethingChanged = true;
@@ -97,7 +81,6 @@ using namespace std::chrono;
             }
            
             if (somethingChanged) {
-                std::cout << "Building resources from watcher\n";
                 buildResources();
             }
         }
@@ -107,15 +90,18 @@ using namespace std::chrono;
     {
         int wd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
         if (wd < 0) throw C_Error();
-        addWatch(wd, directories.usersConfigDir); 
-        for (const string& configDir: directories.systemConfigDirs) {
+        addWatch(wd, xdg::config_home()); 
+        for (const string& configDir: xdg::config_dirs()) {
             addWatch(wd, configDir);
         }
-        for (const string& applicationDir : directories.directoryTree(directories.usersApplicationDirRoot)) {
+        string usersApplicationsDir = xdg::data_home() + "/applications";
+        for (const string& applicationDir : directoryTree(usersApplicationsDir)) {
             addWatch(wd, applicationDir);
         }
-        for (const string& systemApplicationDirRoot : directories.systemApplicationDirRoots) {
-            for (const string& applicationDir : directories.directoryTree(systemApplicationDirRoot)) {
+        vector<string> sysApplicationsDirs = append(xdg::data_dirs(), "/applications");
+        for (const string& systemApplicationDirRoot : sysApplicationsDirs) {
+            vector<string> tree = directoryTree(systemApplicationDirRoot);
+            for (const string& applicationDir : directoryTree(systemApplicationDirRoot)) {
                 addWatch(wd, applicationDir);
             }
         }
@@ -125,7 +111,6 @@ using namespace std::chrono;
     int DesktopService::addWatch(int wd, string dir)
     {
         static int flags = IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO;
-        std::cout << "Adding watch for " << dir << "\n";
         int watch = inotify_add_watch(wd, dir.data(), flags) ;
         if (watch < 0) throw C_Error();
         return watch;
@@ -133,7 +118,6 @@ using namespace std::chrono;
 
     void DesktopService::buildResources()
     {
-        std::cout << "Building resources..\n";
         MimeResourceBuilder mimeResourceBuilder;
         mimeResourceBuilder.build();
         DesktopEntryResourceBuilder desktopEntryResourceBuilder;

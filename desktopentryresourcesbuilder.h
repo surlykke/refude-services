@@ -15,7 +15,7 @@
 #include <ripc/json.h>
 #include <ripc/service.h>
 
-#include "directories.h"
+#include "xdg.h"
 #include "typedefs.h"
 
 namespace org_restfulipc
@@ -42,8 +42,6 @@ namespace org_restfulipc
         Map<Json> desktopJsons;
         Map<Json> translations;
         Json handlers;
-        
-        Directories directories;
     };
 
 }
