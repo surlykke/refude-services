@@ -6,8 +6,10 @@
 * Please refer to the LICENSE file for a copy of the license.
 */
 
+#include <dirent.h>
 #include <string.h>
 #include <algorithm>
+#include "errorhandling.h"
 #include "utils.h"
 
 namespace org_restfulipc
@@ -50,5 +52,47 @@ namespace org_restfulipc
         string result = oldString;
         replace(result.begin(), result.end(), ch, replaceCh);
         return result;
+    }
+
+    vector<string> append(vector<string> dirs, string subdir)
+    {
+        vector<string> appended;
+        for (string dir : dirs) {
+            appended.push_back(dir + subdir);
+        }
+
+        return appended;
+    }
+
+
+    vector<string> directoryTree(string directory)
+    {
+        vector<string> directories = { directory + "/" };
+        int index = 0; 
+        while (index < directories.size()) {
+            DIR* dir = opendir(directories[index].data());
+            if (dir == NULL) throw C_Error();
+
+            for (;;) {
+                errno = 0;
+                struct dirent* dirent = readdir(dir);
+                if (errno && !dirent) { 
+                    throw C_Error();
+                }
+                else if (!dirent) {
+                    break;
+                } 
+                else if (dirent->d_name[0] == '.') {
+                    // "We skip directories ".", ".." and hidden directories
+                    continue;
+                }
+                else if (dirent->d_type == DT_DIR) {
+                    directories.push_back(directories[index] + string(dirent->d_name) + '/');
+                }
+            }
+            closedir(dir);
+            index++;
+        }
+        return directories;
     }
 }
