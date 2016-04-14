@@ -53,6 +53,7 @@ namespace org_restfulipc
     struct C_Error : public RuntimeError
     {
         C_Error() : RuntimeError(strerror(errno)), errorNumber(errno) {}
+        C_Error(const char* info) : RuntimeError("%s: %s", strerror(errno), info), errorNumber(errno) {}
         int errorNumber;
     };
 

@@ -23,6 +23,9 @@ namespace org_restfulipc
 
     vector<string> append(vector<string> dirs, string subdir);
 
+    
+    vector<string> subdirectories(string directory);
+
     /**
      * Given a directory produces a vector containing, as first, the starting directory, and, after that,
      * all its sub- subsub- etc- directories. All directorypaths end with '/'.
@@ -35,7 +38,8 @@ namespace org_restfulipc
      *   "/usr/share/applications/yyy/zzz/"}
      *
      * Handy when you need to traverse a directory 
-     *
+     * Hidden directories are omitted (name starting with '.')
+     * 
      * @param directory The directory to start from 
      * @return vector containing the directory tree 'linearlized'     
      */

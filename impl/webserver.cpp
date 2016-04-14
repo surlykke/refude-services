@@ -93,36 +93,26 @@ namespace org_restfulipc
 
     void WebServer::handleRequest(int& socket, int matchedPathLength, const HttpMessage& request)
     {
-        const char* relativePath = filePath(matchedPathLength, request);
-        string fullPath = rootDir + relativePath;
-        const char* mimetype = magic_file(magic_cookie, fullPath.data());
-        FileWriter(socket, rootFd, relativePath, mimetype).writeFile();
+        PathMimetypePair pair = findFile(matchedPathLength, request);
+        FileWriter(socket, rootFd, pair.path, pair.mimetype).writeFile();
     }
 
-    const char* WebServer::filePath(int matchedPathLength, const HttpMessage& request)
+    PathMimetypePair WebServer::findFile(int matchedPathLength, const HttpMessage& request)
     {
+        PathMimetypePair resp; 
         int pathLength = strlen(request.path);
-        const char* filePath;
         if (matchedPathLength == pathLength || 
                 (matchedPathLength == pathLength - 1 && request.path[matchedPathLength] == '/' )) {
-            filePath = "index.html";
+            resp.path = "index.html";
         }
         else {
-            filePath = request.path + matchedPathLength + 1;
+            resp.path = request.path + matchedPathLength + 1;
         }
+        
+        // TODO Maybe we can avoid a (costly?) call to magic_file by looking at fileendings... 
+        resp.mimetype = magic_file(magic_cookie, resp.path);        
 
-        return filePath;
+        return resp;
     }
-
-    const char* WebServer::mimetype(const char* filePath)
-    {
-        // FIXME
-    	const char *actual_file = "/usr/share/icons/oxygen/32x32/categories/preferences-desktop.png";
-	const char *magic_full;
-	magic_t magic_cookie;
-	/*MAGIC_MIME tells magic to return a mime of the file, but you can specify different things*/
-
-    }
-
 
 }

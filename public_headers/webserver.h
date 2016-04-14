@@ -14,6 +14,12 @@
 namespace org_restfulipc 
 {
     using namespace std;
+    struct PathMimetypePair
+    {
+        const char* path;
+        const char* mimetype;
+    };
+
     class WebServer : public AbstractResource
     {
     public:
@@ -21,9 +27,9 @@ namespace org_restfulipc
         WebServer(const char* rootDir);
 
         virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
-        virtual const char* filePath(int matchedPathLength, const HttpMessage& request);
+        virtual PathMimetypePair findFile(int matchedPathLength, const HttpMessage& request);
+    
     private:
-        const char* mimetype(const char* filePath);
         magic_t magic_cookie;
         const string rootDir;
         int rootFd;
