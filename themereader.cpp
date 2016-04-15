@@ -18,7 +18,6 @@ namespace org_restfulipc
         dirPath(dirPath)
     {
         read();
-        std::cout << "Collected " << iconTheme.size() << " icons from " << dirPath << "\n";
     }
 
     ThemeReader::~ThemeReader()

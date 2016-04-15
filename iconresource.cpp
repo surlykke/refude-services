@@ -53,6 +53,7 @@ namespace org_restfulipc
 
         while (! themeName.empty()) {
             if (iconThemeCollection.find(themeName) == iconThemeCollection.end()) {
+                std::cerr << "No theme '" << themeName << "'\n";
                 throw Status::Http404;
             }
 
@@ -78,7 +79,6 @@ namespace org_restfulipc
         }
 
         // Abandon all hope
-        std::cout << "Nothing found\n";
         throw Status::Http404;
     }
 

@@ -8,6 +8,7 @@
 
 #ifndef ICONCOLLECTOR_H
 #define ICONCOLLECTOR_H
+#include <limits.h>
 #include <string>
 
 #include "icontheme.h"
@@ -23,6 +24,7 @@ namespace org_restfulipc
         virtual ~IconCollector();
         map<string, IconInstance> collectedIcons;
         DIR* dir;
+        char buffer[PATH_MAX];
     };
 
 }
