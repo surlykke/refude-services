@@ -182,8 +182,8 @@ namespace org_restfulipc
                 return false;
             }
             for (int i = 0; i < size(); i++) {
-                if (strcmp(entries->at(i).key, other.entries->at(i).key) ||
-                    entries->at(i).value.operator!=(other.entries->at(i).value)) {
+                if (strcmp(entries->keyAt(i), other.entries->keyAt(i)) ||
+                    entries->valueAt(i) != other.entries->valueAt(i)) {
                     return false;
                 }
             }

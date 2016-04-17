@@ -149,7 +149,7 @@ namespace org_restfulipc
     {
         Map<AbstractResource::ptr>& map = prefix ? prefixMappings : resourceMappings;
         int pos = map.find(path); 
-        return pos < 0 ? NULL : map.at(pos).value;
+        return pos < 0 ? NULL : map.valueAt(pos);
     }
 
 
@@ -214,16 +214,16 @@ namespace org_restfulipc
                     uint matchedPathLength;
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex > -1) {
-                        handler = resourceMappings.at(resourceIndex).value;
+                        handler = resourceMappings.valueAt(resourceIndex);
                         matchedPathLength = strlen(request.path);
                     }
                     else { 
                         resourceIndex = prefixMappings.find_longest_prefix(request.path);
                         if (resourceIndex >= 0) {
-                            Pair<AbstractResource::ptr> pair = prefixMappings.at(resourceIndex);
-                            matchedPathLength = strlen(pair.key);
+                            const char* matchedPath = prefixMappings.keyAt(resourceIndex); 
+                            matchedPathLength = strlen(matchedPath);
                             if (request.path[matchedPathLength] == '\0' || request.path[matchedPathLength] == '/') {
-                                handler = pair.value;
+                                handler = prefixMappings.valueAt(resourceIndex);
                             }
                         }
                     }

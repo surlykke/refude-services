@@ -35,15 +35,15 @@ namespace org_restfulipc
         if (json.mType == JsonType::Object) {
             buffer.write('{');
             if (json.entries->size() > 0) {
-                writeString(json.entries->at(0).key);
+                writeString(json.entries->keyAt(0));
                 buffer.write(": ");
-                write(json.entries->at(0).value);
+                write(json.entries->valueAt(0));
                 
                 for (int i = 1; i < json.entries->size(); i++) {
                     buffer.write(", ");
-                    writeString(json.entries->at(i).key);
+                    writeString(json.entries->keyAt(i));
                     buffer.write(": ");
-                    write(json.entries->at(i).value);
+                    write(json.entries->valueAt(i));
                 }
             }
             buffer.write('}');
