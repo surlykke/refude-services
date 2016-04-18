@@ -128,44 +128,4 @@ namespace org_restfulipc
         httpMessageReader.readResponse();
     }
 
-    int connectToNotifications(const HttpUrl& url, const char* protocol)
-    {
-        int sock = openConnection(url);
-
-        static const char openStreamRequestTemplate[] =  
-            "GET %s HTTP/1.1\r\n"
-            "Upgrade: socketstream\r\n"
-            "Connection: Upgrade\r\n"
-            "Host: localhost\r\n"
-            "\r\n"; 
-
-        char openStreamRequest[256];
-        sprintf(openStreamRequest, openStreamRequestTemplate, url.requestPath);
-        writeMessage(sock, openStreamRequest, strlen(openStreamRequest));
-
-        HttpMessage handshakeResponse;
-        HttpMessageReader(sock, handshakeResponse).readResponse();
-        
-        if (handshakeResponse.headerValue(Header::connection) == 0 || 
-            strcmp(handshakeResponse.headerValue(Header::connection), "Upgrade") != 0) {
-            return -1;
-        }
-        
-        if (handshakeResponse.headerValue(Header::upgrade) == 0 || 
-            strcmp(handshakeResponse.headerValue(Header::upgrade), "socketstream") != 0) /*FIXME*/{
-            return -1;
-        }
-        
-        return sock;
-    }
-
-    char waitForNotifications(int sock)
-    {
-        char ch; 
-        int bytesRead;
-        bytesRead = read(sock, &ch, 1);
-        if (bytesRead <= 0) throw C_Error();
-
-        return ch;
-    }
 }

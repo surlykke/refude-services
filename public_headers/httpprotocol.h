@@ -30,49 +30,45 @@ namespace org_restfulipc
 
     int methodLength(Method method);
 
-    // Those headers we care about (TODO: Need them all?)
-    enum class Header : int {
-        accept_charset,
-        accept_encoding,
-        accept_language,
-        accept_datetime,
-        authorization,
-        cache_control,
-        connection,
-        cookie,
-        content_length,
-        content_md5,
-        content_type,
-        date,
-        expect,
-        from,
-        host,
-        if_match,
-        if_modified_since,
-        if_none_match,
-        if_range,
-        if_unmodified_since,
-        max_forwards,
-        origin,
-        pragma,
-        proxy_authorization,
-        range,
-        referer,
-        sec_websocket_accept,
-        sec_websocket_key,
-        sec_websocket_protocol,
-        te,
-        user_agent,
-        upgrade,
-        via,
-        warning,
-        unknown
-    };
-
-    const char *strVal(Header header);
-
-    Header string2Header(const char* str);
-
+    // Some well known header names 
+    namespace Header
+    {
+        extern const char* accept_charset;
+        extern const char* accept_encoding;
+        extern const char* accept_language;
+        extern const char* accept_datetime;
+        extern const char* authorization;
+        extern const char* cache_control;
+        extern const char* connection;
+        extern const char* cookie;
+        extern const char* content_length;
+        extern const char* content_md5;
+        extern const char* content_type;
+        extern const char* date;
+        extern const char* expect;
+        extern const char* from;
+        extern const char* host;
+        extern const char* if_match;
+        extern const char* if_modified_since;
+        extern const char* if_none_match;
+        extern const char* if_range;
+        extern const char* if_unmodified_since;
+        extern const char* max_forwards;
+        extern const char* origin;
+        extern const char* pragma;
+        extern const char* proxy_authorization;
+        extern const char* range;
+        extern const char* referer;
+        extern const char* sec_websocket_accept;
+        extern const char* sec_websocket_key;
+        extern const char* sec_websocket_protocol;
+        extern const char* te;
+        extern const char* user_agent;
+        extern const char* upgrade;
+        extern const char* via;
+        extern const char* warning;
+        extern const char* unknown;
+    }
 
     enum class Status {
         Http200,

@@ -25,7 +25,7 @@ AbstractJsonResource::~AbstractJsonResource()
 {
 }
 
-void AbstractJsonResource::handleRequest(int& socket, int matchedPathLength, const HttpMessage& request)
+void AbstractJsonResource::handleRequest(int& socket, int matchedPathLength, HttpMessage& request)
 {
     if (request.method == Method::GET)
     {
@@ -41,7 +41,7 @@ void AbstractJsonResource::handleRequest(int& socket, int matchedPathLength, con
     }  
 }
 
-void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
+void AbstractJsonResource::doGet(int socket, HttpMessage& request)
 {
     for (;;) { 
         {
@@ -62,7 +62,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
     } 
 }
 
-    void AbstractJsonResource::doPatch(int socket, const HttpMessage& request)
+    void AbstractJsonResource::doPatch(int socket, HttpMessage& request)
     {
         throw Status::Http405; 
     }
@@ -128,13 +128,13 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
     }
 
 
-    bool LocalizedJsonResource::responseReady(const HttpMessage& request)
+    bool LocalizedJsonResource::responseReady(HttpMessage& request)
     {
-        const string localeToServe = getLocaleToServe(request.headers[(int)Header::accept_language]);
+        const string localeToServe = getLocaleToServe(request.header(Header::accept_language));
         return localizedResponses.find(localeToServe.data()) > -1;
     }
 
-    void LocalizedJsonResource::prepareResponse(const HttpMessage& request)
+    void LocalizedJsonResource::prepareResponse(HttpMessage& request)
     {
         static const char* responseTemplate =
             "HTTP/1.1 200 OK\r\n"
@@ -142,7 +142,7 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
             "Access-Control-Allow-Methods: GET, PATCH\r\n"
             "Access-Control-Allow-Origin: http://localhost:8383\r\n"; // FIXME
 
-        string locale = getLocaleToServe(request.headers[(int)Header::accept_language]);
+        string locale = getLocaleToServe(request.header(Header::accept_language));
         Buffer& buf = localizedResponses[locale.data()];
         buf.write(responseTemplate);
         FilteringJsonWriter jsonWriter(json, "@@", translations[locale], translations[""], "");
@@ -152,9 +152,9 @@ void AbstractJsonResource::doGet(int socket, const HttpMessage& request)
         buf.write(jsonWriter.buffer.data);
     }
 
-    Buffer& LocalizedJsonResource::getResponse(const HttpMessage& request)
+    Buffer& LocalizedJsonResource::getResponse(HttpMessage& request)
     {
-        string locale = getLocaleToServe(request.headers[(int) Header::accept_language]);
+        string locale = getLocaleToServe(request.header(Header::accept_language));
         return localizedResponses[locale.data()];
     }
 

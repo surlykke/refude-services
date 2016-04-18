@@ -75,7 +75,7 @@ namespace org_restfulipc
             return *this;
         }
 
-        char* key;
+        const char* key;
         V value;
     };
 

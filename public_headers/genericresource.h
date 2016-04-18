@@ -23,9 +23,9 @@ namespace org_restfulipc
         GenericResource(const char* doc = "", NotifierResource::ptr notifierResource = 0);
         virtual ~GenericResource();
 
-        virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
-        virtual void doGet(int socket, const HttpMessage& request);
-        virtual void doPatch(int socket, const HttpMessage& request);
+        virtual void handleRequest(int &socket, int matchedPathLength, HttpMessage& request);
+        virtual void doGet(int socket, HttpMessage& request);
+        virtual void doPatch(int socket, HttpMessage& request);
         void update(const char* data);
 
     private:

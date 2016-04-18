@@ -23,15 +23,15 @@ namespace org_restfulipc
     public:
         AbstractJsonResource();
         virtual ~AbstractJsonResource();
-        virtual void handleRequest(int &socket, int matchedPathLength,  const HttpMessage& request);
+        virtual void handleRequest(int &socket, int matchedPathLength,  HttpMessage& request);
 
     protected:
-        virtual void doGet(int socket, const HttpMessage& request);
+        virtual void doGet(int socket, HttpMessage& request);
 
-        virtual void doPatch(int socket, const HttpMessage& request);
-        virtual bool responseReady(const HttpMessage& request) = 0;
-        virtual void prepareResponse(const HttpMessage& request) = 0;
-        virtual Buffer& getResponse(const HttpMessage& request) = 0;
+        virtual void doPatch(int socket, HttpMessage& request);
+        virtual bool responseReady(HttpMessage& request) = 0;
+        virtual void prepareResponse(HttpMessage& request) = 0;
+        virtual Buffer& getResponse(HttpMessage& request) = 0;
 
         std::shared_timed_mutex responseMutex;
 
@@ -45,9 +45,9 @@ namespace org_restfulipc
         virtual ~JsonResource();
         void setJson(Json&& json);
         bool equal(const Json& json);
-        virtual bool responseReady(const HttpMessage& request) { return true; }
-        virtual void prepareResponse(const HttpMessage& request) {};
-        virtual Buffer& getResponse(const HttpMessage& request) { return buf; }
+        virtual bool responseReady(HttpMessage& request) { return true; }
+        virtual void prepareResponse(HttpMessage& request) {};
+        virtual Buffer& getResponse(HttpMessage& request) { return buf; }
  
     private:
         Json json;
@@ -65,9 +65,9 @@ namespace org_restfulipc
         Json translations;
 
     protected:
-        virtual bool responseReady(const HttpMessage& request);
-        virtual void prepareResponse(const HttpMessage& request);
-        virtual Buffer& getResponse(const HttpMessage& request);
+        virtual bool responseReady(HttpMessage& request);
+        virtual void prepareResponse(HttpMessage& request);
+        virtual Buffer& getResponse(HttpMessage& request);
         Map<Buffer> localizedResponses; 
 
     private:

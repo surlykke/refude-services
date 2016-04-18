@@ -35,7 +35,9 @@ namespace org_restfulipc
         AbstractResource::ptr mapping(const char* path, bool prefix = false);
         Map<AbstractResource::ptr> resourceMappings;
         Map<AbstractResource::ptr> prefixMappings;
- 
+
+        // For debug
+        bool dumpRequests;
     private:
         void startThreads();
         void listener();
@@ -46,6 +48,8 @@ namespace org_restfulipc
         int listenSocket;
         ThreadSafeQueue* requestSockets;
         bool shuttingDown;
+
+
     };
 
 }

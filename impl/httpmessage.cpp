@@ -1,10 +1,10 @@
 /*
-* Copyright (c) 2015, 2016 Christian Surlykke
-*
-* This file is part of the Restful Inter Process Communication (Ripc) project. 
-* It is distributed under the LGPL 2.1 license.
-* Please refer to the LICENSE file for a copy of the license.
-*/
+ * Copyright (c) 2015, 2016 Christian Surlykke
+ *
+ * This file is part of the Restful Inter Process Communication (Ripc) project. 
+ * It is distributed under the LGPL 2.1 license.
+ * Please refer to the LICENSE file for a copy of the license.
+ */
 
 #include <string.h>
 #include <unistd.h>
@@ -17,29 +17,34 @@ using namespace std;
 
 namespace org_restfulipc
 {
+
     HttpMessage::HttpMessage()
     {
     }
 
-
     HttpMessage::~HttpMessage()
     {
+    }
+
+    const char* HttpMessage::header(const char* headerName)
+    {
+        int index = headers.find(headerName);
+        return index == -1 ? NULL : headers.valueAt(index);
     }
 
     void HttpMessage::clear()
     {
         method = Method::UNKNOWN;
         path = 0;
-        queryString = 0;
-        for (int i = 0; i < (int) Header::unknown; i++)
-            headers[i] = 0;
+        queryParameterMap.clear();
+        headers.clear();
         body = 0;
         contentLength = 0;
     }
 
-    HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message, bool dumpRequest) : 
-        dumpRequest(dumpRequest), 
-        _socket(socket), 
+    HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message, bool dumpRequest) :
+        dumpRequest(dumpRequest),
+        _socket(socket),
         _message(message),
         _bufferEnd(0),
         _currentPos(-1)
@@ -51,7 +56,7 @@ namespace org_restfulipc
         clear();
         readRequestLine();
         readHeaders();
-        if (_message.headers[(int) Header::content_length]) {
+        if (_message.header(Header::content_length)) {
             readBody();
         }
     }
@@ -61,46 +66,65 @@ namespace org_restfulipc
         clear();
         readStatusLine();
         readHeaders();
-        if (_message.status >= 200 && 
-            _message.status != 204 && 
+        if (_message.status >= 200 &&
+            _message.status != 204 &&
             _message.status != 304) {
-            if (_message.headers[(int) Header::content_length]) {
+            if (_message.header(Header::content_length)) {
                 readBody();
             }
         }
     }
 
-
-
     void HttpMessageReader::readRequestLine()
     {
         while (nextChar() != ' ');
-        
+
         _message.method = string2Method(_message.buffer);
         if (_message.method == Method::UNKNOWN) throw Status::Http406;
         _message.path = _message.buffer + _currentPos + 1;
 
-        while (! isspace(nextChar()))
-        {
-            if (_message.buffer[_currentPos] == '?')
-            {
-                _message.queryString = _message.buffer + _currentPos + 1;
-                _message.buffer[_currentPos] = '\0';
-            }
-        };
+        for (nextChar(); currentChar() != '?' && !isspace(currentChar()); nextChar());
 
-        _message.buffer[_currentPos] = '\0';
-
-        if (_message.queryString == 0)
-        {
-            _message.queryString = _message.buffer + _currentPos;
+        if (currentChar() == '?') {
+            readQueryString();
         }
+       
+        _message.buffer[_currentPos] = '\0';
 
         int protocolStart = _currentPos + 1;
 
-        while (! isspace(nextChar()));
-        
+        while (!isspace(nextChar()));
+
         if (_message.buffer[_currentPos] != '\r' || nextChar() != '\n') throw Status::Http400;
+    }
+
+    void HttpMessageReader::readQueryString()
+    {
+        while (!isspace(currentChar())) {
+            _message.buffer[_currentPos++] = '\0';
+            char* parameterName = _message.buffer + _currentPos;
+            char* parameterValue = NULL;
+            
+            while (currentChar() != '=' && currentChar() != '&' && !isspace(currentChar())) {
+                nextChar();
+            }
+           
+            if (currentChar() == '=') {
+                _message.buffer[_currentPos++] = '\0';
+                parameterValue = _message.buffer + _currentPos;
+                
+                while (currentChar() != '&' && !isspace(currentChar())) {
+                    nextChar();
+                }
+            }
+
+            if (parameterValue) {
+                _message.queryParameterMap[parameterName].push_back(parameterValue);
+            }
+            else {
+                _message.queryParameterMap[parameterName].push_back("");
+            }
+        }
     }
 
     void HttpMessageReader::readStatusLine()
@@ -110,7 +134,7 @@ namespace org_restfulipc
         if (strncmp("HTTP/1.1", _message.buffer, 8) != 0) throw Status::Http400;
         while (isspace(nextChar()));
         int statuscodeStart = _currentPos;
-        if (! isdigit(currentChar())) throw Status::Http400;
+        if (!isdigit(currentChar())) throw Status::Http400;
         while (isdigit(nextChar()));
         errno = 0;
         long int status = strtol(_message.buffer + statuscodeStart, 0, 10);
@@ -121,8 +145,7 @@ namespace org_restfulipc
         // 'HTTP/1.1 200 Completely f**cked up' will be interpreted as 
         // 'HTTP/1.1 200 Ok'
         // (Why does the http protocol specify that both the code and the text is sent?)
-        while (currentChar() != '\r')
-        {
+        while (currentChar() != '\r') {
             if (currentChar() == '\n') throw Status::Http400;
             nextChar();
         }
@@ -131,16 +154,15 @@ namespace org_restfulipc
     }
 
     // On entry: currentPos points to character just before next header line
-    void HttpMessageReader::readHeaders() 
+
+    void HttpMessageReader::readHeaders()
     {
-        while (true) 
-        {
-            if (nextChar() == '\r')    
-            {
+        while (true) {
+            if (nextChar() == '\r') {
                 if (nextChar() != '\n') throw Status::Http400;
                 return;
             }
-            
+
             readHeaderLine();
         }
     }
@@ -150,7 +172,7 @@ namespace org_restfulipc
      * TODO: Full implementation of spec
      *  - multiline header definitions
      *  - Illegal chars in names/values
-     */    
+     */
     void HttpMessageReader::readHeaderLine()
     {
         int startOfHeaderLine = _currentPos;
@@ -165,10 +187,8 @@ namespace org_restfulipc
         while (isblank(nextChar()));
         endOfHeaderValue = startOfHeaderValue = _currentPos;
 
-        while (currentChar() != '\r')
-        {
-            if (!isblank(currentChar()))
-            {
+        while (currentChar() != '\r') {
+            if (!isblank(currentChar())) {
                 endOfHeaderValue = _currentPos + 1;
             }
             nextChar();
@@ -176,12 +196,7 @@ namespace org_restfulipc
 
         if (nextChar() != '\n') throw Status::Http400;
         _message.buffer[endOfHeaderValue] = '\0';
-        Header h = string2Header(_message.buffer + startOfHeaderLine);
-        if (h != Header::unknown)
-        {
-            _message.headers[(int) h] = _message.buffer + startOfHeaderValue;
-        }
-
+        _message.headers.add(_message.buffer + startOfHeaderLine, _message.buffer + startOfHeaderValue);
     }
 
     bool HttpMessageReader::isTChar(char c)
@@ -192,15 +207,14 @@ namespace org_restfulipc
     void HttpMessageReader::readBody()
     {
         errno = 0;
-        _message.contentLength = strtoul(_message.headerValue(Header::content_length), 0, 10);
+        _message.contentLength = strtoul(_message.header(Header::content_length), 0, 10);
         if (errno != 0) throw C_Error();
 
-        int bodyStart = _currentPos + 1;    
-        while (bodyStart + _message.contentLength > _bufferEnd)    
-        {
+        int bodyStart = _currentPos + 1;
+        while (bodyStart + _message.contentLength > _bufferEnd) {
             receive();
         }
-        
+
         _message.buffer[bodyStart + _message.contentLength] = '\0';
         _message.body = _message.buffer + bodyStart;
     }
@@ -210,17 +224,15 @@ namespace org_restfulipc
         return _message.buffer[_currentPos];
     }
 
-
     char HttpMessageReader::nextChar()
     {
-        _currentPos++;    
+        _currentPos++;
 
-        while ( _currentPos >= _bufferEnd)
-        {
+        while (_currentPos >= _bufferEnd) {
             receive();
         }
 
-        
+
         return _message.buffer[_currentPos];
     }
 
@@ -234,19 +246,18 @@ namespace org_restfulipc
             }
             _bufferEnd += bytesRead;
         }
-        else 
-        {
+        else {
             throw C_Error();
         }
-        
+
     }
 
     void HttpMessageReader::clear()
     {
-        _message.clear();    
-        
+        _message.clear();
+
         _bufferEnd = 0;
-        _currentPos = -1;    
+        _currentPos = -1;
     }
 
 }
@@ -264,23 +275,28 @@ namespace org_restfulipc
 
 
 using namespace org_restfulipc;
-std::ostream& operator<<(std::ostream& out, const HttpMessage& message) 
+
+std::ostream& operator<<(std::ostream& out, HttpMessage& message)
 {
     if (message.path) {
-        out << "HTTP "  << method2String(message.method) << " ";   
+        out << "HTTP " << method2String(message.method) << " ";
         out << message.path;
-        if (*(message.queryString)) {
-            out << "?" << message.queryString;
+        if (message.queryParameterMap.size() > 0) {
+            char separator = '?';
+            for (int i = 0; i < message.queryParameterMap.size(); i++) {
+                for (const char* value : message.queryParameterMap.valueAt(i)) {
+                    cout << separator << message.queryParameterMap.keyAt(i) << "=" << value;
+                    separator = '&';
+                }
+            }
         }
     }
     else {
-        out << message.status ;
+        out << message.status;
     }
     out << "\n";
-    for (int i = 0; i < (int)Header::unknown; i++) {
-        if (message.headers[i]) {
-            out << strVal((Header)i) << ": " << message.headers[i] << "\n";
-        }
+    for (int i = 0; i < message.headers.size(); i++) {
+        out << message.headers.keyAt(i) << ": " << message.headers.valueAt(i) << "\n";
     }
     out << "\n";
     if (message.body) {

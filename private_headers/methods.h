@@ -40,8 +40,6 @@ namespace org_restfulipc
 
     void httpGet(const char* url, HttpMessage& message);
     void httpGet(int socket, const HttpUrl& url, HttpMessage& message);    
-    int openConnection(const HttpUrl& url);    
-    int connectToNotifications(const HttpUrl& url, const char* protocol);
     char waitForNotifications(int sock);
 }
 

@@ -9,7 +9,8 @@
 #ifndef HTTPMESSAGE_H
 #define    HTTPMESSAGE_H
 #include <iostream>
-
+#include <vector>
+#include "map.h"
 #include "httpprotocol.h"
 
 namespace org_restfulipc
@@ -22,15 +23,18 @@ namespace org_restfulipc
 
         Method method;
         char* path;
-        char* queryString;
+        vector<const char*> queryParameters(const char* parameterName);
+        Map<vector<const char*>, false> queryParameterMap;
         int status;
-        const char* headers[(int) Header::unknown];
+
+        const char* header(const char* headerName);
+        Map<const char*, false> headers;
         char* body;
         int contentLength;
         
         char buffer[8192];
 
-        inline const char* headerValue(Header h) const { return headers[(int) h]; }
+        //inline const char* headerValue(Header h) const { return headers[(int) h]; }
     };
 
     class HttpMessageReader
@@ -43,6 +47,7 @@ namespace org_restfulipc
 
     private:
         void readRequestLine();
+        void readQueryString();
         void readStatusLine();
         void readHeaderLines();
         void readHeaderLine();
@@ -63,7 +68,7 @@ namespace org_restfulipc
 }
 
 using namespace org_restfulipc;
-std::ostream& operator<<(std::ostream& out, const HttpMessage& message);
+std::ostream& operator<<(std::ostream& out, HttpMessage& message);
 
 #endif    /* HTTPMESSAGE_H */
 

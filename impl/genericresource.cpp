@@ -31,7 +31,7 @@ namespace org_restfulipc
     {
     }
 
-    void GenericResource::handleRequest(int &socket, int matchedPathLength, const HttpMessage& request)
+    void GenericResource::handleRequest(int &socket, int matchedPathLength, HttpMessage& request)
     {
         if (request.method == Method::GET)    
         {
@@ -47,7 +47,7 @@ namespace org_restfulipc
         }
     }
 
-    void GenericResource::doGet(int socket, const HttpMessage& request)
+    void GenericResource::doGet(int socket, HttpMessage& request)
     {
         std::shared_lock<std::shared_timed_mutex> lock(responseMutex);
         int bytesWritten = 0;
@@ -61,7 +61,7 @@ namespace org_restfulipc
     }
 
 
-    void GenericResource::doPatch(int socket, const HttpMessage& request)
+    void GenericResource::doPatch(int socket, HttpMessage& request)
     {
         throw Status::Http405; // FIXME
     }

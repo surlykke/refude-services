@@ -91,13 +91,13 @@ namespace org_restfulipc
         // FIXME deallocate in destructor...
     }
 
-    void WebServer::handleRequest(int& socket, int matchedPathLength, const HttpMessage& request)
+    void WebServer::handleRequest(int& socket, int matchedPathLength, HttpMessage& request)
     {
         PathMimetypePair pair = findFile(matchedPathLength, request);
         FileWriter(socket, rootFd, pair.path, pair.mimetype).writeFile();
     }
 
-    PathMimetypePair WebServer::findFile(int matchedPathLength, const HttpMessage& request)
+    PathMimetypePair WebServer::findFile(int matchedPathLength, HttpMessage& request)
     {
         PathMimetypePair resp; 
         int pathLength = strlen(request.path);

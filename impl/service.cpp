@@ -71,6 +71,7 @@ namespace org_restfulipc
     };
 
     Service::Service() :
+        dumpRequests(false),
         threads(),
         mNumThreads(5),
         listenSocket(-1),
@@ -208,7 +209,7 @@ namespace org_restfulipc
             do {
                 try {
                     HttpMessageReader reader(requestSocket, request);
-                    //reader.dumpRequest = true;
+                    reader.dumpRequest = dumpRequests;
                     reader.readRequest();
                     AbstractResource::ptr handler; 
                     uint matchedPathLength;
@@ -235,11 +236,9 @@ namespace org_restfulipc
                     
                     handler->handleRequest(requestSocket, matchedPathLength, request);
 
-                    const char* connectHeader = request.headerValue(Header::connection);
-                    if (!connectHeader) connectHeader = "(null)"; 
                     if (requestSocket > -1 &&
-                        request.headerValue(Header::connection) != 0 &&
-                        strcasecmp("close", request.headerValue(Header::connection)) == 0) {
+                        request.header(Header::connection) != 0 &&
+                        strcasecmp("close", request.header(Header::connection)) == 0) {
                         close(requestSocket);
                         requestSocket = -1;
                     }

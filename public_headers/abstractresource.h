@@ -26,7 +26,7 @@ namespace org_restfulipc
         typedef std::shared_ptr<AbstractResource> ptr;
         AbstractResource() {}
         virtual ~AbstractResource() {}
-        virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request) = 0;
+        virtual void handleRequest(int &socket, int matchedPathLength, HttpMessage& request) = 0;
     
     protected:
         void sendFully(int socket, const char* data, int nbytes);

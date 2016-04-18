@@ -30,7 +30,7 @@ namespace org_restfulipc {
     {
     }
 
-    void NotifierResource::handleRequest(int &socket, int matchedPathLength, const HttpMessage &request)
+    void NotifierResource::handleRequest(int &socket, int matchedPathLength, HttpMessage &request)
     {
         static const char* response =
                 "HTTP/1.1 200 OK\r\n"

@@ -49,62 +49,45 @@ namespace org_restfulipc
         return methodLengths[(int) method];
     }
 
-    const char* header_str_value[] = 
+    namespace Header
     {
-        "accept-charset",
-        "accept-encoding",
-        "accept-language",
-        "accept-datetime",
-        "authorization",
-        "cache-control",
-        "connection",
-        "cookie",
-        "content-length",
-        "content-md5",
-        "content-type",
-        "date",
-        "expect",
-        "from",
-        "host",
-        "if-match",
-        "if-modified-since",
-        "if-none-match",
-        "if-range",
-        "if-unmodified-since",
-        "max-forwards",
-        "origin",
-        "pragma",
-        "proxy-authorization",
-        "range",
-        "referer",
-        "sec-websocket-accept",
-        "sec-websocket-key",
-        "sec-websocket-protocol",
-        "te",
-        "user-agent",
-        "upgrade",
-        "via",
-        "warning",
-        "unknown"
+        const char* accept_charset = "accept-charset";
+        const char* accept_encoding = "accept-encoding";
+        const char* accept_language = "accept-language";
+        const char* accept_datetime = "accept-datetime";
+        const char* authorization = "authorization";
+        const char* cache_control = "cache-control";
+        const char* connection = "connection";
+        const char* cookie = "cookie";
+        const char* content_length = "content-length";
+        const char* content_md5 = "content-md5";
+        const char* content_type = "content-type";
+        const char* date = "date";
+        const char* expect = "expect";
+        const char* from = "from";
+        const char* host = "host";
+        const char* if_match = "if-match";
+        const char* if_modified_since = "if-modified-since";
+        const char* if_none_match = "if-none-match";
+        const char* if_range = "if-range";
+        const char* if_unmodified_since = "if-unmodified-since";
+        const char* max_forwards = "max-forwards";
+        const char* origin = "origin";
+        const char* pragma = "pragma";
+        const char* proxy_authorization = "proxy-authorization";
+        const char* range = "range";
+        const char* referer = "referer";
+        const char* sec_websocket_accept = "sec-websocket-accept";
+        const char* sec_websocket_key = "sec-websocket-key";
+        const char* sec_websocket_protocol = "sec-websocket-protocol";
+        const char* te = "te";
+        const char* user_agent = "user-agent";
+        const char* upgrade = "upgrade";
+        const char* via = "via";
+        const char* warning = "warning";
+        const char* unknown = "unknown";
     };
 
-    const char* strVal(Header header)
-    {
-        return header_str_value[(int) header];
-    }
-
-    Header string2Header(const char* str)
-    {
-        for(int i = 0; i < static_cast<int>(Header::unknown); i++)
-        {
-            if (strcasecmp(str, header_str_value[i]) == 0)
-            {
-                return static_cast<Header>(i);
-            }
-        }
-
-        return Header::unknown;
-    }
 
     const char* status_line[] =
     {

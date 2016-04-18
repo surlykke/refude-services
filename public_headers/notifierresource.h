@@ -23,7 +23,7 @@ namespace org_restfulipc
         typedef shared_ptr<NotifierResource> ptr;
         NotifierResource();
 
-        virtual void handleRequest(int &socket, int matchedPathLength, const HttpMessage& request);
+        virtual void handleRequest(int &socket, int matchedPathLength, HttpMessage& request);
         void notifyClients(const char* event, const char* resourceIdentification);
 
     private:
