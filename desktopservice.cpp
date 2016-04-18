@@ -34,6 +34,7 @@ using namespace std::chrono;
         notifier(),
         watchThread()
     {
+        dumpRequests = true;
         notifier = make_shared<NotifierResource>();
         map("/notify", notifier); 
         buildResources();

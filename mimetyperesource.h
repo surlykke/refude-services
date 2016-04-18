@@ -20,7 +20,7 @@ public:
     typedef std::shared_ptr<MimetypeResource> ptr;
     MimetypeResource();
     virtual ~MimetypeResource();
-    virtual void doPatch(int socket, const HttpMessage& request);
+    virtual void doPatch(int socket, HttpMessage& request);
     void setService(DesktopService* service);
 private:
     DesktopService* service;

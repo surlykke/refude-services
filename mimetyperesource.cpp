@@ -25,7 +25,7 @@ namespace org_restfulipc
     {
     }
 
-    void MimetypeResource::doPatch(int socket, const HttpMessage& request)
+    void MimetypeResource::doPatch(int socket, HttpMessage& request)
     {
         std::cout << "Patching\n";
         static const char* successfulResponse =

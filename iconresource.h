@@ -23,11 +23,9 @@ namespace org_restfulipc
         typedef std::shared_ptr<IconResource> ptr;
         IconResource(IconThemeCollection&& iconThemeCollection, map<string, IconInstance>&& usrSharePixmapIcons);
         virtual ~IconResource();
-        virtual PathMimetypePair findFile(int matchedPathLength, const HttpMessage& request);
+        virtual PathMimetypePair findFile(int matchedPathLength, HttpMessage& request);
 
     private:
-        void parseQueryString(const HttpMessage& request, map<string, vector<string>>& queryParameters);
-        string nextQueryStringToken(const HttpMessage& request, int& pos);
         const IconInstance* findPathOfClosest(const vector<IconInstance>& instances, int size);
         string parent(string themeName);
         

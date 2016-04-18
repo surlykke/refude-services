@@ -24,28 +24,25 @@ namespace org_restfulipc
     {
     }
 
-    PathMimetypePair IconResource::findFile(int matchedPathLength, const HttpMessage& request)
+    PathMimetypePair IconResource::findFile(int matchedPathLength, HttpMessage& request)
     {
-        map<string, vector<string>> queryParameters;
-        parseQueryString(request, queryParameters); 
-
         vector<string> names;
         string themeName;
         int size;
 
-        if (queryParameters["name"].size() == 0) throw Status::Http422;
-        if (queryParameters["theme"].size() > 1) throw Status::Http422;
-        if (queryParameters["size"].size() > 1) throw Status::Http422;
+        if (request.queryParameterMap["name"].size() != 1) throw Status::Http422;
+        if (request.queryParameterMap["theme"].size() > 1) throw Status::Http422;
+        if (request.queryParameterMap["size"].size() > 1) throw Status::Http422;
 
-        if (queryParameters["theme"].size() == 1) {
-            themeName = queryParameters["theme"][0];
+        if (request.queryParameterMap["theme"].size() == 1) {
+            themeName = request.queryParameterMap["theme"][0];
         }
         else {
             themeName = "oxygen"; // FIXME
         }
         
-        if (queryParameters["size"].size() == 1) {
-            size = stoi(queryParameters["size"][0]);
+        if (request.queryParameterMap["size"].size() == 1) {
+            size = stoi(request.queryParameterMap["size"][0]);
         }
         else {
             size = 32; // FIXME
@@ -58,7 +55,7 @@ namespace org_restfulipc
             }
 
             IconTheme& iconTheme = iconThemeCollection[themeName];
-            for (const string& name : queryParameters["name"]) {
+            for (const string& name : request.queryParameterMap["name"]) {
                 if (iconTheme.find(name) != iconTheme.end()) {
                     const IconInstance* instance =  findPathOfClosest(iconTheme[name], size);
                     if (instance) {
@@ -72,7 +69,7 @@ namespace org_restfulipc
 
         // So no icons in theme or it's ancestors. We look for an icon in
         // /usr/share/pixmaps, where some applicationicons can be found
-        for (const string& name : queryParameters["name"]) {
+        for (const string& name : request.queryParameterMap["name"]) {
             if (usrSharePixmapsIcons.find(name) != usrSharePixmapsIcons.end()) {
                 return {usrSharePixmapsIcons[name].path.data(), usrSharePixmapsIcons[name].mimetype.data()};
             }
@@ -80,32 +77,6 @@ namespace org_restfulipc
 
         // Abandon all hope
         throw Status::Http404;
-    }
-
-    void IconResource::parseQueryString(const HttpMessage& request, map<string, vector<string>>& queryParameters)
-    {
-        int pos = 0;
-        while (request.queryString[pos]) {
-            string parameterName = nextQueryStringToken(request, pos);
-            if (request.queryString[pos] == '=') {
-                queryParameters[parameterName].push_back(nextQueryStringToken(request, ++pos)); 
-            }
-
-            if (request.queryString[pos] == '&') {
-                pos++;
-            }
-        }
-
-    }
-
-    string IconResource::nextQueryStringToken(const HttpMessage& request, int& pos)
-    {
-        int start = pos;
-        while (request.queryString[pos] && request.queryString[pos] != '=' && request.queryString[pos] != '&') {
-            pos++;
-        }
-
-        return string(request.queryString + start, pos - start);
     }
 
     const IconInstance* IconResource::findPathOfClosest(const vector<IconInstance>& instances, int size)
