@@ -24,8 +24,8 @@ namespace org_restfulipc
     public:
         DesktopEntryReader(string desktopFilePath);
         virtual ~DesktopEntryReader();
+        virtual IniReader::LineType getNextLine() override;
         Json json;
-        Json translations;
     
     private:
         void read();

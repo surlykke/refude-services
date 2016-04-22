@@ -23,7 +23,6 @@ namespace org_restfulipc
         associations(),
         defaults(),
         desktopJsons(),
-        translations(),
         handlers()
     {
     }
@@ -79,14 +78,14 @@ namespace org_restfulipc
             const char* entryId = url + strlen("/desktopentry/");
             LocalizedJsonResource::ptr resource = dynamic_pointer_cast<LocalizedJsonResource>(service.mapping(url));
             if (resource) {
-                if (resource->json != desktopJsons[url] || resource->translations != translations[url]) {
-                    resource->setJson(move(desktopJsons[url]), move(translations[url]));
+                if (resource->json != desktopJsons[url]) {
+                    resource->setJson(move(desktopJsons[url]));
                     notifier->notifyClients("desktopentry-updated", entryId);
                 }
             }
             else {
                 resource = make_shared<LocalizedJsonResource>();
-                resource->setJson(move(desktopJsons[url]), move(translations[url]));
+                resource->setJson(move(desktopJsons[url]));
                 notifier->notifyClients("desktopentry-created", entryId);
                 service.map(url, resource);
             }
@@ -154,7 +153,6 @@ namespace org_restfulipc
                         // We will restore this array later - see below
                     }
                     desktopJsons[url] = std::move(reader.json);
-                    translations[url] = std::move(reader.translations);
                 }
             }
         }

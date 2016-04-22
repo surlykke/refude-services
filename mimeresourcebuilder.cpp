@@ -20,8 +20,7 @@ namespace org_restfulipc
 {
     MimeResourceBuilder::MimeResourceBuilder() :
         root(), 
-        jsons(), 
-        localeTranslations()
+        jsons()
     {
     }
 
@@ -30,22 +29,17 @@ namespace org_restfulipc
     }
 
     // Caller must ensure that mimetypeElement->FirstChildElement exists...
-    void handleLocalizedXmlElement(XMLElement* mimetypeElement, const char* elementName, Json& json, Json& translations)
+    void handleLocalizedXmlElement(XMLElement* mimetypeElement, const char* elementName, Json& json)
     {
-        const char* mimetype = mimetypeElement->Attribute("type");
-        string translationKey = string("@@") + mimetype + "-" + elementName;
-        json[elementName] = translationKey;
+        json[elementName] = JsonConst::EmptyObject; 
+        json[elementName]["_ripc:localized"] = JsonConst::TRUE;
         for (XMLElement* element = mimetypeElement->FirstChildElement(elementName);
                 element;
                 element = element->NextSiblingElement(elementName)) {
             
             string locale = element->Attribute("xml:lang") ?  element->Attribute("xml:lang") : ""; 
-            transform(locale.begin(), locale.end(), locale.begin(), ::tolower);
-           
-            if (translations[locale].undefined()) {
-                translations[locale] = JsonConst::EmptyObject;
-            }
-            translations[locale][translationKey] = element->GetText();
+            json[elementName][locale] = element->GetText();
+            json["_ripc:locales"][locale] = "";
         }
     }
 
@@ -83,21 +77,16 @@ namespace org_restfulipc
             }
             root["mimetypes"][typeName].append(subtypeName);
  
-
-            Json& translations = localeTranslations[url];
-            translations = JsonConst::EmptyObject;
-
-            string commentTranslationKey = string("@@") + mimetype + "-comment";
             if (mimetypeElement->FirstChildElement("comment")) {
-                handleLocalizedXmlElement(mimetypeElement, "comment", json, translations);
+                handleLocalizedXmlElement(mimetypeElement, "comment", json);
             }
 
             if (mimetypeElement->FirstChildElement("acronym")) {
-                handleLocalizedXmlElement(mimetypeElement, "acronym", json, translations);
+                handleLocalizedXmlElement(mimetypeElement, "acronym", json);
             }
             
             if (mimetypeElement->FirstChildElement("expanded-acronym")) {
-                handleLocalizedXmlElement(mimetypeElement, "expanded-acronym", json, translations);
+                handleLocalizedXmlElement(mimetypeElement, "expanded-acronym", json);
             }
 
             for (XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
@@ -165,14 +154,14 @@ namespace org_restfulipc
             const char* mimetype = url + strlen("/mimetype/");
             MimetypeResource::ptr res = dynamic_pointer_cast<MimetypeResource>(service.mapping(url));
             if (res) {
-                if (res->json != jsons[url] || res->translations != localeTranslations[url]) {
-                    res->setJson(move(jsons[url]), move(localeTranslations[url]));
+                if (res->json != jsons[url]) {
+                    res->setJson(move(jsons[url]));
                     notifier->notifyClients("mimetype-updated", mimetype);
                 }
             }
             else {
                 res = make_shared<MimetypeResource>();
-                res->setJson(move(jsons[url]), move(localeTranslations[url]));
+                res->setJson(move(jsons[url]));
                 service.map(url, res);
                 notifier->notifyClients("mimetype-added", mimetype);
             }

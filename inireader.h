@@ -34,7 +34,7 @@ namespace org_restfulipc
         
         IniReader(std::string filePath);
         virtual ~IniReader();
-        LineType getNextLine();
+        virtual LineType getNextLine();
         std::string heading;
         std::string key;
         std::string locale;

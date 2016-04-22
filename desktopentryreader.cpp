@@ -11,16 +11,18 @@
 #include <ctype.h>
 #include <ripc/errorhandling.h>
 #include <ripc/json.h>
+#include <ripc/jsonwriter.h>
 
 #include "desktopentryreader.h"
 #include "desktopTemplate.h"
+#include "desktopActionTemplate.h"
+
 namespace org_restfulipc 
 {
 
     DesktopEntryReader::DesktopEntryReader(std::string desktopFilePath) : 
         IniReader(desktopFilePath),
-        json(JsonConst::EmptyObject),
-        translations(JsonConst::EmptyObject)
+        json(JsonConst::EmptyObject)
     {
         json << desktopTemplate_json;
         read();
@@ -29,6 +31,16 @@ namespace org_restfulipc
     DesktopEntryReader::~DesktopEntryReader() 
     {
     }
+
+    IniReader::LineType DesktopEntryReader::getNextLine()
+    {
+        IniReader::LineType result = IniReader::getNextLine();
+        if (!locale.empty()) {
+            json["_ripc:locales"][locale] = "";
+        }
+        return result;
+    }
+    
 
     void DesktopEntryReader::read()
     {
@@ -50,7 +62,7 @@ namespace org_restfulipc
                 if (json["Other_groups"].undefined()) {
                     json["Other_groups"] = JsonConst::EmptyObject;
                 }
-                json["Other_groups"][heading] = JsonConst::EmptyObject;
+                json["Other_groups"][heading] << desktopActionTemplate_json;
                 readKeyValues(json["Other_groups"][heading]);
             }
             else {
@@ -69,19 +81,12 @@ namespace org_restfulipc
 
     bool DesktopEntryReader::readKeyValue(Json& json) 
     {
-        if (translations[locale].undefined()) {
-            translations[locale] = JsonConst::EmptyObject;
-        }
 
         if (keyOneOf({"Type", "Version", "Exec", "Path", "StartupWMClass", "URL"})) {
             json[key] = value;
         }
         else if (keyOneOf({"Name", "GenericName", "Comment"})) {
-            string translationKey = string("@@") + heading + "::" + key;  
-            if (json[key].undefined())  {
-                json[key] = translationKey; 
-            }
-            translations[locale][translationKey] = value;
+            json[key][locale] = value;
         }
         else if (keyOneOf({"NoDisplay", "DBusActivatable", "Terminal", "StartupNotify"})) {
             if (value == "true") { 
@@ -101,18 +106,17 @@ namespace org_restfulipc
             }
         }    
         else if (key == "Keywords") { 
-            json[key] = JsonConst::EmptyArray;
-            int i = 1;
+            if (!json[key].contains(locale)) {
+                json[key][locale] = JsonConst::EmptyArray;
+            }
             for (std::string val : toList(value)) {
-                string translationKey = string("@@") + heading + "::" + key + "_" + to_string(i++);
-                json[key].append(translationKey);
-                translations[locale][translationKey] = val;
+                json[key][locale].append(value);
             }
         } 
         else if (key == "Actions") {
             json["Actions"] = JsonConst::EmptyObject;
             for (std::string val : toList(value)) {
-                json["Actions"][val] = JsonConst::EmptyObject;
+                json["Actions"][val] << desktopActionTemplate_json;
             }
         }
     }

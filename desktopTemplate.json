@@ -3,5 +3,19 @@
         "self" : {
             "href" : "REPLACEME"
         }
+    },
+    "_ripc:locales" : {},
+    "Name" : {
+        "_ripc:localized" : true
+    },
+    "GenericName" : {
+        "_ripc:localized" : true
+    }, 
+    "Comment" : {
+        "_ripc:localized" : true
+    }, 
+    "Keywords" : {
+        "_ripc:localized" : true
     }
+ 
 }

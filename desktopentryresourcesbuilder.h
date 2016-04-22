@@ -40,7 +40,6 @@ namespace org_restfulipc
         void buildFileAndUrlHandlerResource();
 
         Map<Json> desktopJsons;
-        Map<Json> translations;
         Json handlers;
     };
 

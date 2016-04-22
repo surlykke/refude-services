@@ -29,7 +29,6 @@ namespace org_restfulipc
     private:
         Json root;
         Map<Json> jsons;
-        Map<Json> localeTranslations;
     };
 }
 #endif /* MIMERESOURCEBUILDER_H */
