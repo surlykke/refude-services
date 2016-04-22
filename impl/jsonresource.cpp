@@ -105,12 +105,9 @@ void AbstractJsonResource::doGet(int socket, HttpMessage& request)
     }
 
 
-//---------------------------------------------------------------------------------------
-
     LocalizedJsonResource::LocalizedJsonResource() :
         AbstractJsonResource(),
         json(),
-        translations(),
         localizedResponses()
     {
     }
@@ -119,12 +116,11 @@ void AbstractJsonResource::doGet(int socket, HttpMessage& request)
     {
     }
 
-    void LocalizedJsonResource::setJson(Json&& json, Json&& translations)
+    void LocalizedJsonResource::setJson(Json&& json)
     {
         std::unique_lock<std::shared_timed_mutex> lock(responseMutex);
         localizedResponses.clear();
         this->json = std::move(json);
-        this->translations = std::move(translations);
     }
 
 
@@ -145,7 +141,8 @@ void AbstractJsonResource::doGet(int socket, HttpMessage& request)
         string locale = getLocaleToServe(request.header(Header::accept_language));
         Buffer& buf = localizedResponses[locale.data()];
         buf.write(responseTemplate);
-        FilteringJsonWriter jsonWriter(json, "@@", translations[locale], translations[""], "");
+        
+        LocalizingJsonWriter jsonWriter(json, locale);
         buf.write("Content-Length: ");
         buf.write(jsonWriter.buffer.used);
         buf.write("\r\n\r\n");
@@ -190,12 +187,29 @@ void AbstractJsonResource::doGet(int socket, HttpMessage& request)
         }
 
         for (string locale : locales) {
-            if (translations.contains(locale.data())) {
+            if (json["_ripc:locales"].contains(locale)) {
                 return locale;
             }
         }
 
         return "";
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }

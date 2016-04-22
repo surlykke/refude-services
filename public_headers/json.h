@@ -70,6 +70,7 @@ namespace org_restfulipc
         Json take(int index);
         Json take(const char* key);
         bool contains(const char* key) const;
+        bool contains(std::string key) const;
         const char* keyAt(size_t index) const;
         uint size() const;
 
@@ -96,6 +97,7 @@ namespace org_restfulipc
 
         friend class JsonReader;
         friend class JsonWriter;
+        friend class LocalizingJsonWriter;
         friend class FilteringJsonWriter;
     };
 

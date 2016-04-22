@@ -22,15 +22,30 @@ namespace org_restfulipc
 
     struct JsonWriter
     {
-        JsonWriter(const Json& json);
+        JsonWriter(Json& json);
         ~JsonWriter();
 
         Buffer buffer;
 
     protected:
         JsonWriter();
-        void write(const Json& json);
+        void write(Json& json);
+        virtual void writeObject(Json& json);
+
         virtual void writeString(const char *string);
+    };
+
+    struct LocalizingJsonWriter : public JsonWriter
+    {
+        LocalizingJsonWriter(Json& json, string locale, const char* lastResort = "");
+        virtual ~LocalizingJsonWriter();
+    
+    protected:
+        void writeObject(Json& json) override;
+    
+    private:
+        const string locale;
+        const char* lastResort;
     };
 
     struct FilteringJsonWriter : public JsonWriter

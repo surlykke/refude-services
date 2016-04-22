@@ -245,6 +245,11 @@ namespace org_restfulipc
         return entries->find(key) > -1;
     }
 
+    bool Json::contains(std::string key) const
+    {
+        return  contains(key.data());
+    }
+
     const char* Json::keyAt(size_t index) const
     {
         typeAssert(JsonType::Object, "keyAt(%d)", index);

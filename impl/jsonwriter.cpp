@@ -15,7 +15,7 @@ namespace org_restfulipc
 {
 
 
-    JsonWriter::JsonWriter(const Json& json) :
+    JsonWriter::JsonWriter(Json& json) :
         buffer(128)
     {
         write(json);
@@ -30,23 +30,27 @@ namespace org_restfulipc
     {
     }
 
-    void JsonWriter::write(const Json& json)
+    void JsonWriter::writeObject(Json& json){
+        buffer.write('{');
+        if (json.entries->size() > 0) {
+            writeString(json.entries->keyAt(0));
+            buffer.write(": ");
+            write(json.entries->valueAt(0));
+            
+            for (int i = 1; i < json.entries->size(); i++) {
+                buffer.write(", ");
+                writeString(json.entries->keyAt(i));
+                buffer.write(": ");
+                write(json.entries->valueAt(i));
+            }
+        }
+        buffer.write('}');
+    }
+
+    void JsonWriter::write(Json& json)
     {
         if (json.mType == JsonType::Object) {
-            buffer.write('{');
-            if (json.entries->size() > 0) {
-                writeString(json.entries->keyAt(0));
-                buffer.write(": ");
-                write(json.entries->valueAt(0));
-                
-                for (int i = 1; i < json.entries->size(); i++) {
-                    buffer.write(", ");
-                    writeString(json.entries->keyAt(i));
-                    buffer.write(": ");
-                    write(json.entries->valueAt(i));
-                }
-            }
-            buffer.write('}');
+            writeObject(json);
         }
         else if (json.mType == JsonType::Array) {
             buffer.write('[');
@@ -85,11 +89,57 @@ namespace org_restfulipc
         buffer.write('"');
     }
 
+    LocalizingJsonWriter::LocalizingJsonWriter(Json& json, string locale, const char* lastResort) :
+        JsonWriter(),
+        locale(locale),
+        lastResort(lastResort)
+            
+    {
+        write(json);
+    }
+
+    LocalizingJsonWriter::~LocalizingJsonWriter()
+    {
+    }
+
+    void LocalizingJsonWriter::writeObject(Json& json)
+    {
+        if (json.contains("_ripc:localized") && (bool) json["_ripc:localized"]) {
+            if (json.contains(locale)) {
+                write(json[locale]);
+            }
+            else if (json.contains("")) {
+                write(json[""]);
+            }
+            else {
+                writeString(lastResort);
+            }
+        }
+        else {
+            buffer.write('{');
+            const char* separator = "";
+            for (int i = 0; i < json.entries->size(); i++) {
+                if (!strcmp("_ripc:locales", json.entries->keyAt(i))) {
+                    continue;
+                }
+                buffer.write(separator);
+                writeString(json.entries->keyAt(i));
+                buffer.write(": ");
+                write(json.entries->valueAt(i));
+                separator = ", "; 
+            }
+            buffer.write('}');
+        }
+    }
+
+
+
     FilteringJsonWriter::FilteringJsonWriter(Json& json, 
             const char* marker, 
             Json& replacements, 
             Json& fallbackReplacements, 
             const char* lastResort) :
+        JsonWriter(),
         marker(marker),
         replacements(replacements),
         fallbackReplacements(fallbackReplacements),

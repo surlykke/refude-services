@@ -60,9 +60,8 @@ namespace org_restfulipc
         typedef std::shared_ptr<LocalizedJsonResource> ptr; 
         LocalizedJsonResource();
         virtual ~LocalizedJsonResource();
-        void setJson(Json&& json, Json&& translations);
+        void setJson(Json&& json);
         Json json;
-        Json translations;
 
     protected:
         virtual bool responseReady(HttpMessage& request);
