@@ -60,9 +60,4 @@ namespace org_restfulipc
             mimeappsList.write();
         }
     }
-
-    void MimetypeResource::setService(DesktopService* service)
-    {
-        this->service = service;
-    }
 }

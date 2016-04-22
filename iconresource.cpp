@@ -30,7 +30,7 @@ namespace org_restfulipc
         string themeName;
         int size;
 
-        if (request.queryParameterMap["name"].size() != 1) throw Status::Http422;
+        if (request.queryParameterMap["name"].size() < 1) throw Status::Http422;
         if (request.queryParameterMap["theme"].size() > 1) throw Status::Http422;
         if (request.queryParameterMap["size"].size() > 1) throw Status::Http422;
 

@@ -21,7 +21,6 @@ public:
     MimetypeResource();
     virtual ~MimetypeResource();
     virtual void doPatch(int socket, HttpMessage& request);
-    void setService(DesktopService* service);
 private:
     DesktopService* service;
 };

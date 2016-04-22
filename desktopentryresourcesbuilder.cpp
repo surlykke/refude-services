@@ -152,6 +152,9 @@ namespace org_restfulipc
                         }
                         // We will restore this array later - see below
                     }
+                    if (!reader.json.contains("Icon")) {
+                        reader.json["Icon"] = entryId.substr(0, entryId.size() - 8); // Remove '.desktop'
+                    }
                     desktopJsons[url] = std::move(reader.json);
                 }
             }

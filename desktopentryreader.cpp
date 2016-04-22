@@ -82,7 +82,9 @@ namespace org_restfulipc
     bool DesktopEntryReader::readKeyValue(Json& json) 
     {
 
-        if (keyOneOf({"Type", "Version", "Exec", "Path", "StartupWMClass", "URL"})) {
+        if (keyOneOf({"Type", "Version", "Exec", "Path", "StartupWMClass", "URL", "Icon"})) {
+            // Strangely, Freedesktop.org's desktop entry spec states 'Icon' is a locale-string
+            // That doesn't make any sense?
             json[key] = value;
         }
         else if (keyOneOf({"Name", "GenericName", "Comment"})) {

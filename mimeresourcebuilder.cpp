@@ -111,10 +111,16 @@ namespace org_restfulipc
             if (iconElement) {
                 json["icon"] = iconElement->Attribute("name");
             }
+            else {
+                json["icon"] = typeName + '-' + subtypeName;
+            }
 
             XMLElement* genericIconElement = mimetypeElement->FirstChildElement("generic-icon");
             if (genericIconElement) {
                 json["genericIcon"] = genericIconElement->Attribute("name");
+            }
+            else {
+                json["genericIcon"] = typeName + "-x-generic";
             }
         } 
     }
