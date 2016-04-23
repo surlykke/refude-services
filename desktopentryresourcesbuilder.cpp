@@ -139,6 +139,7 @@ namespace org_restfulipc
                 DesktopEntryReader reader(desktopFilePath);
                 string entryId = replaceAll(string(desktopFilePath.data() + applicationsDirs[0].size()), '/', '-');
                 string url = "/desktopentry/" + entryId;
+                reader.json["_links"]["self"]["href"] = url;
                 if (reader.json.contains("Hidden") && (bool)reader.json["Hidden"]) {
                     desktopJsons.erase(url.data());
                     for (auto& it : associations) {
