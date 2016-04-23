@@ -112,7 +112,7 @@ namespace org_restfulipc
                 json[key][locale] = JsonConst::EmptyArray;
             }
             for (std::string val : toList(value)) {
-                json[key][locale].append(value);
+                json[key][locale].append(val);
             }
         } 
         else if (key == "Actions") {
