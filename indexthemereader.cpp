@@ -7,16 +7,19 @@
 */
 #include <ripc/utils.h>
 #include <ripc/jsonwriter.h>
+#include "themeTemplate.h"
 #include "indexthemereader.h"
 namespace org_restfulipc
 {
 
     IndexThemeReader::IndexThemeReader(string indexThemeFilePath) : 
         IniReader(indexThemeFilePath),
-        json(JsonConst::EmptyObject),
-        translations(JsonConst::EmptyObject)
+        json(),
+        jsonFull()
     {
-        
+        json << themeTemplate_json; 
+        jsonFull << themeTemplate_json;
+        jsonFull["Icons"] = JsonConst::EmptyObject;
     }
 
     IndexThemeReader::~IndexThemeReader()
@@ -30,7 +33,7 @@ namespace org_restfulipc
             throw RuntimeError("'[Icon Theme]' expected");
         }
         while (getNextLine() == KeyValue) {
-            readKeyValue(json);
+            readKeyValue();
         }
         while (lineType == Heading) {
             if (declaredDirectories.count(heading) > 0) {
@@ -42,18 +45,10 @@ namespace org_restfulipc
         }
     }
 
-    bool IndexThemeReader::readKeyValue(Json& json) 
+    bool IndexThemeReader::readKeyValue() 
     {
-        if (translations[locale].undefined()) {
-            translations[locale] = JsonConst::EmptyObject;
-        }
-
         if (oneOf(key, {"Name", "Comment"})) {
-            string translationKey = string("@@") + heading + "::" + key;  
-            if (json[key].undefined())  {
-                json[key] = translationKey; 
-            }
-            translations[locale][translationKey] = value;
+            json[key][locale] = value;
         }
         else if (key == "Directories") {
             declaredDirectories = splitToSet(value.data(), ',');
@@ -61,7 +56,9 @@ namespace org_restfulipc
         else if (key == "Inherits") {
             json["Inherits"] = JsonConst::EmptyArray;
             for (string inherit : split(value, ',')) {
-                json["Inherits"].append(inherit);
+                if (inherit != "Hicolor") { // We always use Hicolor as last fallback, so no need to inherit it
+                    json["Inherits"].append(inherit);
+                }
             }
         }
         else {

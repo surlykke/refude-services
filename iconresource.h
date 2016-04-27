@@ -10,6 +10,7 @@
 #define ICONRESOURCE_H
 #include <vector>
 #include <string>
+#include <ripc/json.h>
 #include <ripc/webserver.h>
 
 #include "icontheme.h"
@@ -21,16 +22,16 @@ namespace org_restfulipc
     {
     public:
         typedef std::shared_ptr<IconResource> ptr;
-        IconResource(IconThemeCollection&& iconThemeCollection, map<string, IconInstance>&& usrSharePixmapIcons);
+        IconResource(Json&& themes, Json&& usrSharePixmapIcons);
         virtual ~IconResource();
-        virtual PathMimetypePair findFile(int matchedPathLength, HttpMessage& request);
+        virtual PathMimetypePair findFile(HttpMessage& request, const char* remainingPath) override;
 
     private:
-        const IconInstance* findPathOfClosest(const vector<IconInstance>& instances, int size);
+        Json* findPathOfClosest(Json& iconList, int size);
         string parent(string themeName);
         
-        IconThemeCollection iconThemeCollection;
-        map<string, IconInstance> usrSharePixmapsIcons;
+        Json themes;
+        Json usrSharePixmapsIcons;
     };
 }
 #endif /* ICONRESOURCE_H */

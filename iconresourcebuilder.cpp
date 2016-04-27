@@ -6,18 +6,23 @@
 * Please refer to the LICENSE file for a copy of the license.
 */
 #include <ripc/utils.h>
+#include <ripc/jsonwriter.h>
 
-#include "iconresourcebuilder.h"
 #include "themereader.h"
 #include "iconresource.h"
 #include "desktopservice.h"
 #include "iconcollector.h"
+#include "themeTemplate.h"
+#include "themesTemplate.h"
+
+#include "iconresourcebuilder.h"
 
 namespace org_restfulipc
 {
 
     IconResourceBuilder::IconResourceBuilder()
     {
+        themes << themesTemplate_json;
     }
 
     IconResourceBuilder::~IconResourceBuilder()
@@ -35,7 +40,10 @@ namespace org_restfulipc
 
         for (string iconsDir : iconsDirs) {
             for (string themeDir : subdirectories(iconsDir)) {
-                ThemeReader(iconThemeCollection[themeDir], iconsDir + '/' + themeDir);
+                if (!themes.contains(themeDir)) {
+                    themes[themeDir] << themeTemplate_json;
+                }
+                ThemeReader(themes[themeDir], iconsDir + '/' + themeDir);
             }
         }
 
@@ -45,7 +53,7 @@ namespace org_restfulipc
 
     void IconResourceBuilder::mapResources(DesktopService& desktopService)
     {
-        IconResource::ptr iconResource = make_shared<IconResource>(move(iconThemeCollection), move(usrSharePixmapsIcons));
+        IconResource::ptr iconResource = make_shared<IconResource>(move(themes), move(usrSharePixmapsIcons));
         desktopService.map("/themeicon", iconResource);
     }
 

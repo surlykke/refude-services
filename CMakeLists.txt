@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.1.0)
-set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}") 
 set(PROJECT "DesktopService")
 project(${PROJECT})
+
+set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}") 
+
 include(GNUInstallDirs)
 link_directories(/usr/local/lib64)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

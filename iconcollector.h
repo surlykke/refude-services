@@ -22,7 +22,7 @@ namespace org_restfulipc
     {
         IconCollector(string directoryPath);
         virtual ~IconCollector();
-        map<string, IconInstance> collectedIcons;
+        Json collectedIcons;
         DIR* dir;
         char buffer[PATH_MAX];
     };

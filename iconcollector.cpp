@@ -11,12 +11,14 @@
 #include <iostream>
 #include <ripc/errorhandling.h>
 #include <unistd.h>
+#include <ripc/json.h>
 #include "iconcollector.h"
 
 namespace org_restfulipc
 {
 
-    IconCollector::IconCollector(string directoryPath)
+    IconCollector::IconCollector(string directoryPath) : 
+        collectedIcons(JsonConst::EmptyObject)
     {
         dir = opendir(directoryPath.data());
         if (dir == NULL) {
@@ -50,15 +52,15 @@ namespace org_restfulipc
                     filePath = buffer;
                 }
 
-                IconInstance instance;
+                Json instance = JsonConst::EmptyObject;
                 if (fileEnding == ".png") {
-                    instance.mimetype = "image/png";
+                    instance["mimetype"] = "image/png";
                 }
                 else if (fileEnding == ".xpm") {
-                    instance.mimetype = "image/x-xpixmap";
+                    instance["mimetype"] = "image/x-xpixmap";
                 }
                 else if (fileEnding == ".svg") {
-                    instance.mimetype = "image/svg+xml";
+                    instance["mimetype"] = "image/svg+xml";
                 }
                 else {
                     continue;
@@ -68,9 +70,9 @@ namespace org_restfulipc
                     continue;
                 }
 
-                instance.path = filePath;
-                instance.maxSize = 0;
-                instance.minSize = 0;
+                instance["path"] = filePath;
+                instance["maxSize"] = (double)0;
+                instance["minSize"] = (double)0;
 
                 collectedIcons[iconName] = move(instance);
             }

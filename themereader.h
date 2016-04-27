@@ -10,6 +10,7 @@
 #define THEMEREADER_H
 #include <magic.h>
 #include <string>
+#include <ripc/json.h>
 #include "icontheme.h"
 #include "indexthemereader.h"
 
@@ -20,12 +21,11 @@ namespace org_restfulipc
     class ThemeReader
     {
     public:
-        ThemeReader(IconTheme& iconTheme, const string& dirPath);
+        ThemeReader(Json& theme, const string& dirPath);
         virtual ~ThemeReader();
-        IconTheme& iconTheme;
+        Json& theme;
     private:
         void read();
-   
         const string& dirPath; 
     };
     

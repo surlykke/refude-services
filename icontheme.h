@@ -13,7 +13,7 @@
 #include <map>
 namespace org_restfulipc
 {
-    using namespace std;
+    /*using namespace std;
     struct IconInstance
     {
         string path;
@@ -23,7 +23,7 @@ namespace org_restfulipc
     };
 
     typedef map<string, vector<IconInstance> > IconTheme;
-    typedef map<string, IconTheme> IconThemeCollection;
+    typedef map<string, IconTheme> IconThemeMap;*/
 }
 #endif /* ICONTHEME_H */
 

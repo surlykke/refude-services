@@ -7,16 +7,16 @@
 */
 
 #include <ripc/map.h>
+#include <ripc/jsonwriter.h>
 
 #include "iconresource.h"
 namespace org_restfulipc 
 {
 
-    IconResource::IconResource(IconThemeCollection&& iconThemeCollection, 
-                               map<string, IconInstance>&& usrSharePixmapIcons) : 
+    IconResource::IconResource(Json&& themes, Json&& usrSharePixmapIcons) : 
         WebServer("/"),
-        iconThemeCollection(iconThemeCollection),
-        usrSharePixmapsIcons(usrSharePixmapIcons)
+        themes(move(themes)),
+        usrSharePixmapsIcons(move(usrSharePixmapIcons))
     {
     }
 
@@ -24,8 +24,9 @@ namespace org_restfulipc
     {
     }
 
-    PathMimetypePair IconResource::findFile(int matchedPathLength, HttpMessage& request)
+    PathMimetypePair IconResource::findFile(HttpMessage& request, const char* remainingPath)
     {
+        std::cout << "Into IconResource::findFile\n";
         vector<string> names;
         string themeName;
         int size;
@@ -48,18 +49,26 @@ namespace org_restfulipc
             size = 32; // FIXME
         }
 
+        std::cout << "names: ";
+        for (const string& name : request.queryParameterMap["name"]) {
+            std::cout << name << " ";
+        }
+        std::cout << "\n";
+
         while (! themeName.empty()) {
-            if (iconThemeCollection.find(themeName) == iconThemeCollection.end()) {
+            std::cout << "Looking at theme " << themeName << "\n";
+            if (! themes.contains(themeName)) {
                 std::cerr << "No theme '" << themeName << "'\n";
                 throw Status::Http404;
             }
 
-            IconTheme& iconTheme = iconThemeCollection[themeName];
+            Json& theme = themes[themeName];
             for (const string& name : request.queryParameterMap["name"]) {
-                if (iconTheme.find(name) != iconTheme.end()) {
-                    const IconInstance* instance =  findPathOfClosest(iconTheme[name], size);
-                    if (instance) {
-                        return {instance->path.data(), instance->mimetype.data()};
+                if (theme["Icons"].contains(name)) {
+                    Json* icon =  findPathOfClosest(theme["Icons"][name], size);
+                    if (icon) {
+                        std::cout << "Found icon: " << JsonWriter(*icon).buffer.data() << "\n";
+                        return {(*icon)["path"], (*icon)["mimetype"]};
                     }
                 }
             }
@@ -70,8 +79,8 @@ namespace org_restfulipc
         // So no icons in theme or it's ancestors. We look for an icon in
         // /usr/share/pixmaps, where some applicationicons can be found
         for (const string& name : request.queryParameterMap["name"]) {
-            if (usrSharePixmapsIcons.find(name) != usrSharePixmapsIcons.end()) {
-                return {usrSharePixmapsIcons[name].path.data(), usrSharePixmapsIcons[name].mimetype.data()};
+            if (usrSharePixmapsIcons.contains(name)) {
+                return {usrSharePixmapsIcons[name]["path"], usrSharePixmapsIcons[name]["mimetype"]};
             }
         }
 
@@ -79,24 +88,27 @@ namespace org_restfulipc
         throw Status::Http404;
     }
 
-    const IconInstance* IconResource::findPathOfClosest(const vector<IconInstance>& instances, int size)
+    Json* IconResource::findPathOfClosest(Json& iconList, int size)
     {
-        int bestDistanceSoFar = numeric_limits<int>::max();
-        const IconInstance* candidate = NULL;
-        for (const IconInstance& instance : instances) {
-            int distance;
-            if (size < instance.minSize) {
-                distance = instance.minSize - size;
+        double bestDistanceSoFar = numeric_limits<double>::max();
+        Json* candidate = NULL;
+        for (int i = 0; i < iconList.size(); i++) {
+            Json* instance = &iconList[i];
+            double distance;
+            double minSize = (*instance)["minSize"];
+            double maxSize = (*instance)["maxSize"];
+            if (size < minSize) {
+                distance = minSize - size;
             }
-            else if (size > instance.maxSize) {
-                distance = size - instance.maxSize;
+            else if (size > maxSize) {
+                distance = size - maxSize;
             }
             else {
-                return &instance; // No reason to look further..
+                return instance; // No reason to look further..
             }
 
             if (distance < bestDistanceSoFar) {
-                candidate = &instance;
+                candidate = instance;
                 bestDistanceSoFar = distance;
             }
         }

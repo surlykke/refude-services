@@ -13,8 +13,8 @@
 #include "iconcollector.h"
 namespace org_restfulipc
 {
-    ThemeReader::ThemeReader(IconTheme& iconTheme, const string& dirPath) :
-        iconTheme(iconTheme),
+    ThemeReader::ThemeReader(Json& theme, const string& dirPath) :
+        theme(theme),
         dirPath(dirPath)
     {
         read();
@@ -35,15 +35,15 @@ namespace org_restfulipc
         for (const IconDirectory& p : indexThemeReader.iconDirectories) {
             string path = dirPath + '/' + p.path; 
             IconCollector iconCollector(path);
-            for (auto& pair : iconCollector.collectedIcons) {
-                const string& iconName = pair.first;
-                IconInstance& iconInstance = pair.second;
+            iconCollector.collectedIcons.each([this, &p](const char* iconName, Json& icon) {
+                icon["minSize"] = p.minSize;
+                icon["maxSize"] = p.maxSize;
                
-                iconInstance.minSize = p.minSize;
-                iconInstance.maxSize = p.maxSize;
-                
-                iconTheme[iconName].push_back(move(iconInstance));
-            }
+                if (! theme["Icons"].contains(iconName)) {
+                    theme["Icons"][iconName] = JsonConst::EmptyArray;
+                }
+                theme["Icons"][iconName].append(move(icon));
+            });
         }
     }
 }

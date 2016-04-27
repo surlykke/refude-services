@@ -7,13 +7,13 @@
 */
 
 
-#include "mimetyperesource.h"
 #include <ripc/json.h>
-#include <ripc/buffer.h>
 #include <ripc/jsonwriter.h>
+#include <ripc/httpmessage.h>
 
 #include "mimeappslistreader.h"
 #include "desktopservice.h"
+#include "mimetyperesource.h"
 namespace org_restfulipc
 {
 
@@ -24,17 +24,17 @@ namespace org_restfulipc
     MimetypeResource::~MimetypeResource()
     {
     }
-
-    void MimetypeResource::doPatch(int socket, HttpMessage& request)
+    void MimetypeResource::doPATCH(int& socket, HttpMessage& request, const char* remainingPath)
     {
-        std::cout << "Patching\n";
+        std::cout << "Patching, request:\n" << request.toBuf().data() << "\n";
         static const char* successfulResponse =
             "HTTP/1.1 204 No Content\r\n"
             "\r\n";
 
         Json mergeJson;
+        std::cout << "Body: " << (long)request.body << "\n";
         mergeJson << request.body;
-        std::cout << "MergeJson:\n" << JsonWriter(mergeJson).buffer.data << "\n";
+        std::cout << "MergeJson:\n" << JsonWriter(mergeJson).buffer.data() << "\n";
         if (mergeJson.type() != JsonType::Object) {
             throw Status::Http406;
         }

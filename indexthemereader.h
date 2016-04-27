@@ -34,10 +34,10 @@ namespace org_restfulipc
         virtual ~IndexThemeReader();
         void read();
         Json json;
-        Json translations;
+        Json jsonFull; 
         vector<IconDirectory> iconDirectories;
     private:
-        bool readKeyValue(Json& json);
+        bool readKeyValue();
         IconDirectory readDirectoryGroup();
         bool oneOf(string str, std::list<std::string> list);
         

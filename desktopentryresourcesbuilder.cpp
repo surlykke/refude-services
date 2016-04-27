@@ -78,7 +78,7 @@ namespace org_restfulipc
             const char* entryId = url + strlen("/desktopentry/");
             LocalizedJsonResource::ptr resource = dynamic_pointer_cast<LocalizedJsonResource>(service.mapping(url));
             if (resource) {
-                if (resource->json != desktopJsons[url]) {
+                if (resource->getJson() != desktopJsons[url]) {
                     resource->setJson(move(desktopJsons[url]));
                     notifier->notifyClients("desktopentry-updated", entryId);
                 }
@@ -93,7 +93,7 @@ namespace org_restfulipc
 
         JsonResource::ptr handlerResource = dynamic_pointer_cast<JsonResource>(service.mapping("/handlers"));
         if (handlerResource) {
-            if (! handlerResource->equal(handlers)) {
+            if (handlerResource->getJson() != handlers) {
                 handlerResource->setJson(move(handlers));
                 notifier->notifyClients("handlers-updated", "");
             }

@@ -160,7 +160,7 @@ namespace org_restfulipc
             const char* mimetype = url + strlen("/mimetype/");
             MimetypeResource::ptr res = dynamic_pointer_cast<MimetypeResource>(service.mapping(url));
             if (res) {
-                if (res->json != jsons[url]) {
+                if (res->getJson() != jsons[url]) {
                     res->setJson(move(jsons[url]));
                     notifier->notifyClients("mimetype-updated", mimetype);
                 }
@@ -175,7 +175,7 @@ namespace org_restfulipc
 
         JsonResource::ptr rootResource = dynamic_pointer_cast<JsonResource>(service.mapping("/mimetypes"));
         if (rootResource) {
-            if (! rootResource->equal(root)) {
+            if (rootResource->getJson() != root) {
                 rootResource->setJson(move(root));
                 notifier->notifyClients("mimetypelist-updated", "");
             }
