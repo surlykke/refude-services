@@ -1,10 +1,10 @@
 /*
-* Copyright (c) 2015, 2016 Christian Surlykke
-*
-* This file is part of the Restful Inter Process Communication (Ripc) project. 
-* It is distributed under the LGPL 2.1 license.
-* Please refer to the LICENSE file for a copy of the license.
-*/
+ * Copyright (c) 2015, 2016 Christian Surlykke
+ *
+ * This file is part of the Restful Inter Process Communication (Ripc) project. 
+ * It is distributed under the LGPL 2.1 license.
+ * Please refer to the LICENSE file for a copy of the license.
+ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,91 +13,128 @@
 
 namespace org_restfulipc
 {
-    Buffer::Buffer(int initialCapacity) :
-        used(0),
-        capacity(initialCapacity),
-        data(0)
+
+    Buffer::Buffer() :
+        _size(0),
+        _capacity(0),
+        _data(0)
     {
-        if (initialCapacity > 0)  {
-            data = (char*) malloc(initialCapacity);
-            if (!data) throw C_Error();
-        }
     }
 
     Buffer::Buffer(Buffer&& other)
     {
-        memcpy(this, &other, sizeof(Buffer));
-        memset(&other, 0, sizeof(Buffer));
+        memcpy(this, &other, sizeof (Buffer));
+        memset(&other, 0, sizeof (Buffer));
     }
 
     Buffer& Buffer::operator=(Buffer&& other)
     {
-        if (data) {
-            delete data;
+        if (_data) {
+            delete _data;
         }
-        memcpy(this, &other, sizeof(Buffer));
-        memset(&other, 0, sizeof(Buffer));
+        memcpy(this, &other, sizeof (Buffer));
+        memset(&other, 0, sizeof (Buffer));
         return *this;
     }
 
     Buffer::~Buffer()
     {
-        if (data) {
-            free(data);
+        if (_data) {
+            free(_data);
         }
     }
 
-    void Buffer::write(const char* string)
+    Buffer& Buffer::write(const char* string)
     {
         size_t len = strlen(string);
-        ensureCapacity(len + 1);
-        strncpy(data + used, string, len + 1);
-        used += len;
+        ensureCapacity(len);
+        strncpy(_data + _size, string, len + 1);
+        _size += len;
+        return *this;
     }
 
-    void Buffer::write(char ch)
+    Buffer& Buffer::write(char ch)
     {
-        ensureCapacity(2);
-        data[used++] = ch;
-        data[used] = '\0';
+        ensureCapacity(1);
+        _data[_size++] = ch;
+        _data[_size] = '\0';
+        return *this;
     }
 
-    void Buffer::write(double d)
+    Buffer& Buffer::write(double d)
     {
         ensureCapacity(25);
-        used += sprintf(data + used, "%.17g", d);
+        _size += snprintf(_data + _size, 25, "%.17g", d);
+        return *this;
     }
 
-    void Buffer::write(int i) {
-        ensureCapacity(10);
-        used += sprintf(data + used, "%d", i);
-    }
-    
-    void Buffer::ensureCapacity(int numChars)
+    Buffer& Buffer::write(int i)
     {
-        if (used + numChars > capacity) {
-            if (capacity == 0) {
-                capacity = 1;
-            }
-            do {
-                capacity *= 2;
-            }
-            while (used + numChars > capacity);
-           
-            data = (char*) realloc(data, capacity);
-            if (! data) throw C_Error();
-        }
+        ensureCapacity(10);
+        _size += snprintf(_data + _size, 10, "%d", i);
+        return *this;
     }
 
     void Buffer::clear()
     {
-        used = 0;
+        _size = 0;
     }
 
     bool Buffer::operator==(Buffer& other)
     {
-        return used == other.used &&
-               ( used == 0 || strcmp(data, other.data) == 0);
+        return _size == other._size && strcmp(data(), other.data()) == 0;
+    }
+
+    const char* Buffer::data()
+    {
+        return _data ? _data : "";
+    }
+
+    int Buffer::size()
+    {
+        return _size;
+    }
+
+    void Buffer::ensureCapacity(int numChars)
+    {
+        /*
+         * _data is a zero-terminated string. _size does not count the terminating zero, 
+         * so we need _size + numChars + 1
+         */
+        int needed = _size + numChars + 1;
+        if (needed <= _capacity) {
+            return;
+        }
+
+        if (_capacity == 0) {
+            _capacity = 128;
+        }
+
+        while (_size + numChars + 1 > _capacity) _capacity *= 2;
+
+        _data = (char*) realloc(_data, _capacity);
+
+        if (!_data) throw C_Error();
+    }
+
+    Buffer& operator<<(Buffer& buffer, const char* str)
+    {
+        return buffer.write(str);
+    }
+
+    Buffer& operator<<(Buffer& buffer, const char ch)
+    {
+        return buffer.write(ch);
+    }
+
+    Buffer& operator<<(Buffer& buffer, double d)
+    {
+        return buffer.write(d);
+    }
+
+    Buffer& operator<<(Buffer& buffer, int i)
+    {
+        return buffer.write(i);
     }
 
 }

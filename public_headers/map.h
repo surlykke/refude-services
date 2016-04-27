@@ -1,10 +1,10 @@
 /*
-* Copyright (c) 2015, 2016 Christian Surlykke
-*
-* This file is part of the Restful Inter Process Communication (Ripc) project. 
-* It is distributed under the LGPL 2.1 license.
-* Please refer to the LICENSE file for a copy of the license.
-*/
+ * Copyright (c) 2015, 2016 Christian Surlykke
+ *
+ * This file is part of the Restful Inter Process Communication (Ripc) project. 
+ * It is distributed under the LGPL 2.1 license.
+ * Please refer to the LICENSE file for a copy of the license.
+ */
 
 #ifndef MAP_H
 #define MAP_H
@@ -17,22 +17,29 @@
 using namespace std;
 
 namespace org_restfulipc
-{ 
+{
     template<class V, bool copyKey>
     struct Pair;
-    
+
     template<class V>
     struct Pair<V, true>
     {
-        Pair(const char *key, V&  value) : key(strdup(key)), value(value) {}
-        Pair(const char *key, V&&  value) : key(strdup(key)), value(move(value)) {}
-        ~Pair() 
+
+        Pair(const char *key, V& value) : key(strdup(key)), value(value)
+        {
+        }
+
+        Pair(const char *key, V&& value) : key(strdup(key)), value(move(value))
+        {
+        }
+
+        ~Pair()
         {
             if (key) {
                 free(key);
             }
         }
-        
+
         Pair(Pair&& other)
         {
             key = other.key;
@@ -58,10 +65,19 @@ namespace org_restfulipc
     template<class V>
     struct Pair<V, false>
     {
-        Pair(const char *key, V&  value) : key(key), value(value) {}
-        Pair(const char *key, V&&  value) : key(key), value(move(value)) {}
-        ~Pair() {}
-        
+
+        Pair(const char *key, V& value) : key(key), value(value)
+        {
+        }
+
+        Pair(const char *key, V&& value) : key(key), value(move(value))
+        {
+        }
+
+        ~Pair()
+        {
+        }
+
         Pair(Pair&& other)
         {
             key = other.key;
@@ -79,32 +95,50 @@ namespace org_restfulipc
         V value;
     };
 
-    template<typename V, bool copyKey>    
+    template<typename V, bool copyKey>
     struct LessThan
     {
-        bool operator()(const Pair<V, copyKey>& p1, const Pair<V, copyKey>& p2) 
+
+        bool operator()(const Pair<V, copyKey>& p1, const Pair<V, copyKey>& p2)
         {
-            return strcmp(p1.key, p2.key) < 0; 
+            return strcmp(p1.key, p2.key) < 0;
         }
     };
 
     template<typename V, bool copyKey>
     struct Equal
     {
-        bool operator()(const Pair<V, copyKey>& p1, const Pair<V, copyKey>& p2) 
+
+        bool operator()(const Pair<V, copyKey>& p1, const Pair<V, copyKey>& p2)
         {
             return strcmp(p1.key, p2.key) == 0;
         }
     };
 
-
-    template<class V, bool copyKey = true> 
-    struct Map 
+    template<class V, bool copyKey = true >
+    struct Map
     {
         std::vector<Pair<V, copyKey>> list;
-        size_t sorted; 
+        size_t sorted;
 
-        Map(): list(), sorted(0) {}
+        Map() : list(), sorted(0)
+        {
+        }
+
+        Map(Map&& other)
+        {
+            this->list = move(other.list);
+            this->sorted = other.sorted;
+            other.sorted = 0;
+        }
+
+        Map& operator=(Map&& other)
+        {
+            this->list = move(other.list);
+            this->sorted = other.sorted;
+            other.sorted = 0;
+            return *this;
+        }
 
         V& add(const char* key, V& value, bool ownKey = false)
         {
@@ -112,13 +146,13 @@ namespace org_restfulipc
             list.push_back(Pair<V, copyKey>(key, value));
             return list.back().value;
         }
-       
+
         V& add(const char* key, V&& value, bool ownKey = false)
         {
             if (!key) throw RuntimeError("NULL is not allowed as map key");
             list.push_back(Pair<V, copyKey>(key, std::move(value)));
             return list.back().value;
-        } 
+        }
 
         int find(const char* key)
         {
@@ -158,11 +192,11 @@ namespace org_restfulipc
             return list.at(pos).value;
         }
 
-        V& operator[](const string& key) 
+        V& operator[](const string& key)
         {
             return operator[](key.data());
         }
-       
+
         V take(const char* key)
         {
             bool found;
@@ -174,55 +208,55 @@ namespace org_restfulipc
             return tmp;
         }
 
-        void erase(const char* key) 
+        void erase(const char* key)
         {
             bool found;
             int pos = search(key, found);
             if (found) {
                 list.erase(list.begin() + pos);
-                sorted--; 
+                sorted--;
             }
         }
 
-        void clear() 
+        void clear()
         {
             list.erase(list.begin(), list.end());
             sorted = 0;
         }
-   
-        size_t size() 
+
+        size_t size()
         {
             sort();
             return list.size();
         }
 
-        const char* keyAt(size_t pos) 
+        const char* keyAt(size_t pos)
         {
             sort();
             return list.at(pos).key;
         }
 
-        V& valueAt(size_t pos) 
+        V& valueAt(size_t pos)
         {
             sort();
             return list.at(pos).value;
         }
 
-        void sort() 
+        void sort()
         {
             if (sorted < list.size()) {
                 if (sorted < list.size() - 1) {
                     std::sort(list.begin() + sorted, list.end(), LessThan<V, copyKey>());
-                } 
+                }
                 if (sorted > 0) {
                     std::inplace_merge(list.begin(), list.begin() + sorted, list.end(), LessThan<V, copyKey>());
                 }
                 list.erase(std::unique(list.begin(), list.end(), Equal<V, copyKey>()), list.end());
-            } 
+            }
             sorted = list.size();
         }
 
-        vector<const char*> keys() 
+        vector<const char*> keys()
         {
             vector<const char*> res;
             for (int i = 0; i < size(); i++) {
@@ -231,7 +265,7 @@ namespace org_restfulipc
             return res;
         }
 
-        vector<V*> values() 
+        vector<V*> values()
         {
             vector<V*> res;
             for (int i = 0; i < size(); i++) {
@@ -240,8 +274,9 @@ namespace org_restfulipc
             return res;
         }
 
-        vector<const char*> keys(const char* prefix) {
-            bool dummy; 
+        vector<const char*> keys(const char* prefix)
+        {
+            bool dummy;
             int prefixLength = strlen(prefix);
             int pos = search(prefix, dummy);
             vector<const char*> res;
@@ -253,8 +288,17 @@ namespace org_restfulipc
             return res;
         }
 
+        //typedef void (*Visitor)(const char*, V&);
+        template <typename Visitor>
+        void each(Visitor visitor)
+        {
+            for (int i = 0; i < size(); i++) {
+                visitor(list.at(i).key, list.at(i).value);
+            }
+        }
+
     private:
-        
+
         /**
          * 
          * @param key The key to search for
@@ -262,14 +306,14 @@ namespace org_restfulipc
          * @return The position of the first key which is lexically greater than or
          *         equal to the given key or, if none such exists, size().
          *         This returned value is where the given key would be inserted in the map.
-         */ 
-        int search(const char * key, bool& found) 
+         */
+        int search(const char * key, bool& found)
         {
             sort();
             int lo = -1;
             int hi = list.size();
             while (lo < hi - 1) {
-                int mid = (lo + hi)/2;
+                int mid = (lo + hi) / 2;
                 int comp = strcmp(key, list.at(mid).key);
                 if (comp == 0) {
                     found = true;
@@ -282,7 +326,7 @@ namespace org_restfulipc
                     hi = mid;
                 }
             }
-           
+
             found = false;
             return hi;
         }

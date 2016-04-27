@@ -16,6 +16,25 @@
 namespace org_restfulipc
 {
 
+    void AbstractResource::handleRequest(int& socket, HttpMessage& request, const char* remainingPath)
+    {
+        std::cout << "Into AbstractResource::handleRequest, method: " << method2String(request.method) << "\n";
+        switch (request.method) 
+        {
+        case Method::GET:     doGET(socket, request, remainingPath); break;
+        case Method::PATCH:   doPATCH(socket, request, remainingPath); break;
+        case Method::POST:    doPOST(socket, request, remainingPath); break;
+        case Method::DELETE:  doDELETE(socket, request, remainingPath); break;
+        case Method::PUT:     doPUT(socket, request, remainingPath); break;
+        case Method::HEAD:    doHEAD(socket, request, remainingPath); break;
+        case Method::TRACE:   doTRACE(socket, request, remainingPath); break;
+        case Method::OPTIONS: doOPTIONS(socket, request, remainingPath); break;
+        case Method::CONNECT: doCONNECT(socket, request, remainingPath); break;
+        case Method::UNKNOWN: throw Status::Http406; // FIXME Is this the right one
+        }
+    }
+
+
     void AbstractResource::sendFully(int socket, const char* data, int nbytes) {
         for (int bytesWritten = 0; bytesWritten < nbytes; ) {
             int n = send(socket, data + bytesWritten, nbytes - bytesWritten, MSG_NOSIGNAL);
@@ -23,5 +42,4 @@ namespace org_restfulipc
             bytesWritten += n;
         }
     }
-
 }

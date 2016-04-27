@@ -13,27 +13,22 @@
 
 #include "abstractresource.h"
 #include "notifierresource.h"
+#include "abstractcachingresource.h"
 
 namespace org_restfulipc
 {
-    class GenericResource : public AbstractResource
+    class GenericResource : public AbstractCachingResource
     {
     public:
         typedef std::shared_ptr<GenericResource> ptr;
         GenericResource(const char* doc = "", NotifierResource::ptr notifierResource = 0);
         virtual ~GenericResource();
 
-        virtual void handleRequest(int &socket, int matchedPathLength, HttpMessage& request);
-        virtual void doGet(int socket, HttpMessage& request);
-        virtual void doPatch(int socket, HttpMessage& request);
         void update(const char* data);
 
     private:
-        char _response[8192]; // FIXME
-        char* _respPtr;
-        int _responseLength;
-        std::shared_timed_mutex responseMutex;
         NotifierResource::ptr notifierResource;
+        string doc;
     };
 }
 

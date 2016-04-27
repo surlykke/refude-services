@@ -13,61 +13,39 @@
 #include "map.h"
 #include "abstractresource.h"
 #include "json.h"
-#include "buffer.h"
+#include "abstractcachingresource.h"
 
 namespace org_restfulipc
 {
     using namespace std;
-    class AbstractJsonResource : public AbstractResource
-    {
-    public:
-        AbstractJsonResource();
-        virtual ~AbstractJsonResource();
-        virtual void handleRequest(int &socket, int matchedPathLength,  HttpMessage& request);
 
-    protected:
-        virtual void doGet(int socket, HttpMessage& request);
-
-        virtual void doPatch(int socket, HttpMessage& request);
-        virtual bool responseReady(HttpMessage& request) = 0;
-        virtual void prepareResponse(HttpMessage& request) = 0;
-        virtual Buffer& getResponse(HttpMessage& request) = 0;
-
-        std::shared_timed_mutex responseMutex;
-
-    };
-
-    class JsonResource : public AbstractJsonResource
+    class JsonResource : public AbstractCachingResource
     {
     public:
         typedef std::shared_ptr<JsonResource> ptr;
         JsonResource();
         virtual ~JsonResource();
+        const Json& getJson(); 
         void setJson(Json&& json);
-        bool equal(const Json& json);
-        virtual bool responseReady(HttpMessage& request) { return true; }
-        virtual void prepareResponse(HttpMessage& request) {};
-        virtual Buffer& getResponse(HttpMessage& request) { return buf; }
- 
-    private:
+
+    protected:
+        Buffer buildContent(HttpMessage& request, map<string, string>& headers) override;
         Json json;
-        Buffer buf;
+
     };
 
-    class LocalizedJsonResource : public AbstractJsonResource
+    class LocalizedJsonResource : public AbstractCachingResource
     {
     public:
         typedef std::shared_ptr<LocalizedJsonResource> ptr; 
         LocalizedJsonResource();
         virtual ~LocalizedJsonResource();
+        const Json& getJson(); 
         void setJson(Json&& json);
-        Json json;
 
     protected:
-        virtual bool responseReady(HttpMessage& request);
-        virtual void prepareResponse(HttpMessage& request);
-        virtual Buffer& getResponse(HttpMessage& request);
-        Map<Buffer> localizedResponses; 
+        virtual Buffer buildContent(HttpMessage& request, map<string, string>& headers) override;
+        Json json;
 
     private:
         string getLocaleToServe(const char* acceptLanguageHeader);

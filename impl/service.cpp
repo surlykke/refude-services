@@ -212,18 +212,18 @@ namespace org_restfulipc
                     reader.dumpRequest = dumpRequests;
                     reader.readRequest();
                     AbstractResource::ptr handler; 
-                    uint matchedPathLength;
+                    const char* remainingPath;
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex > -1) {
                         handler = resourceMappings.valueAt(resourceIndex);
-                        matchedPathLength = strlen(request.path);
+                        remainingPath = "";
                     }
                     else { 
                         resourceIndex = prefixMappings.find_longest_prefix(request.path);
                         if (resourceIndex >= 0) {
                             const char* matchedPath = prefixMappings.keyAt(resourceIndex); 
-                            matchedPathLength = strlen(matchedPath);
-                            if (request.path[matchedPathLength] == '\0' || request.path[matchedPathLength] == '/') {
+                            remainingPath = request.path + strlen(matchedPath);
+                            if (remainingPath[0] == '\0' || remainingPath[0] == '/') {
                                 handler = prefixMappings.valueAt(resourceIndex);
                             }
                         }
@@ -233,8 +233,9 @@ namespace org_restfulipc
                         throw Status::Http404;
                     }
                     
-                    
-                    handler->handleRequest(requestSocket, matchedPathLength, request);
+                    std::cout << "Found handler at " << request.path << ", remainingPath: " << remainingPath << "\n";
+                    std::cout << "request.body: " << (long)request.body << "\n";
+                    handler->handleRequest(requestSocket, request, remainingPath);
 
                     if (requestSocket > -1 &&
                         request.header(Header::connection) != 0 &&

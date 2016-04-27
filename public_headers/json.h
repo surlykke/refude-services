@@ -82,6 +82,14 @@ namespace org_restfulipc
         const char* typeAsString(const JsonType type) const;
         bool undefined();
         JsonType type();
+        
+        template<typename Visitor>
+        void each(Visitor visitor)
+        {
+            typeAssert(JsonType::Object, "each(<lambda>)");
+            entries->each(visitor);
+        }
+
     private:
         void typeAssert(JsonType otherType, const char* operationDescFmt, ...) const;
         void deleteChildren();

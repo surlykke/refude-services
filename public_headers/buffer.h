@@ -11,9 +11,26 @@
 
 namespace org_restfulipc
 {
-    struct Buffer
+    /**
+     * Basically a wrapper for char* string. Grows the string as needed
+     * 
+     * Used for medium to huge strings - primarily
+     * serialization of json objects, so we start out with not-so-small 128 bytes, and do 
+     * no short-string optimizations
+     * There is no copy semantics, to make sure we do not accidentically make performance heavy 
+     * copies. To copy a buffer, do:
+     * 
+     *    Buffer buffer;
+     *    Buffer bufferCopy;
+     *    .
+     *    .
+     *    bufferCopy.write(buffer.data());
+     * 
+     */
+    class Buffer
     {
-        Buffer(int initialCapacity = 0);
+    public:
+        Buffer();
         Buffer(Buffer& other) = delete;
         Buffer(Buffer&& other);
 
@@ -21,19 +38,28 @@ namespace org_restfulipc
         Buffer& operator=(Buffer&& other);
 
         ~Buffer();
-        void write(const char* string);
-        void write(char ch);
-        void write(double d);
-        void write(int i); 
-        void ensureCapacity(int numChars);
+        Buffer& write(const char* string);
+        Buffer& write(char ch);
+        Buffer& write(double d);
+        Buffer& write(int i); 
         void clear();
 
-        char* data;
-        int used;
-        int capacity;
-
         bool operator==(Buffer& other);
+
+        const char* data();
+        int size();
+
+    private:
+        void ensureCapacity(int numChars);
+        char* _data;
+        int _size;
+        int _capacity;
+
     };
 
+    Buffer& operator<<(Buffer& buffer, const char* str);
+    Buffer& operator<<(Buffer& buffer, const char ch);
+    Buffer& operator<<(Buffer& buffer, double d);
+    Buffer& operator<<(Buffer& buffer, int i);
 }
 #endif // BUFFER_H

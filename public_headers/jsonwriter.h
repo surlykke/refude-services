@@ -18,7 +18,6 @@ namespace org_restfulipc
 {
     using namespace std;
     class Json;
-    class Buffer;
 
     struct JsonWriter
     {

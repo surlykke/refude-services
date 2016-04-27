@@ -16,7 +16,7 @@ namespace org_restfulipc
 
 
     JsonWriter::JsonWriter(Json& json) :
-        buffer(128)
+        buffer() 
     {
         write(json);
     }
@@ -26,7 +26,7 @@ namespace org_restfulipc
     }
     
     JsonWriter::JsonWriter() :
-        buffer(128)
+        buffer()
     {
     }
 

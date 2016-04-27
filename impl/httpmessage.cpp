@@ -179,7 +179,10 @@ namespace org_restfulipc
         int startOfHeaderValue = -1;
         int endOfHeaderValue = -1;
 
-        while (isTChar(currentChar())) nextChar();
+        while (isTChar(currentChar())) {
+            _message.buffer[_currentPos] = tolower(_message.buffer[_currentPos]);
+            nextChar();
+        }
         if (currentChar() != ':') throw Status::Http400;
         if (_currentPos <= startOfHeaderLine) throw Status::Http400;
         _message.buffer[_currentPos] = '\0';
@@ -276,32 +279,32 @@ namespace org_restfulipc
 
 using namespace org_restfulipc;
 
-std::ostream& operator<<(std::ostream& out, HttpMessage& message)
+Buffer HttpMessage::toBuf()
 {
-    if (message.path) {
-        out << "HTTP " << method2String(message.method) << " ";
-        out << message.path;
-        if (message.queryParameterMap.size() > 0) {
+    Buffer buf;
+    if (path) {
+        buf << "HTTP " << method2String(method) << " " << path;
+        if (queryParameterMap.size() > 0) {
             char separator = '?';
-            for (int i = 0; i < message.queryParameterMap.size(); i++) {
-                for (const char* value : message.queryParameterMap.valueAt(i)) {
-                    cout << separator << message.queryParameterMap.keyAt(i) << "=" << value;
+            for (int i = 0; i < queryParameterMap.size(); i++) {
+                for (const char* value : queryParameterMap.valueAt(i)) {
+                    buf << separator << queryParameterMap.keyAt(i) << "=" << value;
                     separator = '&';
                 }
             }
         }
     }
     else {
-        out << message.status;
+        buf << status;
     }
-    out << "\n";
-    for (int i = 0; i < message.headers.size(); i++) {
-        out << message.headers.keyAt(i) << ": " << message.headers.valueAt(i) << "\n";
+    buf << "\n";
+    for (int i = 0; i < headers.size(); i++) {
+        buf << headers.keyAt(i) << ": " << headers.valueAt(i) << "\n";
     }
-    out << "\n";
-    if (message.body) {
-        out << message.body << "\n";
+    buf << "\n";
+    if (body) {
+        buf << body << "\n";
     }
 
-    return out;
+    return buf;
 }

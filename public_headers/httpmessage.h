@@ -11,6 +11,7 @@
 #include <iostream>
 #include <vector>
 #include "map.h"
+#include "buffer.h"
 #include "httpprotocol.h"
 
 namespace org_restfulipc
@@ -35,6 +36,7 @@ namespace org_restfulipc
         char buffer[8192];
 
         //inline const char* headerValue(Header h) const { return headers[(int) h]; }
+        Buffer toBuf();
     };
 
     class HttpMessageReader
@@ -68,7 +70,7 @@ namespace org_restfulipc
 }
 
 using namespace org_restfulipc;
-std::ostream& operator<<(std::ostream& out, HttpMessage& message);
+std::ostream& operator<<(std::ostream& out, const HttpMessage& message);
 
 #endif    /* HTTPMESSAGE_H */
 
