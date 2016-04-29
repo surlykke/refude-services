@@ -41,6 +41,7 @@ namespace org_restfulipc
         return mType;
     }
 
+
     void Json::deleteChildren()
     {
         if (mType == JsonType::Object){

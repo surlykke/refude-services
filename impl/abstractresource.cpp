@@ -18,7 +18,6 @@ namespace org_restfulipc
 
     void AbstractResource::handleRequest(int& socket, HttpMessage& request, const char* remainingPath)
     {
-        std::cout << "Into AbstractResource::handleRequest, method: " << method2String(request.method) << "\n";
         switch (request.method) 
         {
         case Method::GET:     doGET(socket, request, remainingPath); break;

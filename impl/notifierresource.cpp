@@ -28,7 +28,6 @@ namespace org_restfulipc
         mClientSockets(),
         mMutex()
     {
-        std::cout << "New notifier resource\n";
     }
 
     void NotifierResource::doGET(int& socket, HttpMessage& request, const char* remainingPath)
@@ -54,7 +53,6 @@ namespace org_restfulipc
 
     void NotifierResource::addClient(int socket)
     {
-        std::cout << "Add client\n";
         std::unique_lock<std::mutex> lock(mMutex);
         mClientSockets.push_back(socket);
     }
@@ -86,7 +84,6 @@ namespace org_restfulipc
             std::unique_lock<std::mutex> lock(mMutex);
 
             for (auto it = mClientSockets.begin(); it != mClientSockets.end(); it++) {
-                std::cout << "socket: "  << *it << "\n";
                 try {
                     sendFully(*it, notification, dataLength);
                 }

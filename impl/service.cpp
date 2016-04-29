@@ -233,8 +233,6 @@ namespace org_restfulipc
                         throw Status::Http404;
                     }
                     
-                    std::cout << "Found handler at " << request.path << ", remainingPath: " << remainingPath << "\n";
-                    std::cout << "request.body: " << (long)request.body << "\n";
                     handler->handleRequest(requestSocket, request, remainingPath);
 
                     if (requestSocket > -1 &&

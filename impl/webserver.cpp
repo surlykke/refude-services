@@ -92,7 +92,6 @@ namespace org_restfulipc
     }
     void WebServer::doGET(int& socket, HttpMessage& request, const char* remainingPath)
     {
-        std::cout << "Into WebServer::doGET\n";
         PathMimetypePair pair = findFile(request, remainingPath);
         FileWriter(socket, rootFd, pair.path, pair.mimetype).writeFile();
     }
