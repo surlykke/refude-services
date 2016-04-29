@@ -14,12 +14,10 @@ namespace org_restfulipc
 
     void AbstractCachingResource::doGET(int& socket, HttpMessage& request, const char* remainingPath)
     {
-        std::cout << "AbstractCachingResource::doGET\n";
         Buffer requestSignature = getSignature(request, remainingPath);
         if (cache.find(requestSignature.data()) < 0) {
-            std::cout << "Not in cache, building...\n";
             map<string, string> additionalHeaders;
-            Buffer content = buildContent(request, additionalHeaders);
+            Buffer content = buildContent(request, remainingPath, additionalHeaders);
 
             Buffer& response = cache[requestSignature.data()];
             response.write("HTTP/1.1 200 OK\r\n"
@@ -36,7 +34,6 @@ namespace org_restfulipc
             response.write(content.data());
         }
         Buffer& resp = cache[requestSignature.data()];
-        std::cout << "Sending: " << resp.data() << "\n";
         sendFully(socket, resp.data(), resp.size());
     }
 

@@ -18,7 +18,7 @@ namespace org_restfulipc
         virtual void doGET(int& socket, HttpMessage& request, const char* remainingPath) override;
 
     protected:
-        virtual Buffer buildContent(HttpMessage& request, map<string, string>& headers) = 0;
+        virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers) = 0;
         Buffer getSignature(HttpMessage& request, const char* remainingPath);
         void clearCache();
 

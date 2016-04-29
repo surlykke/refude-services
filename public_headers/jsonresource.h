@@ -29,7 +29,7 @@ namespace org_restfulipc
         void setJson(Json&& json);
 
     protected:
-        Buffer buildContent(HttpMessage& request, map<string, string>& headers) override;
+        Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers) override;
         Json json;
 
     };
@@ -44,7 +44,7 @@ namespace org_restfulipc
         void setJson(Json&& json);
 
     protected:
-        virtual Buffer buildContent(HttpMessage& request, map<string, string>& headers) override;
+        virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers) override;
         Json json;
 
     private:
