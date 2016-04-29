@@ -23,7 +23,10 @@ namespace org_restfulipc
         void buildResources();
         void mapResources(DesktopService& desktopService);
 
-        Json themes;
+        Json themesJson;
+        Map<Json> themeJsonMap;
+        Json inheritance;
+        Json icons;
         Json usrSharePixmapsIcons;
     };
 

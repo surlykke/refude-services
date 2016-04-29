@@ -65,7 +65,7 @@ namespace org_restfulipc
             }
             string typeName = tmp[0];
             string subtypeName = tmp[1];
-            string url = string("/mimetype/") + mimetype;
+            string url = string("/mimetypes/") + mimetype;
             Json& json = jsons[url];
             json << subtypeTemplate_json;
             json["type"] = typeName;
@@ -128,7 +128,7 @@ namespace org_restfulipc
     void MimeResourceBuilder::addAssociationsAndDefaults(const AppSets& associations, const AppLists& defaults)
     {
         for (auto& p : associations) {
-            string url = string("/mimetype/") + p.first;
+            string url = string("/mimetypes/") + p.first;
             if (jsons.find(url.data()) > 0) {
                 for (const string& entryId : p.second) {
                     jsons[url]["associatedApplications"].append(entryId);
@@ -138,7 +138,7 @@ namespace org_restfulipc
 
         for (const auto& it : defaults) {
             if (it.second.size() > 0) {
-                string url = "/mimetype/" + it.first;
+                string url = "/mimetypes/" + it.first;
                 if (jsons.find(url.data()) >= 0) {
                     jsons[url]["defaultApplication"] = it.second[0];
                 }
@@ -148,16 +148,16 @@ namespace org_restfulipc
 
     void MimeResourceBuilder::mapResources(Service& service, NotifierResource::ptr notifier)
     {
-        for (const char* url : service.resourceMappings.keys("/mimetype/")) {
+        for (const char* url : service.resourceMappings.keys("/mimetypes/")) {
             if (jsons.find(url) < 0) {
-                const char* mimetype = url + strlen("/mimetype/");
+                const char* mimetype = url + strlen("/mimetypes/");
                 service.unMap(url);
                 notifier->notifyClients("mimetype-removed", mimetype);
             }
         }
 
         for (const char* url : jsons.keys()) {
-            const char* mimetype = url + strlen("/mimetype/");
+            const char* mimetype = url + strlen("/mimetypes/");
             MimetypeResource::ptr res = dynamic_pointer_cast<MimetypeResource>(service.mapping(url));
             if (res) {
                 if (res->getJson() != jsons[url]) {

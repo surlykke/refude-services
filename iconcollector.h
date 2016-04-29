@@ -11,9 +11,13 @@
 #include <limits.h>
 #include <string>
 
+#include <ripc/json.h>
+
 #include "icontheme.h"
+
 struct __dirstream;
 typedef struct __dirstream DIR;
+
 namespace org_restfulipc
 {
     using namespace std;

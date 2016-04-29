@@ -26,15 +26,12 @@ namespace org_restfulipc
     }
     void MimetypeResource::doPATCH(int& socket, HttpMessage& request, const char* remainingPath)
     {
-        std::cout << "Patching, request:\n" << request.toBuf().data() << "\n";
         static const char* successfulResponse =
             "HTTP/1.1 204 No Content\r\n"
             "\r\n";
 
         Json mergeJson;
-        std::cout << "Body: " << (long)request.body << "\n";
         mergeJson << request.body;
-        std::cout << "MergeJson:\n" << JsonWriter(mergeJson).buffer.data() << "\n";
         if (mergeJson.type() != JsonType::Object) {
             throw Status::Http406;
         }

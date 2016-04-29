@@ -1,8 +1,12 @@
 {
     "_ripc:locales": {},
+    "_links" : {
+        "self" : {
+            "href" : "FIXME"
+        }
+    },
     "Name" : { "_ripc:localized" : true },
     "Comment" : { "_ripc:localized" : true },
     "Icons" : {},
-    "Inherits" : [],
     "Hidden" : false
 }

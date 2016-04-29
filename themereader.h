@@ -11,21 +11,23 @@
 #include <magic.h>
 #include <string>
 #include <ripc/json.h>
+#include "inireader.h"
 #include "icontheme.h"
-#include "indexthemereader.h"
 
 namespace org_restfulipc
 {
     using namespace std;
 
-    class ThemeReader
+    class ThemeReader : private IniReader
     {
     public:
-        ThemeReader(Json& theme, const string& dirPath);
+        ThemeReader(Json& theme, Json& icons, const string& dirPath);
         virtual ~ThemeReader();
-        Json& theme;
+        Json& themeJson;
+        Json& icons;
     private:
         void read();
+        bool oneOf(string str, std::list<std::string> list);
         const string& dirPath; 
     };
     

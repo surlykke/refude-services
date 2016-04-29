@@ -1,10 +1,13 @@
 {
-    "_ripc:locales": {},
-    "defaultTheme" : "Hicolor",
-    "themes" : {},
+    "defaultTheme" : "hicolor",
+    "themes" : [],
     "_links" : {
         "self" : {
             "href" : "FIXME"
+        },
+        "theme" : {
+            "templated" : true,
+            "href" : "/icons/themes/{themeid}"
         }
     }
 }

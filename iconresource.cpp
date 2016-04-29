@@ -13,10 +13,11 @@
 namespace org_restfulipc 
 {
 
-    IconResource::IconResource(Json&& themes, Json&& usrSharePixmapIcons) : 
+    IconResource::IconResource(Json&& icons, Json&& usrSharePixmapIcons, Json&& inheritance) : 
         WebServer("/"),
-        themes(move(themes)),
-        usrSharePixmapsIcons(move(usrSharePixmapIcons))
+        icons(move(icons)),
+        usrSharePixmapsIcons(move(usrSharePixmapIcons)),
+        inheritance(move(inheritance))
     {
     }
 
@@ -26,7 +27,6 @@ namespace org_restfulipc
 
     PathMimetypePair IconResource::findFile(HttpMessage& request, const char* remainingPath)
     {
-        std::cout << "Into IconResource::findFile\n";
         vector<string> names;
         string themeName;
         int size;
@@ -49,31 +49,26 @@ namespace org_restfulipc
             size = 32; // FIXME
         }
 
-        std::cout << "names: ";
-        for (const string& name : request.queryParameterMap["name"]) {
-            std::cout << name << " ";
-        }
-        std::cout << "\n";
-
-        while (! themeName.empty()) {
-            std::cout << "Looking at theme " << themeName << "\n";
-            if (! themes.contains(themeName)) {
+        for(;;) {
+            if (! icons.contains(themeName)) {
                 std::cerr << "No theme '" << themeName << "'\n";
                 throw Status::Http404;
             }
 
-            Json& theme = themes[themeName];
+            Json& themeIcons = icons[themeName];
             for (const string& name : request.queryParameterMap["name"]) {
-                if (theme["Icons"].contains(name)) {
-                    Json* icon =  findPathOfClosest(theme["Icons"][name], size);
+                if (themeIcons.contains(name)) {
+                    Json* icon =  findPathOfClosest(themeIcons[name], size);
                     if (icon) {
-                        std::cout << "Found icon: " << JsonWriter(*icon).buffer.data() << "\n";
                         return {(*icon)["path"], (*icon)["mimetype"]};
                     }
                 }
             }
 
-            themeName = parent(themeName);
+            if (! inheritance.contains(themeName)) {
+                break;
+            }
+            themeName = (const char*)inheritance[themeName];
         }
 
         // So no icons in theme or it's ancestors. We look for an icon in

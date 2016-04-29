@@ -1,10 +1,10 @@
 /*
-* Copyright (c) 2015, 2016 Christian Surlykke
-*
-* This file is part of the refude-services project. 
-* It is distributed under the GPL v2 license.
-* Please refer to the LICENSE file for a copy of the license.
-*/
+ * Copyright (c) 2015, 2016 Christian Surlykke
+ *
+ * This file is part of the refude-services project. 
+ * It is distributed under the GPL v2 license.
+ * Please refer to the LICENSE file for a copy of the license.
+ */
 #include <ripc/utils.h>
 #include <ripc/jsonwriter.h>
 
@@ -22,7 +22,9 @@ namespace org_restfulipc
 
     IconResourceBuilder::IconResourceBuilder()
     {
-        themes << themesTemplate_json;
+        themesJson << themesTemplate_json;
+        inheritance = JsonConst::EmptyObject;
+        icons = JsonConst::EmptyObject;
     }
 
     IconResourceBuilder::~IconResourceBuilder()
@@ -40,10 +42,19 @@ namespace org_restfulipc
 
         for (string iconsDir : iconsDirs) {
             for (string themeDir : subdirectories(iconsDir)) {
-                if (!themes.contains(themeDir)) {
-                    themes[themeDir] << themeTemplate_json;
+                Json& themeJson = themeJsonMap[themeDir]; 
+                if (themeJson.undefined()) {
+                    themeJson << themeTemplate_json;
                 }
-                ThemeReader(themes[themeDir], iconsDir + '/' + themeDir);
+                ThemeReader(themeJson, icons[themeDir], iconsDir + '/' + themeDir);
+                if (themeDir != "hicolor") {
+                    if (themeJson.contains("Inherits")) {
+                        inheritance[themeDir] = (const char*) themeJson["Inherits"];
+                    }
+                    else {
+                        inheritance[themeDir] = "hicolor";
+                    }
+                }
             }
         }
 
@@ -53,8 +64,25 @@ namespace org_restfulipc
 
     void IconResourceBuilder::mapResources(DesktopService& desktopService)
     {
-        IconResource::ptr iconResource = make_shared<IconResource>(move(themes), move(usrSharePixmapsIcons));
-        desktopService.map("/themeicon", iconResource);
+        IconResource::ptr iconResource = 
+            make_shared<IconResource>(move(icons), move(usrSharePixmapsIcons), move(inheritance));
+        desktopService.map("/icons/icon", iconResource);
+
+        themeJsonMap.each([&desktopService, this](const char* themeDirName, Json& themeJson){
+            themesJson["themes"].append(themeDirName);
+            string selfUri = string("/icons/themes/") + themeDirName;
+            themeJson["_links"]["self"]["href"] = selfUri;
+            LocalizedJsonResource::ptr themeResource = make_shared<LocalizedJsonResource>();
+            themeResource->setJson(move(themeJson));
+            desktopService.map(selfUri.data(), themeResource);
+        });
+
+        const char* themesSelfUri = "/icons/themes";
+        themesJson["_links"]["self"]["href"] = themesSelfUri;
+        JsonResource::ptr themesResource = make_shared<JsonResource>();
+        themesResource->setJson(move(themesJson));
+        desktopService.map(themesSelfUri, themesResource);
+
     }
 
 }
