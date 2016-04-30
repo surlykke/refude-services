@@ -166,6 +166,16 @@ namespace org_restfulipc
             }
         }
 
+        bool contains(const char* key) 
+        {
+            return find(key) > -1;
+        }
+
+        bool contains(string key) 
+        {
+            return find(key.data()) > -1;
+        }
+
         int find_longest_prefix(const char* key)
         {
             bool found;
