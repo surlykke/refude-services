@@ -10,7 +10,7 @@
 #define ICONRESOURCEBUILDER_H
 #include "desktopservice.h"
 #include "icontheme.h"
-
+#include "iconresource.h"
 
 namespace org_restfulipc 
 {
@@ -25,10 +25,11 @@ namespace org_restfulipc
 
         Json themesJson;
         Map<Json> themeJsonMap;
-        Json inheritance;
-        Json icons;
-        Json usrSharePixmapsIcons;
-    };
+
+        ThemeIconMap themeIconMap;
+        IconMap usrSharePixmapsIcons;
+        InheritanceMap  inheritanceMap;
+   };
 
 }
 #endif /* ICONRESOURCEBUILDER_H */

@@ -13,16 +13,15 @@
 #include <ripc/json.h>
 #include <ripc/webserver.h>
 
-#include "icontheme.h"
+#include "types.h"
 
 namespace org_restfulipc
 {
-    using namespace std;
     class IconResource : public WebServer
     {
     public:
         typedef std::shared_ptr<IconResource> ptr;
-        IconResource(Json&& icons, Json&& usrSharePixmapIcons, Json&& inheritance);
+        IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap);
         virtual ~IconResource();
         virtual PathMimetypePair findFile(HttpMessage& request, const char* remainingPath) override;
 
@@ -30,9 +29,9 @@ namespace org_restfulipc
         Json* findPathOfClosest(Json& iconList, int size);
         string parent(string themeName);
         
-        Json icons;
-        Json usrSharePixmapsIcons;
-        Json inheritance;
+        ThemeIconMap themeIconMap;
+        IconMap usrSharePixmapsIcons;
+        InheritanceMap inheritanceMap;
     };
 }
 #endif /* ICONRESOURCE_H */

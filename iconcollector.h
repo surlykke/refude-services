@@ -13,7 +13,7 @@
 
 #include <ripc/json.h>
 
-#include "icontheme.h"
+#include "types.h"
 
 struct __dirstream;
 typedef struct __dirstream DIR;
@@ -24,11 +24,17 @@ namespace org_restfulipc
     
     struct IconCollector
     {
-        IconCollector(string directoryPath);
+        IconCollector(string directoryPath, double minSize, double maxSize, string context);
         virtual ~IconCollector();
-        Json collectedIcons;
+        void collectInto(IconMap& iconMap);
+    
+    private: 
+        string directoryPath;
         DIR* dir;
         char buffer[PATH_MAX];
+        double minSize;
+        double maxSize;
+        string context;
     };
 
 }

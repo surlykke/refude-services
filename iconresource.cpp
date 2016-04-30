@@ -12,12 +12,11 @@
 #include "iconresource.h"
 namespace org_restfulipc 
 {
-
-    IconResource::IconResource(Json&& icons, Json&& usrSharePixmapIcons, Json&& inheritance) : 
+    IconResource::IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap):
         WebServer("/"),
-        icons(move(icons)),
+        themeIconMap(move(themeIconMap)),
         usrSharePixmapsIcons(move(usrSharePixmapIcons)),
-        inheritance(move(inheritance))
+        inheritanceMap(move(inheritanceMap))
     {
     }
 
@@ -41,6 +40,11 @@ namespace org_restfulipc
         else {
             themeName = "oxygen"; // FIXME
         }
+
+        if (! themeIconMap.contains(themeName)) {
+            std::cerr << "No theme '" << themeName << "'\n";
+            throw Status::Http404;
+        }
         
         if (request.queryParameterMap["size"].size() == 1) {
             size = stoi(request.queryParameterMap["size"][0]);
@@ -49,30 +53,20 @@ namespace org_restfulipc
             size = 32; // FIXME
         }
 
-        for(;;) {
-            if (! icons.contains(themeName)) {
-                std::cerr << "No theme '" << themeName << "'\n";
-                throw Status::Http404;
-            }
-
-            Json& themeIcons = icons[themeName];
+        for(string& name = themeName; !name.empty() ; name = inheritanceMap[name]) {
+            IconMap& iconMap = themeIconMap[name];
             for (const string& name : request.queryParameterMap["name"]) {
-                if (themeIcons.contains(name)) {
-                    Json* icon =  findPathOfClosest(themeIcons[name], size);
+                if (iconMap.contains(name)) {
+                    Json* icon =  findPathOfClosest(iconMap[name], size);
                     if (icon) {
                         return {(*icon)["path"], (*icon)["mimetype"]};
                     }
                 }
             }
-
-            if (! inheritance.contains(themeName)) {
-                break;
-            }
-            themeName = (const char*)inheritance[themeName];
         }
 
         // So no icons in theme or it's ancestors. We look for an icon in
-        // /usr/share/pixmaps, where some applicationicons can be found
+        // /usr/share/pixmaps, where some application icons can be found
         for (const string& name : request.queryParameterMap["name"]) {
             if (usrSharePixmapsIcons.contains(name)) {
                 return {usrSharePixmapsIcons[name]["path"], usrSharePixmapsIcons[name]["mimetype"]};

@@ -9,7 +9,6 @@
 #include <ripc/jsonwriter.h>
 
 #include "themereader.h"
-#include "iconresource.h"
 #include "desktopservice.h"
 #include "iconcollector.h"
 #include "themeTemplate.h"
@@ -23,8 +22,6 @@ namespace org_restfulipc
     IconResourceBuilder::IconResourceBuilder()
     {
         themesJson << themesTemplate_json;
-        inheritance = JsonConst::EmptyObject;
-        icons = JsonConst::EmptyObject;
     }
 
     IconResourceBuilder::~IconResourceBuilder()
@@ -46,26 +43,25 @@ namespace org_restfulipc
                 if (themeJson.undefined()) {
                     themeJson << themeTemplate_json;
                 }
-                ThemeReader(themeJson, icons[themeDir], iconsDir + '/' + themeDir);
+                ThemeReader(themeJson, themeIconMap[themeDir], iconsDir + '/' + themeDir);
                 if (themeDir != "hicolor") {
                     if (themeJson.contains("Inherits")) {
-                        inheritance[themeDir] = (const char*) themeJson["Inherits"];
+                        inheritanceMap[themeDir] = (const char*) themeJson["Inherits"];
                     }
                     else {
-                        inheritance[themeDir] = "hicolor";
+                        inheritanceMap[themeDir] = "hicolor";
                     }
                 }
             }
         }
 
-        IconCollector iconCollector("/usr/share/pixmaps");
-        usrSharePixmapsIcons = move(iconCollector.collectedIcons);
+        IconCollector("/usr/share/pixmaps", 0, 0, "").collectInto(usrSharePixmapsIcons);
     }
 
     void IconResourceBuilder::mapResources(DesktopService& desktopService)
     {
         IconResource::ptr iconResource = 
-            make_shared<IconResource>(move(icons), move(usrSharePixmapsIcons), move(inheritance));
+            make_shared<IconResource>(move(themeIconMap), move(usrSharePixmapsIcons), move(inheritanceMap));
         desktopService.map("/icons/icon", iconResource);
 
         themeJsonMap.each([&desktopService, this](const char* themeDirName, Json& themeJson){
@@ -82,7 +78,6 @@ namespace org_restfulipc
         JsonResource::ptr themesResource = make_shared<JsonResource>();
         themesResource->setJson(move(themesJson));
         desktopService.map(themesSelfUri, themesResource);
-
     }
 
 }

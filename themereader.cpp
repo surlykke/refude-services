@@ -12,13 +12,14 @@
 #include "iconcollector.h"
 
 #include "themereader.h"
+#include "iconresource.h"
 namespace org_restfulipc
 {
 
-    ThemeReader::ThemeReader(Json& theme, Json& icons, const string& dirPath) :
+    ThemeReader::ThemeReader(Json& theme, IconMap& iconMap, const string& dirPath) :
         IniReader(dirPath + "/index.theme"),
         themeJson(theme),
-        icons(icons),
+        iconMap(iconMap),
         dirPath(dirPath)
     {
         read();
@@ -101,22 +102,7 @@ namespace org_restfulipc
                     maxSize = size + threshold;
                 }
 
-                if (icons.undefined()) {
-                    icons = JsonConst::EmptyObject;
-                }
-
-                IconCollector iconCollector(dirPath + '/' + heading);
-                iconCollector.collectedIcons.each([&](const char* iconName, Json & icon) {
-                    icon["minSize"] = minSize;
-                    icon["maxSize"] = maxSize;
-                    if (!context.empty()) {
-                        icon["Context"] = context;
-                    }
-                    if (! icons.contains(iconName)) {
-                        icons[iconName] = JsonConst::EmptyArray;
-                    }
-                    icons[iconName].append(move(icon));
-                });
+                IconCollector(dirPath + '/' + heading, minSize, maxSize, context).collectInto(iconMap);
             }
             else {
                 throw RuntimeError("Directory group '%' not listed in 'Directories'");

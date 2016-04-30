@@ -17,10 +17,26 @@
 namespace org_restfulipc
 {
 
-    IconCollector::IconCollector(string directoryPath) : 
-        collectedIcons(JsonConst::EmptyObject)
+    IconCollector::IconCollector(string directoryPath, double minSize, double maxSize, string context) :
+        directoryPath(directoryPath),
+        minSize(minSize),
+        maxSize(maxSize),
+        context(context)
     {
         dir = opendir(directoryPath.data());
+    }
+
+
+
+    IconCollector::~IconCollector()
+    {
+        if (dir) {
+            closedir(dir);
+        }
+    }
+
+    void IconCollector::collectInto(IconMap& iconMap)
+    {
         if (dir == NULL) {
             return;
         }
@@ -70,20 +86,18 @@ namespace org_restfulipc
                     continue;
                 }
 
+                if (! context.empty()) {
+                    instance["context"] = context;
+                }
                 instance["path"] = filePath;
-                instance["maxSize"] = (double)0;
-                instance["minSize"] = (double)0;
+                instance["minSize"] = minSize;
+                instance["maxSize"] = maxSize;
 
-                collectedIcons[iconName] = move(instance);
+                if (iconMap[iconName].undefined()) {
+                    iconMap[iconName] = JsonConst::EmptyArray;
+                }
+                iconMap[iconName].append(move(instance));
             }
         }
     }
-
-    IconCollector::~IconCollector()
-    {
-        if (dir) {
-            closedir(dir);
-        }
-    }
-
 }
