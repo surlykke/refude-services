@@ -46,6 +46,18 @@ namespace org_restfulipc
         virtual void doOPTIONS(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
         virtual void doCONNECT(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
 
+        /**
+         * Extract acceptable locales from accept-language header as an ordered  list.
+         * As an example, given:
+         *  accept-language: en;q=0.4,en-US;q=0.6,da-DK,da;q=0.8,nb;q=0.2,de;q=0.2
+         * It should return:
+         *    { "da-DK", "da", "en-US", "en", "nb", "de" }
+         * However, no guarantees are given on the ordering of locales with same weight ("nb" and "de" in this case)
+         * @param request
+         * @return 
+         */
+        vector<string> getAcceptedLocales(HttpMessage& request);
+
     protected:
         void sendFully(int socket, const char* data, int nbytes);
     };

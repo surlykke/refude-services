@@ -35,11 +35,12 @@ namespace org_restfulipc
     void HttpMessage::clear()
     {
         method = Method::UNKNOWN;
+        status = 0;
         path = 0;
         queryParameterMap.clear();
         headers.clear();
-        body = 0;
         contentLength = 0;
+        body = 0;
     }
 
     HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message, bool dumpRequest) :
@@ -73,6 +74,14 @@ namespace org_restfulipc
                 readBody();
             }
         }
+    }
+
+    void HttpMessageReader::clear()
+    {
+        _message.clear();
+
+        _bufferEnd = 0;
+        _currentPos = -1;
     }
 
     void HttpMessageReader::readRequestLine()
@@ -255,13 +264,6 @@ namespace org_restfulipc
 
     }
 
-    void HttpMessageReader::clear()
-    {
-        _message.clear();
-
-        _bufferEnd = 0;
-        _currentPos = -1;
-    }
 
 }
 

@@ -166,6 +166,11 @@ namespace org_restfulipc
             }
         }
 
+        int find(string key) 
+        {
+            return find(key.data());
+        }
+
         bool contains(const char* key) 
         {
             return find(key) > -1;

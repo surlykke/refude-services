@@ -36,14 +36,14 @@ namespace org_restfulipc
 
     struct LocalizingJsonWriter : public JsonWriter
     {
-        LocalizingJsonWriter(Json& json, string locale, const char* lastResort = "");
+        LocalizingJsonWriter(Json& json, vector<string> acceptableLocales);
         virtual ~LocalizingJsonWriter();
     
     protected:
         void writeObject(Json& json) override;
     
     private:
-        const string locale;
+        string locale;
         const char* lastResort;
     };
 

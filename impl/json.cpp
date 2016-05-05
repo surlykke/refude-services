@@ -269,7 +269,7 @@ namespace org_restfulipc
             return entries->size();
         }
         else {
-            throw RuntimeError("size() can only be called on Objects or Arrays");
+            throw RuntimeError("size() called on %s - it can only be called on Objects or Arrays", typeAsString());
         }
     }
 

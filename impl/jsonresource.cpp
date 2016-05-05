@@ -67,11 +67,12 @@ namespace org_restfulipc
 
     Buffer LocalizedJsonResource::buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers)
     {
-        string locale = getLocaleToServe(request.header(Header::accept_language));
-        return LocalizingJsonWriter(json, locale).buffer;
+        return LocalizingJsonWriter(json, getAcceptedLocales(request)).buffer;
     }
- 
 
+    
+     
+   
     string LocalizedJsonResource::getLocaleToServe(const char* acceptLanguageHeader)
     {
         if (!acceptLanguageHeader) {

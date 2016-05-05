@@ -18,24 +18,23 @@ namespace org_restfulipc
 {
     struct HttpMessage
     {
-        HttpMessage();
-        virtual ~HttpMessage();
-        void clear();
-
         Method method;
-        char* path;
-        vector<const char*> queryParameters(const char* parameterName);
-        Map<vector<const char*>, false> queryParameterMap;
         int status;
-
-        const char* header(const char* headerName);
+        char* path;
         Map<const char*, false> headers;
-        char* body;
+        Map<vector<const char*>, false> queryParameterMap;
         int contentLength;
+        char* body;
         
         char buffer[8192];
 
-        //inline const char* headerValue(Header h) const { return headers[(int) h]; }
+
+        HttpMessage();
+        virtual ~HttpMessage();
+        const char* header(const char* headerName);
+        vector<const char*> queryParameters(const char* parameterName);
+        void clear();
+        
         Buffer toBuf();
     };
 
@@ -46,6 +45,8 @@ namespace org_restfulipc
         void readRequest();
         void readResponse();
         bool dumpRequest; 
+        void clear();
+        void receive();
 
     private:
         void readRequestLine();
@@ -58,9 +59,7 @@ namespace org_restfulipc
         char currentChar();
         char nextChar();
         bool isTChar(char c);
-        void receive();
 
-        void clear();
 
         int _socket;
         HttpMessage& _message;

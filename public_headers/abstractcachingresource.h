@@ -1,6 +1,7 @@
 
 #ifndef ABSTRACTCACHINGRESOURCE_H
 #define ABSTRACTCACHINGRESOURCE_H
+#include <mutex>
 
 #include "buffer.h"
 
@@ -8,7 +9,7 @@
 
 namespace org_restfulipc
 {
-
+    using namespace std;
     class AbstractCachingResource : public AbstractResource
     {
     public:
@@ -22,6 +23,9 @@ namespace org_restfulipc
         Buffer getSignature(HttpMessage& request, const char* remainingPath);
         void clearCache();
 
+    protected:
+        recursive_mutex m;
+    
     private:
         Map<Buffer> cache;
         

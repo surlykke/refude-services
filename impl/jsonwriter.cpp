@@ -89,12 +89,25 @@ namespace org_restfulipc
         buffer.write('"');
     }
 
-    LocalizingJsonWriter::LocalizingJsonWriter(Json& json, string locale, const char* lastResort) :
+    LocalizingJsonWriter::LocalizingJsonWriter(Json& json, vector<string> acceptableLocales):
         JsonWriter(),
-        locale(locale),
+        locale(""),
         lastResort(lastResort)
-            
     {
+        if (json.type() != JsonType::Object || 
+            !json.contains("_ripc:locales") || 
+            json["_ripc:locales"].type() != JsonType::Object) {
+            throw RuntimeError("LocalizingJsonWriter must be given a json that is an object, "
+                               "and contains (at top level) an object keyed '_ripc:locales', "
+                               "containing the locales");
+        }
+        Json& locales = json["_ripc:locales"];
+        for (auto& acceptableLocale : acceptableLocales) {
+            if (locales.contains(acceptableLocale)) {
+                locale = acceptableLocale;
+                break;
+            }
+        }
         write(json);
     }
 
@@ -112,7 +125,9 @@ namespace org_restfulipc
                 write(json[""]);
             }
             else {
-                writeString(lastResort);
+                buffer.write("\"### No translateion for locale '");
+                buffer.write(locale.data());
+                buffer.write("'\"");
             }
         }
         else {

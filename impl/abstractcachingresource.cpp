@@ -1,3 +1,5 @@
+#include <shared_mutex>
+
 #include "abstractcachingresource.h"
 
 namespace org_restfulipc
@@ -14,11 +16,12 @@ namespace org_restfulipc
 
     void AbstractCachingResource::doGET(int& socket, HttpMessage& request, const char* remainingPath)
     {
+        std::unique_lock<recursive_mutex> lock(m);
+    
         Buffer requestSignature = getSignature(request, remainingPath);
-        if (cache.find(requestSignature.data()) < 0) {
+        if (!cache.contains(requestSignature.data())) {
             map<string, string> additionalHeaders;
             Buffer content = buildContent(request, remainingPath, additionalHeaders);
-
             Buffer& response = cache[requestSignature.data()];
             response.write("HTTP/1.1 200 OK\r\n"
                            "Content-Type: application/json; charset=UTF-8\r\n");
@@ -32,9 +35,9 @@ namespace org_restfulipc
             response.write(content.size());
             response.write("\r\n\r\n");
             response.write(content.data());
-        }
-        Buffer& resp = cache[requestSignature.data()];
-        sendFully(socket, resp.data(), resp.size());
+        } 
+        Buffer& response = cache[requestSignature.data()];
+        sendFully(socket, response.data(), response.size());
     }
 
     Buffer AbstractCachingResource::getSignature(HttpMessage& request, const char* remainingPath)
@@ -64,6 +67,7 @@ namespace org_restfulipc
 
     void AbstractCachingResource::clearCache()
     {
+        unique_lock<recursive_mutex> lock(m);
         cache.clear();
     }
 

@@ -226,6 +226,9 @@ namespace org_restfulipc
                             if (remainingPath[0] == '\0' || remainingPath[0] == '/') {
                                 handler = prefixMappings.valueAt(resourceIndex);
                             }
+                            if (remainingPath[0] == '/') {
+                                remainingPath++;
+                            }
                         }
                     }
 
@@ -249,12 +252,16 @@ namespace org_restfulipc
                     requestSocket = -1;
                 }
                 catch (C_Error c_Error) {
-                    if (c_Error.errorNumber) { // We can get here with errorNumber == 0 if it's 
-                                               // a 'benign' error - i.e. connection timed out
+                    if (c_Error.errorNumber != 0 &&
+                        c_Error.errorNumber != EAGAIN &&
+                        c_Error.errorNumber != EWOULDBLOCK) {
                        std::cerr << "Worker caught RuntimeError: " << c_Error.what() << "\n";
                         c_Error.printStackTrace();
+                        std::cerr << "\n";
                     }
                     else {
+                        // We can get here 'benign' error - i.e. connection timed out, peer closed 
+                        // or some such
                     }
                     close(requestSocket);
                     requestSocket = -1;
@@ -264,6 +271,7 @@ namespace org_restfulipc
                     requestSocket = -1;
                     std::cerr << "Worker caught RuntimeError: " << runtimeError.what() << "\n";
                     runtimeError.printStackTrace();
+                    std::cerr << "\n";
                 }
             }
             while (requestSocket > -1);
