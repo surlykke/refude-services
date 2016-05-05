@@ -20,4 +20,4 @@ foreach (JSON_TEMPLATE ${JSON_TEMPLATES})
 endforeach (JSON_TEMPLATE) 
 
 add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
-target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic)
+target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl)

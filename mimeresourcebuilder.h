@@ -27,8 +27,8 @@ namespace org_restfulipc
         void mapResources(Service& service, NotifierResource::ptr notifier);
     
     private:
-        Json root;
-        Map<Json> jsons;
+        Json rootJson;
+        Map<Json> mimetypeJsons;
     };
 }
 #endif /* MIMERESOURCEBUILDER_H */

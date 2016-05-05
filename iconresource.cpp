@@ -69,7 +69,10 @@ namespace org_restfulipc
         // /usr/share/pixmaps, where some application icons can be found
         for (const string& name : request.queryParameterMap["name"]) {
             if (usrSharePixmapsIcons.contains(name)) {
-                return {usrSharePixmapsIcons[name]["path"], usrSharePixmapsIcons[name]["mimetype"]};
+                Json* icon =  findPathOfClosest(usrSharePixmapsIcons[name], size);
+                if (icon) {
+                    return {(*icon)["path"], (*icon)["mimetype"]};
+                }
             }
         }
 
@@ -101,7 +104,6 @@ namespace org_restfulipc
                 bestDistanceSoFar = distance;
             }
         }
-        
         return candidate;
     }
 

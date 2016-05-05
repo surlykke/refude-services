@@ -19,8 +19,8 @@ using namespace tinyxml2;
 namespace org_restfulipc 
 {
     MimeResourceBuilder::MimeResourceBuilder() :
-        root(), 
-        jsons()
+        rootJson(), 
+        mimetypeJsons()
     {
     }
 
@@ -45,7 +45,8 @@ namespace org_restfulipc
 
     void MimeResourceBuilder::build()
     {
-        root << rootTemplate_json;
+        std::cout << "MimeResourceBuilder::build()...\n";
+        rootJson << rootTemplate_json;
         
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
@@ -63,19 +64,17 @@ namespace org_restfulipc
                 std::cerr << "Incomprehensible mimetype: " << mimetype;
                 continue;
             }
-            string typeName = tmp[0];
-            string subtypeName = tmp[1];
-            string url = string("/mimetypes/") + mimetype;
-            Json& json = jsons[url];
+            string& typeName = tmp[0];
+            string& subtypeName = tmp[1];
+            Json& json = mimetypeJsons[mimetype];
             json << subtypeTemplate_json;
             json["type"] = typeName;
             json["subtype"] = subtypeName;
-            json["_links"]["self"]["href"] = url;
 
-            if (root["mimetypes"][typeName].undefined()) {
-                root["mimetypes"][typeName] = JsonConst::EmptyArray;
+            if (rootJson["mimetypes"][typeName].undefined()) {
+                rootJson["mimetypes"][typeName] = JsonConst::EmptyArray;
             }
-            root["mimetypes"][typeName].append(subtypeName);
+            rootJson["mimetypes"][typeName].append(subtypeName);
  
             if (mimetypeElement->FirstChildElement("comment")) {
                 handleLocalizedXmlElement(mimetypeElement, "comment", json);
@@ -128,19 +127,17 @@ namespace org_restfulipc
     void MimeResourceBuilder::addAssociationsAndDefaults(const AppSets& associations, const AppLists& defaults)
     {
         for (auto& p : associations) {
-            string url = string("/mimetypes/") + p.first;
-            if (jsons.find(url.data()) > 0) {
+            if (mimetypeJsons.contains(p.first)) {
                 for (const string& entryId : p.second) {
-                    jsons[url]["associatedApplications"].append(entryId);
+                    mimetypeJsons[p.first]["associatedApplications"].append(entryId);
                 }
             }
         }
 
         for (const auto& it : defaults) {
             if (it.second.size() > 0) {
-                string url = "/mimetypes/" + it.first;
-                if (jsons.find(url.data()) >= 0) {
-                    jsons[url]["defaultApplication"] = it.second[0];
+                if (mimetypeJsons.contains(it.first)) {
+                    mimetypeJsons[it.first]["defaultApplication"] = it.second[0];
                 }
             }
         }
@@ -148,44 +145,18 @@ namespace org_restfulipc
 
     void MimeResourceBuilder::mapResources(Service& service, NotifierResource::ptr notifier)
     {
-        for (const char* url : service.resourceMappings.keys("/mimetypes/")) {
-            if (jsons.find(url) < 0) {
-                const char* mimetype = url + strlen("/mimetypes/");
-                service.unMap(url);
-                notifier->notifyClients("mimetype-removed", mimetype);
-            }
-        }
+        std::cout << "MimeResourceBuilder::mapResources()...\n";
 
-        for (const char* url : jsons.keys()) {
-            const char* mimetype = url + strlen("/mimetypes/");
-            MimetypeResource::ptr res = dynamic_pointer_cast<MimetypeResource>(service.mapping(url));
-            if (res) {
-                if (res->getJson() != jsons[url]) {
-                    res->setJson(move(jsons[url]));
-                    notifier->notifyClients("mimetype-updated", mimetype);
-                }
-            }
-            else {
-                res = make_shared<MimetypeResource>();
-                res->setJson(move(jsons[url]));
-                service.map(url, res);
-                notifier->notifyClients("mimetype-added", mimetype);
-            }
-        }
-
-        JsonResource::ptr rootResource = dynamic_pointer_cast<JsonResource>(service.mapping("/mimetypes"));
-        if (rootResource) {
-            if (rootResource->getJson() != root) {
-                rootResource->setJson(move(root));
-                notifier->notifyClients("mimetypelist-updated", "");
-            }
+        MimetypeResource::ptr mimetypeResource = 
+            dynamic_pointer_cast<MimetypeResource>(service.mapping("/mimetypes", true));
+        
+        if (mimetypeResource) {
+            mimetypeResource->setRoot(move(rootJson), notifier);
+            mimetypeResource->setMimetypeJsons(move(mimetypeJsons), notifier);
         }
         else {
-            rootResource = make_shared<JsonResource>();
-            rootResource->setJson(move(root));
-            service.map("/mimetypes", rootResource);
-            notifier->notifyClients("mimetypelist-added", "");
+            mimetypeResource = make_shared<MimetypeResource>(move(rootJson), move(mimetypeJsons));
+            service.map("/mimetypes", mimetypeResource, true);
         }
     }
-
 }
