@@ -19,7 +19,6 @@ using namespace tinyxml2;
 namespace org_restfulipc 
 {
     MimeResourceBuilder::MimeResourceBuilder() :
-        rootJson(), 
         mimetypeJsons()
     {
     }
@@ -46,7 +45,6 @@ namespace org_restfulipc
     void MimeResourceBuilder::build()
     {
         std::cout << "MimeResourceBuilder::build()...\n";
-        rootJson << rootTemplate_json;
         
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
@@ -71,11 +69,6 @@ namespace org_restfulipc
             json["type"] = typeName;
             json["subtype"] = subtypeName;
 
-            if (rootJson["mimetypes"][typeName].undefined()) {
-                rootJson["mimetypes"][typeName] = JsonConst::EmptyArray;
-            }
-            rootJson["mimetypes"][typeName].append(subtypeName);
- 
             if (mimetypeElement->FirstChildElement("comment")) {
                 handleLocalizedXmlElement(mimetypeElement, "comment", json);
             }
@@ -151,11 +144,10 @@ namespace org_restfulipc
             dynamic_pointer_cast<MimetypeResource>(service.mapping("/mimetypes", true));
         
         if (mimetypeResource) {
-            mimetypeResource->setRoot(move(rootJson), notifier);
             mimetypeResource->setMimetypeJsons(move(mimetypeJsons), notifier);
         }
         else {
-            mimetypeResource = make_shared<MimetypeResource>(move(rootJson), move(mimetypeJsons));
+            mimetypeResource = make_shared<MimetypeResource>(move(mimetypeJsons));
             service.map("/mimetypes", mimetypeResource, true);
         }
     }

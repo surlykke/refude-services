@@ -19,9 +19,8 @@ namespace org_restfulipc
     {
     public:
         typedef std::shared_ptr<MimetypeResource> ptr;
-        MimetypeResource(Json&& rootJson, Map<Json>&& mimetypeJsons);
+        MimetypeResource(Map<Json>&& mimetypeJsons);
         virtual ~MimetypeResource();
-        void setRoot(Json&& root, NotifierResource::ptr notifier);
         void setMimetypeJsons(Map<Json>&& mimetypeJsons, NotifierResource::ptr notifier);
         void doPATCH(int& socket, HttpMessage& request, const char* remainingPath) override;
 
@@ -29,10 +28,11 @@ namespace org_restfulipc
         Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers) override;
 
     private:
+        void add(const char* type, const char* subtype, Json& mimetypes);
         bool match(const vector<const char*>& searchTerms, 
                    Json& mimetypeJson, 
                    const vector<string>& acceptableLocales);
-        Json rootJson;
+        
         Map<Json> mimetypeJsons;
     };
 

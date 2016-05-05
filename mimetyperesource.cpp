@@ -18,30 +18,14 @@
 namespace org_restfulipc
 {
 
-    MimetypeResource::MimetypeResource(Json&& rootJson, Map<Json>&& mimetypeJsons) :
+    MimetypeResource::MimetypeResource(Map<Json>&& mimetypeJsons) :
         AbstractCachingResource(),
-        rootJson(move(rootJson)),
         mimetypeJsons(move(mimetypeJsons))
     {
     }
 
     MimetypeResource::~MimetypeResource()
     {
-    }
-
-    void MimetypeResource::setRoot(Json&& root, NotifierResource::ptr notifier)
-    {
-        bool rootJsonChanged;
-        {
-            unique_lock<recursive_mutex> lock(m);
-            clearCache();
-            rootJsonChanged = (this->rootJson != root);
-            this->rootJson = move(root);
-        }
-
-        if (rootJsonChanged) {
-            notifier->notifyClients("mimetypelist-updated", "");
-        }
     }
 
     void MimetypeResource::setMimetypeJsons(Map<Json>&& mimetypeJsons, NotifierResource::ptr notifier)
@@ -69,9 +53,9 @@ namespace org_restfulipc
             }
             this->mimetypeJsons = move(mimetypeJsons);
         }
-        for (int i = 0; i < affectedMimetypes.size(); i++) {
-            notifier->notifyClients(affectedMimetypes.valueAt(i), affectedMimetypes.keyAt(i));
-        }
+        affectedMimetypes.each([&notifier](const char* key, const char* value) {
+            notifier->notifyClients(value, key);
+        });
     }
 
     /* 
@@ -81,39 +65,33 @@ namespace org_restfulipc
     {
         std::cout << "Into build content, queryParameterMap.size() = " << request.queryParameterMap.size()
             << ", remainingPath: '" << remainingPath << "'\n";
-        if (remainingPath[0] == '\0' || remainingPath[1] == '\0') {
+        if (remainingPath[0] == '\0') {
+            Json mimetypes = JsonConst::EmptyObject;
             if (request.queryParameterMap.size() == 0) {
-                Buffer buffer = JsonWriter(rootJson).buffer;
-                return buffer;
+                mimetypeJsons.each([&](const char* key, Json & value)
+                {
+                    add(value["type"], value["subtype"], mimetypes);
+                });
+            }
+            else if (request.queryParameterMap.size() == 1 &&
+                     request.queryParameterMap.contains("search")) {
+                const vector<const char*>& terms = request.queryParameterMap["search"];
+                vector<string> locales = getAcceptedLocales(request);
+                mimetypeJsons.each([&](const char* key, Json & value) {
+                    if (match(terms, value, locales)) {
+                        add(value["type"], value["subtype"], mimetypes);
+                    }
+                });
+
             }
             else {
-                if (request.queryParameterMap.size() > 1 ||
-                    !request.queryParameterMap.contains("search")) {
-                    throw Status::Http422;
-                }
-                vector<const char*> searchTerms = request.queryParameterMap["search"];
-                vector<string> acceptableLocales = getAcceptedLocales(request);
-                Json searchResult;
-                searchResult << rootTemplate_json;
-                Json& searchResultMimetypes = searchResult["mimetypes"];
-
-                for (int i = 0; i < mimetypeJsons.size(); i++) {
-
-                    Json& mimetypeJson = mimetypeJsons.valueAt(i);
-                    if (match(searchTerms, mimetypeJson, acceptableLocales)) {
-                        const char* type = mimetypeJson["type"];
-                        const char* subtype = mimetypeJson["subtype"];
-
-                        if (!searchResultMimetypes.contains(type)) {
-                            searchResultMimetypes[type] = JsonConst::EmptyArray;
-                        }
-
-                        searchResultMimetypes[type].append(subtype);
-                    }
-                }
-
-                return JsonWriter(searchResult).buffer;
+                throw Status::Http422;
             }
+
+            Json result; 
+            result << rootTemplate_json;
+            result["mimetypes"] = move(mimetypes);
+            return JsonWriter(result).buffer;
         }
         else {
             if (mimetypeJsons.contains(remainingPath)) {
@@ -123,6 +101,15 @@ namespace org_restfulipc
 
         throw Status::Http404;
     }
+
+    void MimetypeResource::add(const char* type, const char* subtype, Json& mimetypes)
+    {
+        if (!mimetypes.contains(type)) {
+            mimetypes[type] = JsonConst::EmptyArray;
+        }
+        mimetypes[type].append(subtype);
+    }
+
 
     bool MimetypeResource::match(const vector<const char*>& searchTerms,
                                  Json& mimetypeJson,
@@ -145,10 +132,10 @@ namespace org_restfulipc
                 Json& commentObj = mimetypeJson["comment"];
                 const char* locale = NULL;
                 for (const string& acceptableLocale : acceptableLocales) {
-                    if (commentObj.contains(acceptableLocale)){
+                    if (commentObj.contains(acceptableLocale)) {
                         locale = acceptableLocale.data();
                         break;
-                    }   
+                    }
                 }
                 if (locale) {
                     if (strcasestr(commentObj[locale], searchTerm)) {
