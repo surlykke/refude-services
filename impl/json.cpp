@@ -189,6 +189,9 @@ namespace org_restfulipc
             }
             return true;
         case JsonType::Array: 
+            if (size() != other.size()) {
+                return false;
+            }
             for (int i = 0; i < size(); i++) {
                 if (elements->at(i) != other.elements->at(i)) {
                     return false;
