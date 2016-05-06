@@ -250,6 +250,23 @@ namespace org_restfulipc
         return  contains(key.data());
     }
 
+    int Json::find(const char* str) const
+    {
+        typeAssert(JsonType::Array, "find(\"%s\"", str);
+        for (int i = 0; i < elements->size(); i++) {
+            if ((*elements)[i].mType == JsonType::Array && !strcmp(str, (*elements)[i].str)) {
+                return i;
+            }
+        }
+        
+        return -1;
+    }
+
+    int Json::find(std::string str) const
+    {
+        return find(str.data());
+    }
+
     const char* Json::keyAt(size_t index) const
     {
         typeAssert(JsonType::Object, "keyAt(%d)", index);

@@ -71,6 +71,8 @@ namespace org_restfulipc
         Json take(const char* key);
         bool contains(const char* key) const;
         bool contains(std::string key) const;
+        int find(const char* str) const;
+        int find(std::string str) const;
         const char* keyAt(size_t index) const;
         uint size() const;
 
