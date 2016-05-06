@@ -223,6 +223,11 @@ namespace org_restfulipc
             return tmp;
         }
 
+        V take(const string key) 
+        {
+            return take(key.data());
+        }
+
         void erase(const char* key)
         {
             bool found;

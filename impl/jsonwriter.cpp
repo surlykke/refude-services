@@ -125,7 +125,7 @@ namespace org_restfulipc
                 write(json[""]);
             }
             else {
-                buffer.write("\"### No translateion for locale '");
+                buffer.write("\"### No translation for locale '");
                 buffer.write(locale.data());
                 buffer.write("'\"");
             }
