@@ -14,20 +14,6 @@
 
 namespace org_restfulipc
 {
-    template<typename AppSomething> 
-    void writeHlp(ostream& out, string header, AppSomething& appSomething) 
-    {
-        out << header << "\n";
-        for (const auto& it : appSomething) {
-            out << it.first << "=";
-            for (string entryId : it.second) {
-                out << entryId << ";";
-            }
-            out << "\n";
-        }
-    }
-
-
     MimeappsList::MimeappsList(std::string path):
     filePath(path)
     {
@@ -60,8 +46,29 @@ namespace org_restfulipc
     void MimeappsList::write()
     {
         std::ofstream stream(filePath);
-        writeHlp(stream, "[Default Applications]", defaultApps); 
-        writeHlp(stream, "[Added Associations]", addedAssociations);
-        writeHlp(stream, "[Removed Associations]", removedAssociations);
+    
+        stream << "[Default Applications]\n";
+        defaultApps.each([&stream](const char* mimetype, vector<string>& defaultApps){
+            stream << mimetype << "=";
+            for (string defaultApp : defaultApps) {
+                stream << defaultApp << ";";
+            }
+        });
+
+        stream << "[Added Associations]\n";
+        addedAssociations.each([&stream](const char* mimetype, set<string>& associatedApps){
+            stream << mimetype << "=";
+            for (string associatedApp : associatedApps) {
+                stream << associatedApp << ";";
+            }
+        });
+
+        stream << "[Removed Associations]\n";
+        removedAssociations.each([&stream](const char* mimetype, set<string>& deAssociatedApps){
+            stream << mimetype << "=";
+            for (string deAssociatedApp : deAssociatedApps) {
+                stream << deAssociatedApp << ";";
+            }
+        });
     }
 }

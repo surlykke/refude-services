@@ -23,7 +23,7 @@ namespace org_restfulipc
         MimeResourceBuilder();
         virtual ~MimeResourceBuilder();
         void build();
-        void addAssociationsAndDefaults(const AppSets& associations, const AppLists& defaults);
+        void addAssociationsAndDefaults(Map<Json>& desktopJsons,  Map<vector<string>>& defaultApplications);
         void mapResources(Service& service, NotifierResource::ptr notifier);
     
     private:

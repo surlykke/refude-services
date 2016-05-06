@@ -1,13 +1,12 @@
 {
     "_links" : {
         "self" : {
-            "href" : "/handlers"
+            "href" : "@self_href@"
         },
         "application" : {
             "templated" : true,
-            "href": "/desktopentry/{application-id}"
+            "href": "@application_href@"
         }
     },
-    "fileHandlers" : [],
-    "urlHandlers" : []
+    "desktopEntries" : []
 }

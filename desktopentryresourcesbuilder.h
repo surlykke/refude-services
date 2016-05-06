@@ -30,18 +30,14 @@ namespace org_restfulipc
         void buildJsons();
         void mapResources(Service& service, NotifierResource::ptr notifier);
 
-        AppSets associations;
-        AppLists defaults;
+        Map<Json> desktopJsons;
+        Map<vector<string>> defaultApplications;
 
     private:
         vector<string> desktopFiles(string directory);
         void readDesktopFiles(vector<string> applicationsDirs);
         void readMimeappsListFile(string dir);
-        void buildFileAndUrlHandlerResource();
-
-        Map<Json> desktopJsons;
-        Json handlers;
-    };
+   };
 
 }
 #endif /* DESKTOPENTRYRESOURCESBUILDER_H */

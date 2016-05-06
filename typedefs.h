@@ -9,17 +9,17 @@
 #ifndef TYPEDEFS_H
 #define TYPEDEFS_H
 
-#include <map>
 #include <set>
-#include <list>
 #include <string>
+#include <vector>
+#include <ripc/map.h>
 
 namespace org_restfulipc
 {
     using namespace std;
 
-    typedef map<string, vector<string> > AppLists;
-    typedef map<string, set<string> > AppSets;
+    typedef Map<vector<string>> AppLists;
+    typedef Map<set<string>> AppSets;
 
 }
 

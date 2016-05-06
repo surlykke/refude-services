@@ -1,10 +1,10 @@
 /*
-* Copyright (c) 2015, 2016 Christian Surlykke
-*
-* This file is part of the refude-services project. 
-* It is distributed under the GPL v2 license.
-* Please refer to the LICENSE file for a copy of the license.
-*/
+ * Copyright (c) 2015, 2016 Christian Surlykke
+ *
+ * This file is part of the refude-services project. 
+ * It is distributed under the GPL v2 license.
+ * Please refer to the LICENSE file for a copy of the license.
+ */
 
 #include <tinyxml2.h>
 #include <ripc/jsonresource.h>
@@ -16,8 +16,9 @@
 #include "mimeresourcebuilder.h"
 #include "mimetyperesource.h"
 using namespace tinyxml2;
-namespace org_restfulipc 
+namespace org_restfulipc
 {
+
     MimeResourceBuilder::MimeResourceBuilder() :
         mimetypeJsons()
     {
@@ -28,15 +29,16 @@ namespace org_restfulipc
     }
 
     // Caller must ensure that mimetypeElement->FirstChildElement exists...
+
     void handleLocalizedXmlElement(XMLElement* mimetypeElement, const char* elementName, Json& json)
     {
-        json[elementName] = JsonConst::EmptyObject; 
+        json[elementName] = JsonConst::EmptyObject;
         json[elementName]["_ripc:localized"] = JsonConst::TRUE;
         for (XMLElement* element = mimetypeElement->FirstChildElement(elementName);
-                element;
-                element = element->NextSiblingElement(elementName)) {
-            
-            string locale = element->Attribute("xml:lang") ?  element->Attribute("xml:lang") : ""; 
+            element;
+            element = element->NextSiblingElement(elementName)) {
+
+            string locale = element->Attribute("xml:lang") ? element->Attribute("xml:lang") : "";
             json[elementName][locale] = element->GetText();
             json["_ripc:locales"][locale] = "";
         }
@@ -45,17 +47,17 @@ namespace org_restfulipc
     void MimeResourceBuilder::build()
     {
         std::cout << "MimeResourceBuilder::build()...\n";
-        
+
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
         XMLElement* rootElement = doc->FirstChildElement("mime-info");
-        
+
 
         if (!rootElement) throw RuntimeError("No 'mime-info' root-element");
         for (XMLElement* mimetypeElement = rootElement->FirstChildElement("mime-type");
-             mimetypeElement;
-             mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
-           
+            mimetypeElement;
+            mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
+
             string mimetype = mimetypeElement->Attribute("type");
             vector<string> tmp = split(mimetype, '/');
             if (tmp.size() != 2 || tmp[0].empty() || tmp[1].empty()) {
@@ -76,26 +78,26 @@ namespace org_restfulipc
             if (mimetypeElement->FirstChildElement("acronym")) {
                 handleLocalizedXmlElement(mimetypeElement, "acronym", json);
             }
-            
+
             if (mimetypeElement->FirstChildElement("expanded-acronym")) {
                 handleLocalizedXmlElement(mimetypeElement, "expanded-acronym", json);
             }
 
             for (XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
-                 aliasElement;
-                 aliasElement = aliasElement->NextSiblingElement("alias")) {
+                aliasElement;
+                aliasElement = aliasElement->NextSiblingElement("alias")) {
                 json["aliases"].append(aliasElement->Attribute("type"));
             }
 
             for (XMLElement* globElement = mimetypeElement->FirstChildElement("glob");
-                 globElement;
-                 globElement = globElement->NextSiblingElement("glob")) {
+                globElement;
+                globElement = globElement->NextSiblingElement("glob")) {
                 json["globs"].append(globElement->Attribute("pattern"));
             }
-           
+
             for (XMLElement* subclassOfElement = mimetypeElement->FirstChildElement("sub-class-of");
-                 subclassOfElement;
-                    subclassOfElement = subclassOfElement->NextSiblingElement("sub-class-of")) {
+                subclassOfElement;
+                subclassOfElement = subclassOfElement->NextSiblingElement("sub-class-of")) {
                 json["subclassOf"].append(subclassOfElement->Attribute("type"));
             }
 
@@ -114,35 +116,42 @@ namespace org_restfulipc
             else {
                 json["genericIcon"] = typeName + "-x-generic";
             }
-        } 
+        }
     }
 
-    void MimeResourceBuilder::addAssociationsAndDefaults(const AppSets& associations, const AppLists& defaults)
+    void MimeResourceBuilder::addAssociationsAndDefaults(Map<Json>& desktopJsons, Map<vector<string>>&defaultApplications)
     {
-        for (auto& p : associations) {
-            if (mimetypeJsons.contains(p.first)) {
-                for (const string& entryId : p.second) {
-                    mimetypeJsons[p.first]["associatedApplications"].append(entryId);
+        desktopJsons.each([this](const char* desktopId, Json& desktopJson) {
+            if (!strcmp("CMake.desktop", desktopId)) {
+                std::cout << JsonWriter(desktopJson).buffer.data() << "\n";
+            }
+            Json& mimetypes = desktopJson["MimeType"];
+            for (int i = 0; i < mimetypes.size(); i++) {
+                string mimetype = (const char*)mimetypes[i];
+                if (mimetypeJsons.contains(mimetype)) {
+                    mimetypeJsons[mimetype]["associatedApplications"].append(desktopId);
                 }
             }
-        }
+        });
 
-        for (const auto& it : defaults) {
-            if (it.second.size() > 0) {
-                if (mimetypeJsons.contains(it.first)) {
-                    mimetypeJsons[it.first]["defaultApplication"] = it.second[0];
+        defaultApplications.each([this](const char* mimetype, vector<string>& defaultApplicationIds) {
+            std::cout << "Add default applications for " << mimetype << "\n";
+            if (mimetypeJsons.contains(mimetype)) {
+                for (string& defaultApplicationId : defaultApplicationIds) {
+                    mimetypeJsons[mimetype]["defaultApplications"].append(defaultApplicationId);
                 }
+                std::cout << "\n";
             }
-        }
+        });
     }
 
     void MimeResourceBuilder::mapResources(Service& service, NotifierResource::ptr notifier)
     {
         std::cout << "MimeResourceBuilder::mapResources()...\n";
 
-        MimetypeResource::ptr mimetypeResource = 
+        MimetypeResource::ptr mimetypeResource =
             dynamic_pointer_cast<MimetypeResource>(service.mapping("/mimetypes", true));
-        
+
         if (mimetypeResource) {
             mimetypeResource->setMimetypeJsons(move(mimetypeJsons), notifier);
         }

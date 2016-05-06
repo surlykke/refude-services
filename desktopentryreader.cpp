@@ -102,7 +102,6 @@ namespace org_restfulipc
             }
         }
         else if (keyOneOf({"OnlyShowIn","NotShowIn","MimeType","Categories","Implements"})) {
-            json[key] = JsonConst::EmptyArray;
             for (std::string val : toList(value)) {
                 json[key].append(val);
             }

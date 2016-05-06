@@ -16,6 +16,10 @@
     }, 
     "Keywords" : {
         "_ripc:localized" : true
-    }
- 
+    },
+    "OnlyShowIn" : [],
+    "NotShowIn" : [],
+    "MimeType" : [],
+    "Categories" : [],
+    "Implements" : []
 }

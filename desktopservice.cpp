@@ -130,8 +130,8 @@ namespace org_restfulipc
         mimeResourceBuilder.build();
         DesktopEntryResourceBuilder desktopEntryResourceBuilder;
         desktopEntryResourceBuilder.buildJsons();
-        mimeResourceBuilder.addAssociationsAndDefaults(desktopEntryResourceBuilder.associations,
-                                                       desktopEntryResourceBuilder.defaults);
+        mimeResourceBuilder.addAssociationsAndDefaults(desktopEntryResourceBuilder.desktopJsons,
+                                                       desktopEntryResourceBuilder.defaultApplications);
         mimeResourceBuilder.mapResources(*this, notifier);
         desktopEntryResourceBuilder.mapResources(*this, notifier);
     }

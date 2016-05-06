@@ -7,6 +7,7 @@
 */
 #include <errno.h>
 #include <dirent.h>
+#include <algorithm>
 #include <ripc/utils.h>
 #include <ripc/notifierresource.h>
 #include <ripc/jsonwriter.h>
@@ -16,14 +17,13 @@
 #include "handlerTemplate.h"
 
 #include "desktopentryresourcesbuilder.h"
+#include "desktopentryresource.h"
 
 namespace org_restfulipc
 {
     DesktopEntryResourceBuilder::DesktopEntryResourceBuilder() : 
-        associations(),
-        defaults(),
-        desktopJsons(),
-        handlers()
+        defaultApplications(),
+        desktopJsons()
     {
     }
 
@@ -33,7 +33,6 @@ namespace org_restfulipc
 
     void DesktopEntryResourceBuilder::buildJsons()
     {
-
         for (const string& applicationsDir : append(xdg::data_dirs(), "/applications")) {
             readDesktopFiles(directoryTree(applicationsDir));
             readMimeappsListFile(applicationsDir);
@@ -46,67 +45,22 @@ namespace org_restfulipc
         }
 
         readMimeappsListFile(xdg::config_home());
-
-        for (auto& p : associations) {
-            for (const string& entryId : p.second) {
-                string url = string("/desktopentry/") + entryId;
-                if (desktopJsons.find(url.data()) >= 0) {
-                    desktopJsons[url]["MimeType"].append(p.first);
-                }
-            }
-        }
-
-        buildFileAndUrlHandlerResource();
     }
 
     void DesktopEntryResourceBuilder::mapResources(Service& service, NotifierResource::ptr notifier)
     {
-        vector<const char*> mappedUrls = service.resourceMappings.keys("/desktopentry/");
-        vector<const char*> removedUrls;
-        for (const char* url : mappedUrls) {
-            if (desktopJsons.find(url) < 0) {
-                removedUrls.push_back(url);
-            }
-        }
-        for (const char* url : removedUrls) {
-            const char* entryId = url + strlen("/desktopentry/");
-            notifier->notifyClients("desktopentry-removed", entryId);
-            service.unMap(url);
-        }
-        
-        for (const char* url : desktopJsons.keys()) {
-            const char* entryId = url + strlen("/desktopentry/");
-            LocalizedJsonResource::ptr resource = dynamic_pointer_cast<LocalizedJsonResource>(service.mapping(url));
-            if (resource) {
-                if (resource->getJson() != desktopJsons[url]) {
-                    resource->setJson(move(desktopJsons[url]));
-                    notifier->notifyClients("desktopentry-updated", entryId);
-                }
-            }
-            else {
-                resource = make_shared<LocalizedJsonResource>();
-                resource->setJson(move(desktopJsons[url]));
-                notifier->notifyClients("desktopentry-created", entryId);
-                service.map(url, resource);
-            }
-        }
-
-        JsonResource::ptr handlerResource = dynamic_pointer_cast<JsonResource>(service.mapping("/handlers"));
-        if (handlerResource) {
-            if (handlerResource->getJson() != handlers) {
-                handlerResource->setJson(move(handlers));
-                notifier->notifyClients("handlers-updated", "");
-            }
+        if (service.mapping("/desktopentries", true)) {
+            DesktopEntryResource::ptr desktopEntryResource = 
+                dynamic_pointer_cast<DesktopEntryResource>(service.mapping("/desktopentries", true));
+            desktopEntryResource->setDesktopJsons(move(desktopJsons), notifier);
         }
         else {
-            handlerResource = make_shared<JsonResource>();
-            handlerResource->setJson(move(handlers));
-            service.map("/handlers", handlerResource);
-            notifier->notifyClients("handlers-created", "");
+            DesktopEntryResource::ptr desktopEntryResource = make_shared<DesktopEntryResource>(move(desktopJsons));
+            service.map("/desktopentries", desktopEntryResource, true);
         }
     }
 
-   vector<string> DesktopEntryResourceBuilder::desktopFiles(string directory)
+    vector<string> DesktopEntryResourceBuilder::desktopFiles(string directory)
     {
         vector<string> files;
         DIR* dir = opendir(directory.data());
@@ -138,25 +92,14 @@ namespace org_restfulipc
             for (const string& desktopFilePath : desktopFiles(applicationsDir)) {
                 DesktopEntryReader reader(desktopFilePath);
                 string entryId = replaceAll(string(desktopFilePath.data() + applicationsDirs[0].size()), '/', '-');
-                string url = "/desktopentry/" + entryId;
-                reader.json["_links"]["self"]["href"] = url;
                 if (reader.json.contains("Hidden") && (bool)reader.json["Hidden"]) {
-                    desktopJsons.erase(url.data());
-                    for (auto& it : associations) {
-                        it.second.erase(entryId);
-                    }
+                    desktopJsons.take(entryId);
                 }
                 else {
-                    if (reader.json.contains("MimeType")) {
-                        while (reader.json["MimeType"].size() > 0) {
-                            associations[(const char*)reader.json["MimeType"].take(0)].insert(entryId);
-                        }
-                        // We will restore this array later - see below
-                    }
                     if (!reader.json.contains("Icon")) {
                         reader.json["Icon"] = entryId.substr(0, entryId.size() - 8); // Remove '.desktop'
                     }
-                    desktopJsons[url] = std::move(reader.json);
+                    desktopJsons[entryId] = std::move(reader.json);
                 }
             }
         }
@@ -165,43 +108,37 @@ namespace org_restfulipc
     void DesktopEntryResourceBuilder::readMimeappsListFile(string dir)
     {
         MimeappsList mimeappsList(dir + "/mimeapps.list");
-        for (const auto& p : mimeappsList.removedAssociations) {
-            for (string entryId : p.second) {
-                associations[p.first].erase(entryId);
-            }
-        }
-
-        for (const auto& p : mimeappsList.removedAssociations) {
-            for (string entryId : p.second) {
-                associations[p.first].erase(entryId);
-            }
-        }
-
-        for (const auto& p : mimeappsList.defaultApps) {
-            const string& mimeType = p.first;
-            for (const string& entryId : p.second) {
-                defaults[mimeType].push_back(entryId);
-            }
-        }
-    }
-
-    void DesktopEntryResourceBuilder::buildFileAndUrlHandlerResource()
-    {
-        handlers << handlerTemplate_json;
-        for (const char* url : desktopJsons.keys()) {
-            const char* entryId = url + strlen("/desktopentry/");
-            Json& desktopentryJson = desktopJsons[url];
-            if (desktopentryJson.contains("Exec")) {
-                if (strcasestr(desktopentryJson["Exec"], "%u")) {
-                    handlers["fileHandlers"].append(entryId);
-                    handlers["urlHandlers"].append(entryId);
-                }
-                else if (strcasestr(desktopentryJson["Exec"], "%f")) {
-                    handlers["urlHandlers"].append(entryId);
+        mimeappsList.removedAssociations.each([this](const char* mimetype, set<string>& deAssociatedApplications) {
+            for (const string& deAssociatedApplication : deAssociatedApplications) {
+                if (desktopJsons.contains(deAssociatedApplication)) {
+                    Json& associatedAppsArray = desktopJsons[deAssociatedApplication]["Mimetype"];
+                    while (int index = associatedAppsArray.find(deAssociatedApplication)) {
+                        associatedAppsArray.take(index);
+                    }
                 }
             }
-        }
-    }
+        });
+        
+        mimeappsList.addedAssociations.each([this](const char* mimetype, set<string>& associatedApplications) {
+            for (const string& associatedApplication : associatedApplications) {
+                if (desktopJsons.contains(associatedApplication)) {
+                    desktopJsons[associatedApplication]["Mimetype"].append(mimetype);
+                }
+            }
+        });
 
+        mimeappsList.defaultApps.each([this](const char* mimetype, vector<string>& defaultApplicationIds){
+            for (string& defaultApplicationId : defaultApplicationIds) {
+                vector<string>& defaults = defaultApplications[mimetype];
+                defaults.erase(std::remove(defaults.begin(), defaults.end(), defaultApplicationId), defaults.end());
+            }
+            
+            int pos = 0;
+            for (string& defaultApplicationId : defaultApplicationIds) {
+                defaultApplications[mimetype].insert(defaultApplications[mimetype].begin() + pos++, defaultApplicationId);
+            }
+        });
+        
+    }
 
 }

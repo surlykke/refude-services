@@ -5,7 +5,7 @@
     "globs" : [],
     "aliases" : [],
     "subclassOf" : [],
-    "defaultApplication" : null,
+    "defaultApplications" : [],
     "associatedApplications" : [],
     "_links" : {
         "self" : {
