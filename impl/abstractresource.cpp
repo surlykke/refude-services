@@ -39,7 +39,7 @@ namespace org_restfulipc
         if (! request.headers.contains("accept-language")) {
             return result;
         }
-        printf("accept-language: %s\n", request.headers["accept-language"]) ;
+        
         // TODO: Maybe we should just have a generel max header length in HttpMessageReader?
         if (strlen(request.headers["accept-language"]) > 1023) {
             throw Status::Http400; // FIXME Error message "Header too long"
@@ -51,9 +51,6 @@ namespace org_restfulipc
         for (const char* p = request.headers["accept-language"]; *p; p++) if (!isspace(*p)) *(c++) = *p;
         if (c > acceptLanguage && *(c - 1) != ',') *(c++) = ',';
         *c = '\0';
-
-        std::cout << "Compactified acceptLanguage: " << acceptLanguage << "\n";
-
 
         vector<pair<float, string>> weightedLocales;
         char* currentLocale = acceptLanguage;
@@ -80,7 +77,6 @@ namespace org_restfulipc
         } 
         sort(weightedLocales.rbegin(), weightedLocales.rend());
         for (auto& p : weightedLocales) {
-            std::cout << "Weighted locale: " << p.first << ", " << p.second << "\n";
             result.push_back(p.second);
         }
     }
