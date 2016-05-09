@@ -51,7 +51,7 @@ namespace org_restfulipc
         Json(double number);
         ~Json();
 
-        Json deepCopy();
+        Json copy();
         Json& operator=(Json&& other);
         Json& operator=(Json& other) = delete;
         Json& operator=(JsonConst jsonConst);

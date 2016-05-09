@@ -91,23 +91,9 @@ namespace org_restfulipc
 
     LocalizingJsonWriter::LocalizingJsonWriter(Json& json, vector<string> acceptableLocales):
         JsonWriter(),
-        locale(""),
+        acceptableLocales(acceptableLocales),
         lastResort(lastResort)
     {
-        if (json.type() != JsonType::Object || 
-            !json.contains("_ripc:locales") || 
-            json["_ripc:locales"].type() != JsonType::Object) {
-            throw RuntimeError("LocalizingJsonWriter must be given a json that is an object, "
-                               "and contains (at top level) an object keyed '_ripc:locales', "
-                               "containing the locales");
-        }
-        Json& locales = json["_ripc:locales"];
-        for (auto& acceptableLocale : acceptableLocales) {
-            if (locales.contains(acceptableLocale)) {
-                locale = acceptableLocale;
-                break;
-            }
-        }
         write(json);
     }
 
@@ -117,37 +103,20 @@ namespace org_restfulipc
 
     void LocalizingJsonWriter::writeObject(Json& json)
     {
-        if (json.contains("_ripc:localized") && (bool) json["_ripc:localized"]) {
-            if (json.contains(locale)) {
-                write(json[locale]);
+        if (json.contains("_ripc:localized")) {
+            bool found = false;
+            for (string locale : acceptableLocales) {
+                if (json.contains(locale)) {
+                    write(json[locale]);
+                    return;
+                }
             }
-            else if (json.contains("")) {
-                write(json[""]);
-            }
-            else {
-                buffer.write("\"### No translation for locale '");
-                buffer.write(locale.data());
-                buffer.write("'\"");
-            }
+            write(json["_ripc:localized"]);
         }
         else {
-            buffer.write('{');
-            const char* separator = "";
-            for (int i = 0; i < json.entries->size(); i++) {
-                if (!strcmp("_ripc:locales", json.entries->keyAt(i))) {
-                    continue;
-                }
-                buffer.write(separator);
-                writeString(json.entries->keyAt(i));
-                buffer.write(": ");
-                write(json.entries->valueAt(i));
-                separator = ", "; 
-            }
-            buffer.write('}');
+            JsonWriter::writeObject(json);
         }
     }
-
-
 
     FilteringJsonWriter::FilteringJsonWriter(Json& json, 
             const char* marker, 

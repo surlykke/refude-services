@@ -11,6 +11,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "buffer.h"
 
@@ -43,7 +44,7 @@ namespace org_restfulipc
         void writeObject(Json& json) override;
     
     private:
-        string locale;
+        vector<string> acceptableLocales;
         const char* lastResort;
     };
 

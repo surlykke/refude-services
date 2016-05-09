@@ -111,23 +111,37 @@ namespace org_restfulipc
         deleteChildren();
     }
 
-    Json Json::deepCopy()
+    Json Json::copy()
     {
-        Json copy;
-        memcpy(&copy, this, sizeof(Json));
-        if (mType == JsonType::Array) {
-            for (size_t i = 0; i < elements->size(); i++) {
-                copy.append((*elements)[i].deepCopy());
-            }
+        if (mType == JsonType::Undefined) {
+            return Json();
         }
         else if (mType == JsonType::Object) {
-            for (size_t i = 0; i < entries->size(); i++) {
-                copy.append(strdup(entries->list[i].key), entries->list[i].value.deepCopy());
+            Json obj = JsonConst::EmptyObject;
+            for (size_t sz = 0; sz < entries->size(); sz++) {
+                obj.append(entries->list[sz].key, entries->list[sz].value.copy());
             }
-            entries->sorted = entries->list.size();
+            return obj;
         }
-
-        return copy;
+        else if (mType == JsonType::Array) {
+            Json arr = JsonConst::EmptyArray;
+            for (size_t sz = 0; sz < elements->size(); sz++) {
+                arr.append((*elements)[sz].copy());
+            }
+            return arr;
+        }
+        else if (mType == JsonType::String) {
+            return str;
+        }
+        else if (mType == JsonType::Number) {
+            return number;
+        }
+        else if (mType == JsonType::Boolean) {
+            return boolean;
+        }
+        else if (mType == JsonType::Null) {
+            return JsonConst::Null;
+        }
     }
 
     Json& Json::operator=(Json&& other)
