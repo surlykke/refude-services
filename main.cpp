@@ -16,8 +16,8 @@ using namespace org_restfulipc;
 
 int main(int argc, char *argv[])
 {
-   try {
-        DesktopService service;
+    DesktopService service;
+    try {
         std::cout << "Serving 7938\n";
         service.serve(7938);
         service.wait();

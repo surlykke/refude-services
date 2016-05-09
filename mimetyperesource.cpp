@@ -37,20 +37,19 @@ namespace org_restfulipc
         {
             unique_lock<recursive_mutex> lock(m);
             clearCache();
-            for (int i = 0; i < this->mimetypeJsons.size(); i++) {
-                if (!mimetypeJsons.contains(this->mimetypeJsons.keyAt(i))) {
-                    affectedMimetypes.add(this->mimetypeJsons.keyAt(i), mimetypeRemoved);
+            this->mimetypeJsons.each([&](const char* mimetype, Json& mimetypeJson){
+                if (! mimetypeJsons.contains(mimetype)) {
+                    affectedMimetypes[mimetype]= mimetypeRemoved;
                 }
-            }
-
-            for (int i = 0; i < mimetypeJsons.size(); i++) {
-                if (!this->mimetypeJsons.contains(mimetypeJsons.keyAt(i))) {
-                    affectedMimetypes.add(mimetypeJsons.keyAt(i), mimetypeAdded);
+            });
+            mimetypeJsons.each([&, this](const char* mimetype, Json& mimetypeJson){
+                if (! this->mimetypeJsons.contains(mimetype)) {
+                    affectedMimetypes[mimetype] = mimetypeAdded;
                 }
-                else if (this->mimetypeJsons[mimetypeJsons.keyAt(i)] != mimetypeJsons.valueAt(i)) {
-                    affectedMimetypes.add(mimetypeJsons.keyAt(i), mimetypeUpdated);
+                else if (mimetypeJson != this->mimetypeJsons[mimetype]) {
+                    affectedMimetypes[mimetype] = mimetypeUpdated;
                 }
-            }
+            });
             this->mimetypeJsons = move(mimetypeJsons);
         }
         affectedMimetypes.each([&notifier](const char* key, const char* value) {
@@ -63,8 +62,6 @@ namespace org_restfulipc
      */
     Buffer MimetypeResource::buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers)
     {
-        std::cout << "Into build content, queryParameterMap.size() = " << request.queryParameterMap.size()
-            << ", remainingPath: '" << remainingPath << "'\n";
         if (remainingPath[0] == '\0') {
             Json mimetypes = JsonConst::EmptyObject;
             if (request.queryParameterMap.size() == 0) {
@@ -179,7 +176,6 @@ namespace org_restfulipc
 
             string thisMimetype = remainingPath;
             string defaultApplication = (string) mergeJson["defaultApplication"];
-            std::cout << "Sætter defaultApplciation for " << thisMimetype << " til " << defaultApplication << "\n";
             MimeappsList mimeappsList(xdg::config_home() + "/mimeapps.list");
             auto& defaultAppsForMime = mimeappsList.defaultApps[thisMimetype];
             for (auto it = defaultAppsForMime.begin(); it != defaultAppsForMime.end();) {
@@ -191,9 +187,6 @@ namespace org_restfulipc
                 }
             }
             defaultAppsForMime.insert(defaultAppsForMime.begin(), defaultApplication);
-            std::cout << "defaultAppsForMime nu: ";
-            for (auto& s : defaultAppsForMime) std::cout << s << " ";
-            std::cout << "\n";
             mimeappsList.write();
         }
     }

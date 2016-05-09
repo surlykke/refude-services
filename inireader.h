@@ -40,13 +40,13 @@ namespace org_restfulipc
         std::string locale;
         std::string value;
         LineType lineType; 
+        std::string line;
 
     private:
         std::string getBracketContents();
         void skip(const char *expected = "") ;
 
         std::ifstream desktopFile;
-        std::string line;
         int pos;
 
     };

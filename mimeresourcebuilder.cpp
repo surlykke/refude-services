@@ -33,21 +33,22 @@ namespace org_restfulipc
     void handleLocalizedXmlElement(XMLElement* mimetypeElement, const char* elementName, Json& json)
     {
         json[elementName] = JsonConst::EmptyObject;
-        json[elementName]["_ripc:localized"] = JsonConst::TRUE;
+        json[elementName]["_ripc:localized"] = "";
         for (XMLElement* element = mimetypeElement->FirstChildElement(elementName);
             element;
             element = element->NextSiblingElement(elementName)) {
 
-            string locale = element->Attribute("xml:lang") ? element->Attribute("xml:lang") : "";
-            json[elementName][locale] = element->GetText();
-            json["_ripc:locales"][locale] = "";
+            if (element->Attribute("xml:lang")) {
+                json[elementName][element->Attribute("xml:lang")] = element->GetText();
+            }
+            else {
+                json[elementName]["_ripc:localized"] = element->GetText();
+            }
         }
     }
 
     void MimeResourceBuilder::build()
     {
-        std::cout << "MimeResourceBuilder::build()...\n";
-
         XMLDocument* doc = new XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
         XMLElement* rootElement = doc->FirstChildElement("mime-info");
@@ -122,9 +123,6 @@ namespace org_restfulipc
     void MimeResourceBuilder::addAssociationsAndDefaults(Map<Json>& desktopJsons, Map<vector<string>>&defaultApplications)
     {
         desktopJsons.each([this](const char* desktopId, Json& desktopJson) {
-            if (!strcmp("CMake.desktop", desktopId)) {
-                std::cout << JsonWriter(desktopJson).buffer.data() << "\n";
-            }
             Json& mimetypes = desktopJson["MimeType"];
             for (int i = 0; i < mimetypes.size(); i++) {
                 string mimetype = (const char*)mimetypes[i];
@@ -135,20 +133,16 @@ namespace org_restfulipc
         });
 
         defaultApplications.each([this](const char* mimetype, vector<string>& defaultApplicationIds) {
-            std::cout << "Add default applications for " << mimetype << "\n";
             if (mimetypeJsons.contains(mimetype)) {
                 for (string& defaultApplicationId : defaultApplicationIds) {
                     mimetypeJsons[mimetype]["defaultApplications"].append(defaultApplicationId);
                 }
-                std::cout << "\n";
             }
         });
     }
 
     void MimeResourceBuilder::mapResources(Service& service, NotifierResource::ptr notifier)
     {
-        std::cout << "MimeResourceBuilder::mapResources()...\n";
-
         MimetypeResource::ptr mimetypeResource =
             dynamic_pointer_cast<MimetypeResource>(service.mapping("/mimetypes", true));
 

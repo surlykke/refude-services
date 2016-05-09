@@ -18,7 +18,8 @@ namespace org_restfulipc
     filePath(path)
     {
         IniReader reader(filePath);
-        while (reader.getNextLine() != IniReader::EndOfFile) {
+        reader.getNextLine();
+        while (reader.lineType != IniReader::EndOfFile) {
             if (reader.lineType != IniReader::Heading) {
                 throw RuntimeError("Heading line expected");
             }
@@ -53,6 +54,7 @@ namespace org_restfulipc
             for (string defaultApp : defaultApps) {
                 stream << defaultApp << ";";
             }
+            stream << "\n";
         });
 
         stream << "[Added Associations]\n";
@@ -61,6 +63,7 @@ namespace org_restfulipc
             for (string associatedApp : associatedApps) {
                 stream << associatedApp << ";";
             }
+            stream << "\n";
         });
 
         stream << "[Removed Associations]\n";
@@ -69,6 +72,7 @@ namespace org_restfulipc
             for (string deAssociatedApp : deAssociatedApps) {
                 stream << deAssociatedApp << ";";
             }
+            stream << "\n";
         });
     }
 }

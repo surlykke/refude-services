@@ -1,0 +1,16 @@
+{
+	"commands" :	
+	[
+		
+	],
+	"_links" : {
+		"self" : {
+            "href" : "REPLACEME"
+		},
+		"exec" : {
+			"templated" : true,
+			"href" : "@ROOT@/commands?Exec={id}"
+		}
+	}
+}
+		

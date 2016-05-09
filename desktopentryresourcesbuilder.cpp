@@ -111,8 +111,8 @@ namespace org_restfulipc
         mimeappsList.removedAssociations.each([this](const char* mimetype, set<string>& deAssociatedApplications) {
             for (const string& deAssociatedApplication : deAssociatedApplications) {
                 if (desktopJsons.contains(deAssociatedApplication)) {
-                    Json& associatedAppsArray = desktopJsons[deAssociatedApplication]["Mimetype"];
-                    while (int index = associatedAppsArray.find(deAssociatedApplication)) {
+                    Json& associatedAppsArray = desktopJsons[deAssociatedApplication]["MimeType"];
+                    while (int index = associatedAppsArray.find(deAssociatedApplication) > -1) {
                         associatedAppsArray.take(index);
                     }
                 }
@@ -122,7 +122,7 @@ namespace org_restfulipc
         mimeappsList.addedAssociations.each([this](const char* mimetype, set<string>& associatedApplications) {
             for (const string& associatedApplication : associatedApplications) {
                 if (desktopJsons.contains(associatedApplication)) {
-                    desktopJsons[associatedApplication]["Mimetype"].append(mimetype);
+                    desktopJsons[associatedApplication]["MimeType"].append(mimetype);
                 }
             }
         });

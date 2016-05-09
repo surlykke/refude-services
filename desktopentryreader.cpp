@@ -32,16 +32,6 @@ namespace org_restfulipc
     {
     }
 
-    IniReader::LineType DesktopEntryReader::getNextLine()
-    {
-        IniReader::LineType result = IniReader::getNextLine();
-        if (!locale.empty()) {
-            json["_ripc:locales"][locale] = "";
-        }
-        return result;
-    }
-    
-
     void DesktopEntryReader::read()
     {
         getNextLine(); 
@@ -88,7 +78,12 @@ namespace org_restfulipc
             json[key] = value;
         }
         else if (keyOneOf({"Name", "GenericName", "Comment"})) {
-            json[key][locale] = value;
+            if (locale.empty()) {
+                json[key]["_ripc:localized"] = value;
+            }
+            else {
+                json[key][locale] = value;
+            }
         }
         else if (keyOneOf({"NoDisplay", "DBusActivatable", "Terminal", "StartupNotify"})) {
             if (value == "true") { 
@@ -107,11 +102,17 @@ namespace org_restfulipc
             }
         }    
         else if (key == "Keywords") { 
-            if (!json[key].contains(locale)) {
-                json[key][locale] = JsonConst::EmptyArray;
+            Json keywords = JsonConst::EmptyArray; 
+          
+            for (std::string keyword : toList(value)) {
+                keywords.append(keyword);
             }
-            for (std::string val : toList(value)) {
-                json[key][locale].append(val);
+        
+            if (locale.empty()) {
+                json[key]["_ripc:localized"] = move(keywords);
+            }
+            else {
+                json[key][locale] = move(keywords);
             }
         } 
         else if (key == "Actions") {

@@ -14,9 +14,13 @@ namespace org_restfulipc
         DesktopEntryResource(Map<Json>&& desktopJsons);
         virtual ~DesktopEntryResource();
         void setDesktopJsons(Map<Json>&& desktopJsons, NotifierResource::ptr notifier);    
+
+    protected:
         virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers);
 
     private:
+        bool matchCommand(Json& desktopJson, vector<const char*>* searchTerms, const vector<string>& locales);
+        bool matchDesktopEntry(Json& desktopJson, vector<const char*>* searchTerms, const vector<string>& locales);
         Map<Json> desktopJsons;
     };
 }

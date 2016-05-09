@@ -82,7 +82,6 @@ namespace org_restfulipc
                 }
 
                 if (somethingChanged) {
-                    std::cout << "Rebuilding\n";
                     buildResources();
                 }
             }
@@ -91,6 +90,9 @@ namespace org_restfulipc
             std::cerr << "DesktopService::watcher caught RuntimeError: " << e.what() << "\n";
             e.printStackTrace();
             std::cerr << "\n";
+        }
+        catch (...) {
+            
         }
     }
 

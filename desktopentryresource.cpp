@@ -1,6 +1,7 @@
 #include <ripc/json.h>
 #include <ripc/jsonwriter.h>
 #include "handlerTemplate.h"
+#include "commandsTemplate.h"
 #include "desktopentryresource.h"
 
 namespace org_restfulipc
@@ -56,7 +57,8 @@ namespace org_restfulipc
         if (*remainingPath == '\0') {
             bool onlyFileHandlers = false;
             bool onlyUrlHandlers = false;
-
+            vector<const char*>* searchTerms = NULL;
+            vector<string> locales = getAcceptedLocales(request);
             Json desktopEntryList = JsonConst::EmptyArray;
             request.queryParameterMap.each([&](const char* parameterName, vector<const char*>& values) {
                 if (!strcmp("handles", parameterName)) {
@@ -72,6 +74,9 @@ namespace org_restfulipc
                         }
                     }
                 }
+                else if (!strcmp("search", parameterName)) {
+                    searchTerms = &values;
+                }
                 else {
                     throw Status::Http422;
                 }
@@ -79,7 +84,7 @@ namespace org_restfulipc
 
 
             desktopJsons.each([&](const char* desktopEntryId, Json & desktopJson) {
-                bool add = false;
+                bool add;
                 if (onlyFileHandlers) {
                     add = desktopJson.contains("Exec") && strcasestr(desktopJson["Exec"], "%f");
                 }    
@@ -89,6 +94,10 @@ namespace org_restfulipc
                 }
                 else {
                     add = true;
+                }
+
+                if (searchTerms) {
+                    add = matchDesktopEntry(desktopJson, searchTerms, locales);
                 }
 
                 if (add) {
@@ -101,6 +110,34 @@ namespace org_restfulipc
             result["desktopEntries"] = move(desktopEntryList);
             return JsonWriter(result).buffer;
         } 
+        else if (! strcmp(remainingPath, "commands")) {
+            Json content;
+            content << commandsTemplate_json;
+            vector<const char*>* searchTerms = NULL;
+            vector<string> locales = getAcceptedLocales(request);
+            request.queryParameterMap.each([&searchTerms](const char* parameterName, vector<const char*>& values) {
+                if (!strcmp("search", parameterName)) {
+                    searchTerms = &values;
+                }
+                else {
+                    throw Status::Http422;
+                }
+            });
+
+            desktopJsons.each([&](const char* desktopEntryId, Json& desktopJson) {
+                Json command = JsonConst::EmptyObject;
+                if (matchCommand(desktopJson, searchTerms, locales)) {
+                    command["Name"] = desktopJson["Name"].copy();
+                    command["Comment"] = desktopJson["Comment"].copy();
+                    command["Icon"] = (const char*)desktopJson["Icon"];
+                    command["Exec"] = (const char*)desktopJson["Exec"];
+                    command["Id"] = string("desktopEntry:") + desktopEntryId;
+                    content["commands"].append(move(command));
+                }
+            });
+
+            return LocalizingJsonWriter(content, locales).buffer;
+        }
         else {
             if (desktopJsons.contains(remainingPath)) {
                 return LocalizingJsonWriter(desktopJsons[remainingPath], getAcceptedLocales(request)).buffer;
@@ -109,7 +146,54 @@ namespace org_restfulipc
                 throw Status::Http404;
             }
         }
-                     
+
     }
+
+    bool DesktopEntryResource::matchCommand(Json& desktopJson, vector<const char*>* searchTerms, const vector<string>& locales)
+    {
+        if (!searchTerms) {
+            return true;
+        }
+
+        Json& nameObj = desktopJson["Name"];
+
+        for (const char* searchTerm : *searchTerms) {
+            for (string locale: locales) {
+                if (nameObj.contains(locale) && strcasestr(nameObj[locale], searchTerm)) {
+                    return true;
+                }
+            }
+
+            if (strcasestr(nameObj["_ripc:localized"], searchTerm)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool DesktopEntryResource::matchDesktopEntry(Json& desktopJson, vector<const char*>* searchTerms, const vector<string>& locales)
+    {
+        if (!searchTerms) {
+            return true;
+        }
+
+        Json& nameObj = desktopJson["Name"];
+       
+        for (const char* searchTerm : *searchTerms) {
+            for (string locale: locales) {
+                if (nameObj.contains(locale) && strcasestr(nameObj[locale], searchTerm)) {
+                    return true;
+                }
+            }
+
+            if (nameObj.contains("") && strcasestr(nameObj[""], searchTerm)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
 }

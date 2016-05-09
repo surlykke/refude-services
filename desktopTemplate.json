@@ -4,18 +4,17 @@
             "href" : "REPLACEME"
         }
     },
-    "_ripc:locales" : {},
     "Name" : {
-        "_ripc:localized" : true
+        "_ripc:localized" : ""
     },
     "GenericName" : {
-        "_ripc:localized" : true
+        "_ripc:localized" : ""
     }, 
     "Comment" : {
-        "_ripc:localized" : true
+        "_ripc:localized" : ""
     }, 
     "Keywords" : {
-        "_ripc:localized" : true
+        "_ripc:localized" : [] 
     },
     "OnlyShowIn" : [],
     "NotShowIn" : [],
