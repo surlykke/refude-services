@@ -14,6 +14,7 @@ namespace org_restfulipc
         DesktopEntryResource(Map<Json>&& desktopJsons);
         virtual ~DesktopEntryResource();
         void setDesktopJsons(Map<Json>&& desktopJsons, NotifierResource::ptr notifier);    
+        virtual void doPOST(int& socket, HttpMessage& request, const char* remainingPath);
 
     protected:
         virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers);

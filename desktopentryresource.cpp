@@ -1,5 +1,6 @@
 #include <ripc/json.h>
 #include <ripc/jsonwriter.h>
+#include <unistd.h>
 #include "handlerTemplate.h"
 #include "commandsTemplate.h"
 #include "desktopentryresource.h"
@@ -26,15 +27,17 @@ namespace org_restfulipc
         {
             unique_lock<recursive_mutex> lock(m);
             clearCache();
-            this->desktopJsons.each([&](const char* desktopEntryId, Json& desktopJson){
+            this->desktopJsons.each([&](const char* desktopEntryId, Json & desktopJson)
+            {
                 if (!desktopJsons.contains(desktopEntryId)) {
                     notifications[desktopEntryId] = desktopEntryRemoved;
                 }
 
             });
 
-            desktopJsons.each([&, this](const char* desktopEntryId, Json& desktopJson) {
-                if (! this->desktopJsons.contains(desktopEntryId)) {
+            desktopJsons.each([&, this](const char* desktopEntryId, Json & desktopJson)
+            {
+                if (!this->desktopJsons.contains(desktopEntryId)) {
                     notifications[desktopEntryId] = desktopEntryAdded;
                 }
                 else if (this->desktopJsons[desktopEntryId] != desktopJson) {
@@ -43,13 +46,40 @@ namespace org_restfulipc
                 }
             });
 
-           this->desktopJsons = move(desktopJsons);
+            this->desktopJsons = move(desktopJsons);
         }
-        
-        notifications.each([&notifier](const char* desktopEntryId, const char* notificationType) {
+
+        notifications.each([&notifier](const char* desktopEntryId, const char* notificationType)
+        {
             notifier->notifyClients(notificationType, desktopEntryId);
         });
 
+    }
+
+    void DesktopEntryResource::doPOST(int& socket, HttpMessage& request, const char* remainingPath)
+    {
+        std::cout << "doPost: '" << remainingPath << "'\n";
+        if (!strncmp(remainingPath, "commands/", strlen("commands/")) && 
+            desktopJsons.contains(remainingPath + strlen("commands/"))) {
+
+            Json& desktopJson = desktopJsons[remainingPath + strlen("commands/")];
+            char command[1024];
+            const char* p1 = (const char*) desktopJson["Exec"];
+            char* p2 = command;
+            while (*p1) {
+                if (!strncasecmp(p1, "%f", 2) || !strncasecmp(p1, "%u", 2)) {
+                    p1 += 2;
+                }
+                else {
+                    *(p2++) = *(p1++);
+                }
+            }
+            sprintf(p2, ">/dev/null 2>/dev/null &"); 
+            std::cout << "doing '" << command << "'...\n";
+            system(command); 
+        }
+        std::cout << "Returning http 200" ;
+        throw Status::Http200;
     }
 
     Buffer DesktopEntryResource::buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers)
@@ -60,7 +90,8 @@ namespace org_restfulipc
             vector<const char*>* searchTerms = NULL;
             vector<string> locales = getAcceptedLocales(request);
             Json desktopEntryList = JsonConst::EmptyArray;
-            request.queryParameterMap.each([&](const char* parameterName, vector<const char*>& values) {
+            request.queryParameterMap.each([&](const char* parameterName, vector<const char*>& values)
+            {
                 if (!strcmp("handles", parameterName)) {
                     for (const char* value : values) {
                         if (!strcmp("files", value)) {
@@ -83,25 +114,26 @@ namespace org_restfulipc
             });
 
 
-            desktopJsons.each([&](const char* desktopEntryId, Json & desktopJson) {
+            desktopJsons.each([&](const char* desktopEntryId, Json & desktopJson)
+            {
                 bool add;
                 if (onlyFileHandlers) {
-                    add = desktopJson.contains("Exec") && strcasestr(desktopJson["Exec"], "%f");
-                }    
+                              add = desktopJson.contains("Exec") && strcasestr(desktopJson["Exec"], "%f");
+                }
                 else if (onlyUrlHandlers) {
-                    add = desktopJson.contains("Exec") && 
-                          (strcasestr(desktopJson["Exec"], "%f") || strcasestr(desktopJson["Exec"], "%u"));
+                              add = desktopJson.contains("Exec") &&
+                              (strcasestr(desktopJson["Exec"], "%f") || strcasestr(desktopJson["Exec"], "%u"));
                 }
                 else {
-                    add = true;
+                              add = true;
                 }
 
                 if (searchTerms) {
-                    add = matchDesktopEntry(desktopJson, searchTerms, locales);
+                              add = matchDesktopEntry(desktopJson, searchTerms, locales);
                 }
 
                 if (add) {
-                    desktopEntryList.append(desktopEntryId);
+                              desktopEntryList.append(desktopEntryId);
                 }
             });
 
@@ -109,13 +141,14 @@ namespace org_restfulipc
             result << handlerTemplate_json;
             result["desktopEntries"] = move(desktopEntryList);
             return JsonWriter(result).buffer;
-        } 
-        else if (! strcmp(remainingPath, "commands")) {
+        }
+        else if (!strcmp(remainingPath, "commands")) {
             Json content;
             content << commandsTemplate_json;
             vector<const char*>* searchTerms = NULL;
             vector<string> locales = getAcceptedLocales(request);
-            request.queryParameterMap.each([&searchTerms](const char* parameterName, vector<const char*>& values) {
+            request.queryParameterMap.each([&searchTerms](const char* parameterName, vector<const char*>& values)
+            {
                 if (!strcmp("search", parameterName)) {
                     searchTerms = &values;
                 }
@@ -124,15 +157,17 @@ namespace org_restfulipc
                 }
             });
 
-            desktopJsons.each([&](const char* desktopEntryId, Json& desktopJson) {
+            desktopJsons.each([&](const char* desktopEntryId, Json & desktopJson)
+            {
                 Json command = JsonConst::EmptyObject;
                 if (matchCommand(desktopJson, searchTerms, locales)) {
-                    command["Name"] = desktopJson["Name"].copy();
-                    command["Comment"] = desktopJson["Comment"].copy();
-                    command["Icon"] = (const char*)desktopJson["Icon"];
-                    command["Exec"] = (const char*)desktopJson["Exec"];
-                    command["Id"] = string("desktopEntry:") + desktopEntryId;
-                    content["commands"].append(move(command));
+                              command["Name"] = desktopJson["Name"].copy();
+                              command["Comment"] = desktopJson["Comment"].copy();
+                              command["Icon"] = (const char*) desktopJson["Icon"];
+                              command["Exec"] = (const char*) desktopJson["Exec"];
+                              command["TypeId"] = "desktopentries";
+                              command["Id"] = desktopEntryId;
+                              content["commands"].append(move(command));
                 }
             });
 
@@ -158,7 +193,7 @@ namespace org_restfulipc
         Json& nameObj = desktopJson["Name"];
 
         for (const char* searchTerm : *searchTerms) {
-            for (string locale: locales) {
+            for (string locale : locales) {
                 if (nameObj.contains(locale) && strcasestr(nameObj[locale], searchTerm)) {
                     return true;
                 }
@@ -179,9 +214,9 @@ namespace org_restfulipc
         }
 
         Json& nameObj = desktopJson["Name"];
-       
+
         for (const char* searchTerm : *searchTerms) {
-            for (string locale: locales) {
+            for (string locale : locales) {
                 if (nameObj.contains(locale) && strcasestr(nameObj[locale], searchTerm)) {
                     return true;
                 }

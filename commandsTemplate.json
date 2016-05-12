@@ -5,11 +5,11 @@
 	],
 	"_links" : {
 		"self" : {
-            "href" : "REPLACEME"
+            "href" : "@HREF@"
 		},
 		"exec" : {
 			"templated" : true,
-			"href" : "@ROOT@/commands?Exec={id}"
+			"href" : "@ROOT@/commands/{id}"
 		}
 	}
 }
