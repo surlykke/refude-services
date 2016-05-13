@@ -59,27 +59,35 @@ namespace org_restfulipc
     void DesktopEntryResource::doPOST(int& socket, HttpMessage& request, const char* remainingPath)
     {
         std::cout << "doPost: '" << remainingPath << "'\n";
-        if (!strncmp(remainingPath, "commands/", strlen("commands/")) && 
-            desktopJsons.contains(remainingPath + strlen("commands/"))) {
-
-            Json& desktopJson = desktopJsons[remainingPath + strlen("commands/")];
-            char command[1024];
-            const char* p1 = (const char*) desktopJson["Exec"];
-            char* p2 = command;
-            while (*p1) {
-                if (!strncasecmp(p1, "%f", 2) || !strncasecmp(p1, "%u", 2)) {
-                    p1 += 2;
+        if (!strncmp(remainingPath, "commands/", strlen("commands/"))) {
+            const char* desktopEntryId = remainingPath + strlen("commands/") ;
+            if (desktopJsons.contains(desktopEntryId)) {
+                Json& desktopJson = desktopJsons[desktopEntryId];
+                char command[1024];
+                const char* execPtr = (const char*) desktopJson["Exec"];
+                if (strlen(execPtr) > 1000) {
+                    throw RuntimeError("Exec string for %s too long", desktopEntryId);
                 }
-                else {
-                    *(p2++) = *(p1++);
+                char* p2 = command;
+                p2 += sprintf(p2, "cd; ");
+                while (*execPtr) {
+                    if (!strncasecmp(execPtr, "%f", 2) || !strncasecmp(execPtr, "%u", 2)) {
+                        execPtr += 2;
+                    }
+                    else {
+                        *(p2++) = *(execPtr++);
+                    }
                 }
+                sprintf(p2, ">/dev/null 2>/dev/null &"); 
+                std::cout << "doing '" << command << "'...\n";
+                system(command); 
+                throw Status::Http200;
             }
-            sprintf(p2, ">/dev/null 2>/dev/null &"); 
-            std::cout << "doing '" << command << "'...\n";
-            system(command); 
+            else {
+                throw Status::Http404;
+            }
         }
-        std::cout << "Returning http 200" ;
-        throw Status::Http200;
+        throw Status::Http406;
     }
 
     Buffer DesktopEntryResource::buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers)
