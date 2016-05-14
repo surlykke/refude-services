@@ -140,7 +140,7 @@ namespace org_restfulipc
                     }
                 }
                 else {
-                    if (strcasestr(commentObj[""], searchTerm)) {
+                    if (strcasestr(commentObj["_ripc:localized"], searchTerm)) {
                         return true;
                     }
                 }

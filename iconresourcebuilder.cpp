@@ -37,25 +37,37 @@ namespace org_restfulipc
             iconsDirs.push_back(dir);
         }
 
-        for (string iconsDir : iconsDirs) {
-            for (string themeDir : subdirectories(iconsDir)) {
+        for (auto dirIterator =  iconsDirs.rbegin(); dirIterator != iconsDirs.rend(); dirIterator++) {
+            for (string themeDir : subdirectories(*dirIterator)) {
                 Json& themeJson = themeJsonMap[themeDir]; 
                 if (themeJson.undefined()) {
                     themeJson << themeTemplate_json;
                 }
-                ThemeReader(themeJson, themeIconMap[themeDir], iconsDir + '/' + themeDir);
-                if (themeDir != "hicolor") {
+
+                ThemeReader(themeJson, *dirIterator + '/' + themeDir);
+                IconMap& iconMap = themeIconMap[themeDir];
+                themeJson["IconDirectories"].each([&](const char* iconDirPath, Json& iconDirJson) {
+                    IconCollector(*dirIterator + "/" + themeDir + "/" + iconDirPath, iconDirJson).collectInto(iconMap);
+                });
+
+                if (themeDir == "hicolor") { 
                     if (themeJson.contains("Inherits")) {
-                        inheritanceMap[themeDir] = (const char*) themeJson["Inherits"];
-                    }
-                    else {
-                        inheritanceMap[themeDir] = "hicolor";
+                        // Thou shalt not loop forever
+                        themeJson.take("Inherits");
                     }
                 }
+                else {
+                    inheritanceMap[themeDir] = (const char*) themeJson["Inherits"];
+                }
+
             }
         }
+        Json dummyIconJson = JsonConst::EmptyObject;
+        dummyIconJson["Size"] = 0.0;
+        dummyIconJson["MinSize"] = 0.0;
+        dummyIconJson["MaxSize"] = 0.0;
 
-        IconCollector("/usr/share/pixmaps", 0, 0, "").collectInto(usrSharePixmapsIcons);
+        IconCollector("/usr/share/pixmaps", dummyIconJson).collectInto(usrSharePixmapsIcons);
     }
 
     void IconResourceBuilder::mapResources(DesktopService& desktopService)

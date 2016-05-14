@@ -24,17 +24,15 @@ namespace org_restfulipc
     
     struct IconCollector
     {
-        IconCollector(string directoryPath, double minSize, double maxSize, string context);
+        IconCollector(string directoryPath, Json& iconDirectoryJson);
         virtual ~IconCollector();
         void collectInto(IconMap& iconMap);
     
     private: 
         string directoryPath;
+        Json& iconDirJson;
         DIR* dir;
         char buffer[PATH_MAX];
-        double minSize;
-        double maxSize;
-        string context;
     };
 
 }

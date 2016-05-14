@@ -8,6 +8,7 @@
 
 #ifndef ICONRESOURCE_H
 #define ICONRESOURCE_H
+#include <sys/types.h>
 #include <vector>
 #include <string>
 #include <ripc/json.h>
@@ -24,14 +25,17 @@ namespace org_restfulipc
         IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap);
         virtual ~IconResource();
         virtual PathMimetypePair findFile(HttpMessage& request, const char* remainingPath) override;
-
+        
     private:
+        PathMimetypePair findByPath(const char *path); 
         Json* findPathOfClosest(Json& iconList, int size);
+        bool othersHavePermissions(const char* filePath, mode_t permissions);
         string parent(string themeName);
         
         ThemeIconMap themeIconMap;
         IconMap usrSharePixmapsIcons;
         InheritanceMap inheritanceMap;
+
     };
 }
 #endif /* ICONRESOURCE_H */

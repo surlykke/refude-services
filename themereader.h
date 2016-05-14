@@ -21,10 +21,9 @@ namespace org_restfulipc
     class ThemeReader : private IniReader
     {
     public:
-        ThemeReader(Json& theme, IconMap& iconMap, const string& dirPath);
+        ThemeReader(Json& theme, const string& dirPath);
         virtual ~ThemeReader();
         Json& themeJson;
-        IconMap& iconMap;
 
     private:
         void read();

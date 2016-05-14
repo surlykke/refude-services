@@ -16,10 +16,9 @@
 namespace org_restfulipc
 {
 
-    ThemeReader::ThemeReader(Json& theme, IconMap& iconMap, const string& dirPath) :
+    ThemeReader::ThemeReader(Json& theme, const string& dirPath) :
         IniReader(dirPath + "/index.theme"),
         themeJson(theme),
-        iconMap(iconMap),
         dirPath(dirPath)
     {
         read();
@@ -43,7 +42,6 @@ namespace org_restfulipc
         while (getNextLine() == KeyValue) {
             if (oneOf(key,{"Name", "Comment"})) {
                 themeJson[key][locale] = value;
-                themeJson["_ripc:locales"][locale] = "";
             }
             else if (key == "Directories") {
                 declaredDirectories = splitToSet(value, ',');
@@ -101,8 +99,19 @@ namespace org_restfulipc
                     minSize = size - threshold;
                     maxSize = size + threshold;
                 }
+               
+                Json& directoryObj = themeJson["IconDirectories"][heading];
+                if (directoryObj.undefined()) {
+                    directoryObj = JsonConst::EmptyObject;
+                }
+                if (!context.empty()) {
+                    directoryObj["Context"] = context;
+                }
+                directoryObj["Size"] = size;
+                directoryObj["MinSize"] = minSize;
+                directoryObj["MaxSize"] = maxSize;
 
-                IconCollector(dirPath + '/' + heading, minSize, maxSize, context).collectInto(iconMap);
+    //            IconCollector(dirPath + '/' + heading, minSize, maxSize, context).collectInto(iconMap);
             }
             else {
                 throw RuntimeError("Directory group '%' not listed in 'Directories'");

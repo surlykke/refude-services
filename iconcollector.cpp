@@ -17,16 +17,12 @@
 namespace org_restfulipc
 {
 
-    IconCollector::IconCollector(string directoryPath, double minSize, double maxSize, string context) :
+    IconCollector::IconCollector(string directoryPath, Json& iconDirJson) :
         directoryPath(directoryPath),
-        minSize(minSize),
-        maxSize(maxSize),
-        context(context)
+        iconDirJson(iconDirJson)
     {
         dir = opendir(directoryPath.data());
     }
-
-
 
     IconCollector::~IconCollector()
     {
@@ -59,7 +55,7 @@ namespace org_restfulipc
                     continue;
                 }
                 string fileEnding = fileName.substr(fileName.size() - 4, 4); // All endings '.png', '.xpm', and '.svg' 
-                string iconName = fileName.substr(0, fileName.size() - 4); // have same length.
+                string iconName = fileName.substr(0, fileName.size() - 4);   // have same length.
                 string filePath = directoryPath + '/' + fileName;
                 if (dirent->d_type == DT_LNK) {
                     if (!realpath(filePath.data(), buffer)) {
@@ -81,17 +77,13 @@ namespace org_restfulipc
                 else {
                     continue;
                 }
-
-                if (fileName.size() <= 4) {
-                    continue;
-                }
-
-                if (! context.empty()) {
-                    instance["context"] = context;
+ 
+                if (iconDirJson.contains("Context")) {
+                    instance["context"] = (const char*)iconDirJson["Context"];
                 }
                 instance["path"] = filePath;
-                instance["minSize"] = minSize;
-                instance["maxSize"] = maxSize;
+                instance["MinSize"] = (double)iconDirJson["MinSize"];
+                instance["MaxSize"] = (double)iconDirJson["MaxSize"];
 
                 if (iconMap[iconName].undefined()) {
                     iconMap[iconName] = JsonConst::EmptyArray;
