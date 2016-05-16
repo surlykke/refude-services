@@ -23,5 +23,5 @@ endforeach (JSON_TEMPLATE)
 add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
 target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl)
 
-install(FILES refude-service.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
+install(FILES refudeservice.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
 install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_BINDIR})
