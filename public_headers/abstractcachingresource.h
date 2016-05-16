@@ -9,7 +9,6 @@
 
 namespace org_restfulipc
 {
-    using namespace std;
     class AbstractCachingResource : public AbstractResource
     {
     public:
@@ -19,12 +18,14 @@ namespace org_restfulipc
         virtual void doGET(int& socket, HttpMessage& request, const char* remainingPath) override;
 
     protected:
-        virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers) = 0;
+        virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, 
+                                    std::map<std::string, std::string>& headers) = 0;
+        
         Buffer getSignature(HttpMessage& request, const char* remainingPath);
         void clearCache();
 
     protected:
-        recursive_mutex m;
+        std::recursive_mutex m;
     
     private:
         Map<Buffer> cache;

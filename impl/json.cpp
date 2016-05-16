@@ -240,7 +240,7 @@ namespace org_restfulipc
         return (*elements)[index];
     }
 
-    vector<const char*> Json::keys() const
+    std::vector<const char*> Json::keys() const
     {
         typeAssert(JsonType::Object, "keys()");
         return entries->keys();

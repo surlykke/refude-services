@@ -14,17 +14,15 @@
 
 namespace org_restfulipc
 {
-    using namespace std;
+    std::vector<std::string> split(std::string str, char c);
+    std::set<std::string> splitToSet(std::string str, char c);
+    std::string value(const std::string& envVarName, const std::string& fallback = "");
+    std::string replaceAll(const std::string oldString, char ch, char replaceCh);
 
-    vector<string> split(string str, char c);
-    set<string> splitToSet(string str, char c);
-    string value(const string& envVarName, const string& fallback = "");
-    string replaceAll(const string oldString, char ch, char replaceCh);
-
-    vector<string> append(vector<string> dirs, string subdir);
+    std::vector<std::string> append(std::vector<std::string> dirs, std::string subdir);
 
     
-    vector<string> subdirectories(string directory);
+    std::vector<std::string> subdirectories(std::string directory);
 
     /**
      * Given a directory produces a vector containing, as first, the starting directory, and, after that,
@@ -43,7 +41,7 @@ namespace org_restfulipc
      * @param directory The directory to start from 
      * @return vector containing the directory tree 'linearlized'     
      */
-     vector<string> directoryTree(string directory);
+     std::vector<std::string> directoryTree(std::string directory);
 
 }
 #endif /* UTILS_H */

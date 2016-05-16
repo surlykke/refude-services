@@ -11,8 +11,6 @@
 #include "errorhandling.h"
 #include "genericresource.h"
 
-using namespace std;
-
 namespace org_restfulipc
 {
 

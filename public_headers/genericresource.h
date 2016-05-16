@@ -28,7 +28,7 @@ namespace org_restfulipc
 
     private:
         NotifierResource::ptr notifierResource;
-        string doc;
+        std::string doc;
     };
 }
 

@@ -17,7 +17,6 @@
 int main(int argc, char** argv)
 {
     
-    using namespace org_restfulipc;
     Service service;
     NotifierResource::ptr notifier = make_shared<NotifierResource>();
     GenericResource::ptr resource = make_shared<GenericResource>("", notifier);

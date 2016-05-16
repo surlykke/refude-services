@@ -16,11 +16,11 @@ namespace org_restfulipc
 
     void AbstractCachingResource::doGET(int& socket, HttpMessage& request, const char* remainingPath)
     {
-        std::unique_lock<recursive_mutex> lock(m);
+        std::unique_lock<std::recursive_mutex> lock(m);
     
         Buffer requestSignature = getSignature(request, remainingPath);
         if (!cache.contains(requestSignature.data())) {
-            map<string, string> additionalHeaders;
+            std::map<std::string, std::string> additionalHeaders;
             Buffer content = buildContent(request, remainingPath, additionalHeaders);
             Buffer& response = cache[requestSignature.data()];
             response.write("HTTP/1.1 200 OK\r\n"
@@ -42,10 +42,10 @@ namespace org_restfulipc
 
     Buffer AbstractCachingResource::getSignature(HttpMessage& request, const char* remainingPath)
     {
-        static vector<const char*> interestingHeaders = {"accept-language"}; // FIXME: What else?
+        static std::vector<const char*> interestingHeaders = {"accept-language"}; // FIXME: What else?
 
         Buffer result;
-        request.queryParameterMap.each([&result](const char* key, const vector<const char*> values) {
+        request.queryParameterMap.each([&result](const char* key, const std::vector<const char*> values) {
             for (const char* value : values)  {
                 result.write('&');
                 result.write(key);
@@ -67,7 +67,7 @@ namespace org_restfulipc
 
     void AbstractCachingResource::clearCache()
     {
-        unique_lock<recursive_mutex> lock(m);
+        std::unique_lock<std::recursive_mutex> lock(m);
         cache.clear();
     }
 

@@ -16,7 +16,6 @@
 
 int main(int argc, char** argv)
 {
-    using namespace org_restfulipc;
     Service service;
     WebServer::ptr webServer = make_shared<WebServer>("/home/christian/projekter/Aktive/refude/default-applications");
 

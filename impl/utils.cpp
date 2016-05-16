@@ -15,9 +15,9 @@
 namespace org_restfulipc
 {
 
-    vector<string> split(string str, char c)
+    std::vector<std::string> split(std::string str, char c)
     {
-        std::vector<string> result;
+        std::vector<std::string> result;
         int k = 0;
         for (int i = 0; i < str.size(); i++) {
             if (str[i] == c) {
@@ -34,40 +34,40 @@ namespace org_restfulipc
         return result;
     }
 
-    set<string> splitToSet(string str, char c)
+    std::set<std::string> splitToSet(std::string str, char c)
     {
-        vector<string> vals = split(str, c);
-        set<string> result;
+        std::vector<std::string> vals = split(str, c);
+        std::set<std::string> result;
         result.insert(vals.begin(), vals.end());
         return result;
     }
 
-    string value(const string& envVarName, const string& fallback)
+    std::string value(const std::string& envVarName, const std::string& fallback)
     {
         const char* val = getenv(envVarName.data());
         return (val && *val) ? val : fallback;
     }
 
-    string replaceAll(const string oldString, char ch, char replaceCh)
+    std::string replaceAll(const std::string oldString, char ch, char replaceCh)
     {
-        string result = oldString;
-        replace(result.begin(), result.end(), ch, replaceCh);
+        std::string result = oldString;
+        std::replace(result.begin(), result.end(), ch, replaceCh);
         return result;
     }
 
-    vector<string> append(vector<string> dirs, string subdir)
+    std::vector<std::string> append(std::vector<std::string> dirs, std::string subdir)
     {
-        vector<string> appended;
-        for (string dir : dirs) {
+        std::vector<std::string> appended;
+        for (std::string dir : dirs) {
             appended.push_back(dir + subdir);
         }
 
         return appended;
     }
 
-    vector<string> subdirectories(string directory)
+    std::vector<std::string> subdirectories(std::string directory)
     {
-        vector<string> result;
+        std::vector<std::string> result;
         DIR* dir = opendir(directory.data());
         if (dir == NULL) throw C_Error(directory.data());
 
@@ -92,9 +92,9 @@ namespace org_restfulipc
         return result;
     }
 
-    vector<string> directoryTree(string directory)
+    std::vector<std::string> directoryTree(std::string directory)
     {
-        vector<string> directories = {directory + "/"};
+        std::vector<std::string> directories = {directory + "/"};
         int index = 0;
         while (index < directories.size()) {
             DIR* dir = opendir(directories[index].data());
@@ -114,7 +114,7 @@ namespace org_restfulipc
                     continue;
                 }
                 else if (dirent->d_type == DT_DIR) {
-                    directories.push_back(directories[index] + string(dirent->d_name) + '/');
+                    directories.push_back(directories[index] + std::string(dirent->d_name) + '/');
                 }
             }
             closedir(dir);

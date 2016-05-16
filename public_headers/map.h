@@ -14,8 +14,6 @@
 #include <algorithm>
 #include "errorhandling.h"
 
-using namespace std;
-
 namespace org_restfulipc
 {
     template<class V, bool copyKey>
@@ -29,7 +27,7 @@ namespace org_restfulipc
         {
         }
 
-        Pair(const char *key, V&& value) : key(strdup(key)), value(move(value))
+        Pair(const char *key, V&& value) : key(strdup(key)), value(std::move(value))
         {
         }
 
@@ -44,7 +42,7 @@ namespace org_restfulipc
         {
             key = other.key;
             other.key = 0;
-            value = move(other.value);
+            value = std::move(other.value);
         }
 
         Pair& operator=(Pair&& other)
@@ -54,7 +52,7 @@ namespace org_restfulipc
             }
             key = other.key;
             other.key = 0;
-            value = move(other.value);
+            value = std::move(other.value);
             return *this;
         }
 
@@ -70,7 +68,7 @@ namespace org_restfulipc
         {
         }
 
-        Pair(const char *key, V&& value) : key(key), value(move(value))
+        Pair(const char *key, V&& value) : key(key), value(std::move(value))
         {
         }
 
@@ -81,13 +79,13 @@ namespace org_restfulipc
         Pair(Pair&& other)
         {
             key = other.key;
-            value = move(other.value);
+            value = std::move(other.value);
         }
 
         Pair& operator=(Pair&& other)
         {
             key = other.key;
-            value = move(other.value);
+            value = std::move(other.value);
             return *this;
         }
 
@@ -166,7 +164,7 @@ namespace org_restfulipc
             }
         }
 
-        int find(string key) 
+        int find(std::string key) 
         {
             return find(key.data());
         }
@@ -176,7 +174,7 @@ namespace org_restfulipc
             return find(key) > -1;
         }
 
-        bool contains(string key) 
+        bool contains(std::string key) 
         {
             return find(key.data()) > -1;
         }
@@ -207,7 +205,7 @@ namespace org_restfulipc
             return list.at(pos).value;
         }
 
-        V& operator[](const string& key)
+        V& operator[](const std::string& key)
         {
             return operator[](key.data());
         }
@@ -223,7 +221,7 @@ namespace org_restfulipc
             return tmp;
         }
 
-        V take(const string key) 
+        V take(const std::string key) 
         {
             return take(key.data());
         }
@@ -276,30 +274,30 @@ namespace org_restfulipc
             sorted = list.size();
         }
 
-        vector<const char*> keys()
+        std::vector<const char*> keys()
         {
-            vector<const char*> res;
+            std::vector<const char*> res;
             for (int i = 0; i < size(); i++) {
                 res.push_back(list.at(i).key);
             }
             return res;
         }
 
-        vector<V*> values()
+        std::vector<V*> values()
         {
-            vector<V*> res;
+            std::vector<V*> res;
             for (int i = 0; i < size(); i++) {
                 res.push_back(&(list.at(i).value));
             }
             return res;
         }
 
-        vector<const char*> keys(const char* prefix)
+        std::vector<const char*> keys(const char* prefix)
         {
             bool dummy;
             int prefixLength = strlen(prefix);
             int pos = search(prefix, dummy);
-            vector<const char*> res;
+            std::vector<const char*> res;
             while (pos < size() && !strncmp(prefix, list.at(pos).key, prefixLength)) {
                 res.push_back(list.at(pos).key);
                 pos++;

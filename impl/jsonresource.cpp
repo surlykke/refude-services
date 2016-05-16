@@ -34,11 +34,12 @@ namespace org_restfulipc
 
     void JsonResource::setJson(Json&& json)
     {
-        this->json = move(json);
+        this->json = std::move(json);
         clearCache();
     }
 
-    Buffer JsonResource::buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers)
+    Buffer JsonResource::buildContent(HttpMessage& request, const char* remainingPath, 
+                                      std::map<std::string, std::string>& headers)
     {
         return JsonWriter(json).buffer;
     }
@@ -65,7 +66,8 @@ namespace org_restfulipc
         clearCache();
     }
 
-    Buffer LocalizedJsonResource::buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers)
+    Buffer LocalizedJsonResource::buildContent(HttpMessage& request, const char* remainingPath, 
+                                               std::map<std::string, std::string>& headers)
     {
         return LocalizingJsonWriter(json, getAcceptedLocales(request)).buffer;
     }
@@ -73,18 +75,18 @@ namespace org_restfulipc
     
      
    
-    string LocalizedJsonResource::getLocaleToServe(const char* acceptLanguageHeader)
+    std::string LocalizedJsonResource::getLocaleToServe(const char* acceptLanguageHeader)
     {
         if (!acceptLanguageHeader) {
             return "";
         }
-        vector<string> locales;
-        string aLH(acceptLanguageHeader);
-        aLH.erase(remove_if(aLH.begin(), aLH.end(), ::isspace), aLH.end());
-        replace(aLH.begin(), aLH.end(), '-', '_');
-        transform(aLH.begin(), aLH.end(), aLH.begin(), ::tolower);
-        for (string part : split(aLH, ',')) {
-            vector<string> langAndWeight = split(part, ';');
+        std::vector<std::string> locales;
+        std::string aLH(acceptLanguageHeader);
+        aLH.erase(std::remove_if(aLH.begin(), aLH.end(), ::isspace), aLH.end());
+        std::replace(aLH.begin(), aLH.end(), '-', '_');
+        std::transform(aLH.begin(), aLH.end(), aLH.begin(), ::tolower);
+        for (std::string part : split(aLH, ',')) {
+            std::vector<std::string> langAndWeight = split(part, ';');
             if (langAndWeight.size() > 1 &&
                 langAndWeight[1].size() >= 2 &&
                 langAndWeight[1].substr(0, 2) == "q=") {
@@ -94,16 +96,16 @@ namespace org_restfulipc
                 locales.push_back(langAndWeight[1] + langAndWeight[0]);
             }
             else {
-                locales.push_back(string("1.000") + langAndWeight[0]);
+                locales.push_back(std::string("1.000") + langAndWeight[0]);
             }
         }
 
-        sort(locales.begin(), locales.end(), std::greater<string>());
+        sort(locales.begin(), locales.end(), std::greater<std::string>());
         for (int i = 0; i < locales.size(); i++) {
             locales[i].erase(0, 5);
         }
 
-        for (string locale : locales) {
+        for (std::string locale : locales) {
             if (json["_ripc:locales"].contains(locale)) {
                 return locale;
             }
@@ -111,22 +113,4 @@ namespace org_restfulipc
 
         return "";
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

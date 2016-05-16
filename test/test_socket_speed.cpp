@@ -22,9 +22,6 @@
 
 #define SOCK_PATH "test_speed"
 
-using namespace std;
-using namespace org_restfulipc;
-
 void runAsClient() 
 {
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);

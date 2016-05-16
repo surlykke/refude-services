@@ -33,9 +33,9 @@ namespace org_restfulipc
         }
     }
 
-    vector<string> AbstractResource::getAcceptedLocales(HttpMessage& request)
+    std::vector<std::string> AbstractResource::getAcceptedLocales(HttpMessage& request)
     {
-        vector<string> result;
+        std::vector<std::string> result;
         if (! request.headers.contains("accept-language")) {
             return result;
         }
@@ -52,7 +52,7 @@ namespace org_restfulipc
         if (c > acceptLanguage && *(c - 1) != ',') *(c++) = ',';
         *c = '\0';
 
-        vector<pair<float, string>> weightedLocales;
+        std::vector<std::pair<float, std::string>> weightedLocales;
         char* currentLocale = acceptLanguage;
         char* currentWeight = NULL;
         for (char* current = acceptLanguage; *current; current++) {
@@ -66,7 +66,7 @@ namespace org_restfulipc
             else if (*current == ',') {
                 *current = '\0';
                 if (currentWeight) {
-                    weightedLocales.push_back({stof(currentWeight), currentLocale});
+                    weightedLocales.push_back({std::stof(currentWeight), currentLocale});
                 }
                 else {
                     weightedLocales.push_back({1.0, currentLocale});
@@ -80,7 +80,25 @@ namespace org_restfulipc
             result.push_back(p.second);
         }
     }
-    
+
+    void AbstractResource::buildResponse(Buffer& response, Buffer&& content, 
+                                         const std::map<std::string, std::string>& headers)
+    {
+            response.write("HTTP/1.1 200 OK\r\n"
+                           "Content-Type: application/json; charset=UTF-8\r\n");
+            for (auto headerPair : headers) {
+                response.write(headerPair.first.data());
+                response.write(":");
+                response.write(headerPair.second.data());
+                response.write("\r\n");
+            }
+            response.write("content-length: ");
+            response.write(content.size());
+            response.write("\r\n\r\n");
+            response.write(content.data());
+
+    }
+
  
     void AbstractResource::sendFully(int socket, const char* data, int nbytes) {
         for (int bytesWritten = 0; bytesWritten < nbytes; ) {

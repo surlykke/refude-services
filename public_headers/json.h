@@ -61,7 +61,7 @@ namespace org_restfulipc
         Json& operator[](const char* index);
         Json& operator[](std::string index);
         Json& operator[](int index) const;
-        vector<const char*> keys() const; // TODO  Use some imutable array here
+        std::vector<const char*> keys() const; // TODO  Use some imutable array here
         operator const char*() const;
         operator double() const;
         operator long() const;

@@ -17,7 +17,6 @@
 
 namespace org_restfulipc
 {
-    using namespace std;
     class Json;
 
     struct JsonWriter
@@ -37,14 +36,14 @@ namespace org_restfulipc
 
     struct LocalizingJsonWriter : public JsonWriter
     {
-        LocalizingJsonWriter(Json& json, vector<string> acceptableLocales);
+        LocalizingJsonWriter(Json& json, std::vector<std::string> acceptableLocales);
         virtual ~LocalizingJsonWriter();
     
     protected:
         void writeObject(Json& json) override;
     
     private:
-        vector<string> acceptableLocales;
+        std::vector<std::string> acceptableLocales;
         const char* lastResort;
     };
 

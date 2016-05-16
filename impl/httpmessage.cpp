@@ -13,8 +13,6 @@
 #include "httpmessage.h"
 #include "errorhandling.h"
 
-using namespace std;
-
 namespace org_restfulipc
 {
 
@@ -97,7 +95,7 @@ namespace org_restfulipc
         if (currentChar() == '?') {
             readQueryString();
         }
-       
+
         _message.buffer[_currentPos] = '\0';
 
         int protocolStart = _currentPos + 1;
@@ -113,15 +111,15 @@ namespace org_restfulipc
             _message.buffer[_currentPos++] = '\0';
             char* parameterName = _message.buffer + _currentPos;
             char* parameterValue = NULL;
-            
+
             while (currentChar() != '=' && currentChar() != '&' && !isspace(currentChar())) {
                 nextChar();
             }
-           
+
             if (currentChar() == '=') {
                 _message.buffer[_currentPos++] = '\0';
                 parameterValue = _message.buffer + _currentPos;
-                
+
                 while (currentChar() != '&' && !isspace(currentChar())) {
                     nextChar();
                 }
@@ -264,6 +262,35 @@ namespace org_restfulipc
 
     }
 
+    Buffer HttpMessage::toBuf()
+    {
+        Buffer buf;
+        if (path) {
+            buf << "HTTP " << method2String(method) << " " << path;
+            if (queryParameterMap.size() > 0) {
+                char separator = '?';
+                for (int i = 0; i < queryParameterMap.size(); i++) {
+                    for (const char* value : queryParameterMap.valueAt(i)) {
+                        buf << separator << queryParameterMap.keyAt(i) << "=" << value;
+                        separator = '&';
+                    }
+                }
+            }
+        }
+        else {
+            buf << status;
+        }
+        buf << "\n";
+        for (int i = 0; i < headers.size(); i++) {
+            buf << headers.keyAt(i) << ": " << headers.valueAt(i) << "\n";
+        }
+        buf << "\n";
+        if (body) {
+            buf << body << "\n";
+        }
+
+        return buf;
+    }
 
 }
 
@@ -279,34 +306,3 @@ namespace org_restfulipc
 //char buffer[8192];
 
 
-using namespace org_restfulipc;
-
-Buffer HttpMessage::toBuf()
-{
-    Buffer buf;
-    if (path) {
-        buf << "HTTP " << method2String(method) << " " << path;
-        if (queryParameterMap.size() > 0) {
-            char separator = '?';
-            for (int i = 0; i < queryParameterMap.size(); i++) {
-                for (const char* value : queryParameterMap.valueAt(i)) {
-                    buf << separator << queryParameterMap.keyAt(i) << "=" << value;
-                    separator = '&';
-                }
-            }
-        }
-    }
-    else {
-        buf << status;
-    }
-    buf << "\n";
-    for (int i = 0; i < headers.size(); i++) {
-        buf << headers.keyAt(i) << ": " << headers.valueAt(i) << "\n";
-    }
-    buf << "\n";
-    if (body) {
-        buf << body << "\n";
-    }
-
-    return buf;
-}

@@ -89,7 +89,7 @@ namespace org_restfulipc
         buffer.write('"');
     }
 
-    LocalizingJsonWriter::LocalizingJsonWriter(Json& json, vector<string> acceptableLocales):
+    LocalizingJsonWriter::LocalizingJsonWriter(Json& json, std::vector<std::string> acceptableLocales):
         JsonWriter(),
         acceptableLocales(acceptableLocales),
         lastResort(lastResort)
@@ -105,7 +105,7 @@ namespace org_restfulipc
     {
         if (json.contains("_ripc:localized")) {
             bool found = false;
-            for (string locale : acceptableLocales) {
+            for (std::string locale : acceptableLocales) {
                 if (json.contains(locale)) {
                     write(json[locale]);
                     return;

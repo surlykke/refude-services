@@ -29,7 +29,7 @@ namespace org_restfulipc
 
         void enqueue(int s) {
            {
-                unique_lock<mutex> lock(m);
+                std::unique_lock<std::mutex> lock(m);
 
                 while (count >= 16) {
                     notFull.wait(lock);
@@ -49,7 +49,7 @@ namespace org_restfulipc
         int dequeue() {
             int result;
             {
-                unique_lock<mutex> lock(m);
+                std::unique_lock<std::mutex> lock(m);
 
                 while (count <= 0) {
                     notEmpty.wait(lock);
@@ -65,9 +65,9 @@ namespace org_restfulipc
         int elements[16];
         int count;
 
-        mutex m;
-        condition_variable notFull;
-        condition_variable notEmpty;
+        std::mutex m;
+        std::condition_variable notFull;
+        std::condition_variable notEmpty;
     };
 
     Service::Service() :

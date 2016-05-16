@@ -15,12 +15,8 @@
 #include "errorhandling.h"
 #include "methods.h"
 
-using namespace std;
-
 namespace org_restfulipc
 {
-
-
 
     HttpUrl::HttpUrl(const char* url)
     {

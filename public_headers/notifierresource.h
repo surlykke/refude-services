@@ -13,14 +13,14 @@
 #include <vector>
 
 #include "abstractresource.h"
-using namespace std;
+
 namespace org_restfulipc 
 {
 
     class NotifierResource : public AbstractResource
     {
     public:
-        typedef shared_ptr<NotifierResource> ptr;
+        typedef std::shared_ptr<NotifierResource> ptr;
         NotifierResource();
 
         virtual void doGET(int& socket, HttpMessage& request, const char* remainingPath) override;
@@ -29,8 +29,8 @@ namespace org_restfulipc
     private:
         void addClient(int socket);
 
-        vector<int> mClientSockets;
-        mutex mMutex;
+        std::vector<int> mClientSockets;
+        std::mutex mMutex;
     };
 
 }

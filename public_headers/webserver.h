@@ -13,7 +13,6 @@
 #include "magic.h"
 namespace org_restfulipc 
 {
-    using namespace std;
     struct PathMimetypePair
     {
         const char* path;
@@ -30,7 +29,7 @@ namespace org_restfulipc
     
     private:
         magic_t magic_cookie;
-        const string rootDir;
+        const std::string rootDir;
         int rootFd;
     };
 }

@@ -22,7 +22,7 @@ namespace org_restfulipc
         int status;
         char* path;
         Map<const char*, false> headers;
-        Map<vector<const char*>, false> queryParameterMap;
+        Map<std::vector<const char*>, false> queryParameterMap;
         int contentLength;
         char* body;
         
@@ -67,8 +67,7 @@ namespace org_restfulipc
     };
 }
 
-using namespace org_restfulipc;
-std::ostream& operator<<(std::ostream& out, const HttpMessage& message);
+std::ostream& operator<<(std::ostream& out, const org_restfulipc::HttpMessage& message);
 
 #endif    /* HTTPMESSAGE_H */
 
