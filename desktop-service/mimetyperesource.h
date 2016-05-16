@@ -10,11 +10,10 @@
 #define MYMETYPERESOURCE_H
 
 #include <ripc/jsonresource.h>
+#include <ripc/notifierresource.h>
 
 namespace org_restfulipc
 {
-    class DesktopService;
-
     class MimetypeResource : public AbstractCachingResource
     {
     public:

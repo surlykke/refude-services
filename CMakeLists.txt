@@ -1,15 +1,16 @@
 cmake_minimum_required(VERSION 3.1.0)
-set(PROJECT "DesktopService")
+set(PROJECT "RefudeService")
 project(${PROJECT})
 
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}") 
 
 include(GNUInstallDirs)
 link_directories(/usr/local/lib64)
+include_directories(common)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-file(GLOB SOURCE_FILES *.cpp)
+file(GLOB_RECURSE SOURCE_FILES *.cpp)
 
-file(GLOB JSON_TEMPLATES *.json)
+file(GLOB_RECURSE JSON_TEMPLATES *.json)
 message(STATUS "JSON_TEMPLATES: ${JSON_TEMPLATES}")
 foreach (JSON_TEMPLATE ${JSON_TEMPLATES}) 
     get_filename_component(BASENAME ${JSON_TEMPLATE} NAME_WE)
@@ -22,5 +23,5 @@ endforeach (JSON_TEMPLATE)
 add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
 target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl)
 
-install(FILES refude-services.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
+install(FILES refude-service.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
 install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_BINDIR})

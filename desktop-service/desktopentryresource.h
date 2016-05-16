@@ -1,6 +1,7 @@
-#ifndef DESKTOPENTRYRESOURCE_H
-#define DESKTOPENTRYRESOURCE_H
+#ifndef DESKTOPENTRYRESOURCE_H 
+#define DESKTOPENTRYRESOURCE_H 
 
+#include <ripc/json.h>
 #include <ripc/abstractcachingresource.h>
 #include <ripc/notifierresource.h>
 

@@ -11,7 +11,6 @@
 #include <magic.h>
 #include <string>
 #include <ripc/json.h>
-#include "types.h"
 #include "inireader.h"
 
 namespace org_restfulipc

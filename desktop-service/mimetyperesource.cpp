@@ -13,7 +13,8 @@
 
 #include "rootTemplate.h"
 #include "mimeappslistreader.h"
-#include "desktopservice.h"
+//#include "desktopservice.h"
+#include "xdg.h"
 #include "mimetyperesource.h"
 namespace org_restfulipc
 {
@@ -52,7 +53,7 @@ namespace org_restfulipc
             });
             this->mimetypeJsons = move(mimetypeJsons);
         }
-        affectedMimetypes.each([&notifier](const char* key, const char* value) {
+        affectedMimetypes.each([&](const char* key, const char* value) {
             notifier->notifyClients(value, key);
         });
     }

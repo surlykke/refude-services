@@ -8,7 +8,8 @@
 
 #ifndef ICONRESOURCEBUILDER_H
 #define ICONRESOURCEBUILDER_H
-#include "desktopservice.h"
+#include <ripc/service.h>
+
 #include "icontheme.h"
 #include "iconresource.h"
 
@@ -21,7 +22,7 @@ namespace org_restfulipc
         IconResourceBuilder();
         virtual ~IconResourceBuilder();
         void buildResources();
-        void mapResources(DesktopService& desktopService);
+        void mapResources(Service& service);
 
         Json themesJson;
         Map<Json> themeJsonMap;

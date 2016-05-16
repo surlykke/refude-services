@@ -92,6 +92,8 @@ namespace org_restfulipc
 
     Buffer DesktopEntryResource::buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers)
     {
+        std::cout << "DesktopEntryResource, path: " << request.path << "\n"
+                  << "- remaining path: " << remainingPath << "\n";
         if (*remainingPath == '\0') {
             bool onlyFileHandlers = false;
             bool onlyUrlHandlers = false;
@@ -182,6 +184,7 @@ namespace org_restfulipc
             return LocalizingJsonWriter(content, locales).buffer;
         }
         else {
+            std::cout << "Looking at " << remainingPath << "\n";
             if (desktopJsons.contains(remainingPath)) {
                 return LocalizingJsonWriter(desktopJsons[remainingPath], getAcceptedLocales(request)).buffer;
             }

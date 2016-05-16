@@ -140,18 +140,4 @@ namespace org_restfulipc
             }
         });
     }
-
-    void MimeResourceBuilder::mapResources(Service& service, NotifierResource::ptr notifier)
-    {
-        MimetypeResource::ptr mimetypeResource =
-            dynamic_pointer_cast<MimetypeResource>(service.mapping("/mimetypes", true));
-
-        if (mimetypeResource) {
-            mimetypeResource->setMimetypeJsons(move(mimetypeJsons), notifier);
-        }
-        else {
-            mimetypeResource = make_shared<MimetypeResource>(move(mimetypeJsons));
-            service.map("/mimetypes", mimetypeResource, true);
-        }
-    }
 }

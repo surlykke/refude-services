@@ -7,9 +7,10 @@
  */
 #include <ripc/utils.h>
 #include <ripc/jsonwriter.h>
+#include <ripc/jsonresource.h>
 
+#include "xdg.h"
 #include "themereader.h"
-#include "desktopservice.h"
 #include "iconcollector.h"
 #include "themeTemplate.h"
 #include "themesTemplate.h"
@@ -70,26 +71,26 @@ namespace org_restfulipc
         IconCollector("/usr/share/pixmaps", dummyIconJson).collectInto(usrSharePixmapsIcons);
     }
 
-    void IconResourceBuilder::mapResources(DesktopService& desktopService)
+    void IconResourceBuilder::mapResources(Service& service)
     {
         IconResource::ptr iconResource = 
             make_shared<IconResource>(move(themeIconMap), move(usrSharePixmapsIcons), move(inheritanceMap));
-        desktopService.map("/icons/icon", iconResource);
+        service.map("/icons/icon", iconResource);
 
-        themeJsonMap.each([&desktopService, this](const char* themeDirName, Json& themeJson){
+        themeJsonMap.each([&service, this](const char* themeDirName, Json& themeJson){
             themesJson["themes"].append(themeDirName);
             string selfUri = string("/icons/themes/") + themeDirName;
             themeJson["_links"]["self"]["href"] = selfUri;
             LocalizedJsonResource::ptr themeResource = make_shared<LocalizedJsonResource>();
             themeResource->setJson(move(themeJson));
-            desktopService.map(selfUri.data(), themeResource);
+            service.map(selfUri.data(), themeResource);
         });
 
         const char* themesSelfUri = "/icons/themes";
         themesJson["_links"]["self"]["href"] = themesSelfUri;
         JsonResource::ptr themesResource = make_shared<JsonResource>();
         themesResource->setJson(move(themesJson));
-        desktopService.map(themesSelfUri, themesResource);
+        service.map(themesSelfUri, themesResource);
     }
 
 }

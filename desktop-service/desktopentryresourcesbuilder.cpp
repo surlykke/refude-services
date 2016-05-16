@@ -31,7 +31,7 @@ namespace org_restfulipc
     {
     }
 
-    void DesktopEntryResourceBuilder::buildJsons()
+    void DesktopEntryResourceBuilder::build()
     {
         for (const string& applicationsDir : append(xdg::data_dirs(), "/applications")) {
             readDesktopFiles(directoryTree(applicationsDir));
@@ -45,19 +45,6 @@ namespace org_restfulipc
         }
 
         readMimeappsListFile(xdg::config_home());
-    }
-
-    void DesktopEntryResourceBuilder::mapResources(Service& service, NotifierResource::ptr notifier)
-    {
-        if (service.mapping("/desktopentries", true)) {
-            DesktopEntryResource::ptr desktopEntryResource = 
-                dynamic_pointer_cast<DesktopEntryResource>(service.mapping("/desktopentries", true));
-            desktopEntryResource->setDesktopJsons(move(desktopJsons), notifier);
-        }
-        else {
-            DesktopEntryResource::ptr desktopEntryResource = make_shared<DesktopEntryResource>(move(desktopJsons));
-            service.map("/desktopentries", desktopEntryResource, true);
-        }
     }
 
     vector<string> DesktopEntryResourceBuilder::desktopFiles(string directory)

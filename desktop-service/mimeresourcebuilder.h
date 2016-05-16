@@ -24,9 +24,6 @@ namespace org_restfulipc
         virtual ~MimeResourceBuilder();
         void build();
         void addAssociationsAndDefaults(Map<Json>& desktopJsons,  Map<vector<string>>& defaultApplications);
-        void mapResources(Service& service, NotifierResource::ptr notifier);
-    
-    private:
         Map<Json> mimetypeJsons;
     };
 }

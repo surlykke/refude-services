@@ -9,10 +9,9 @@
 #include <dirent.h>
 #include <ripc/utils.h>
 #include <ripc/jsonwriter.h>
-#include "iconcollector.h"
 
 #include "themereader.h"
-#include "iconresource.h"
+
 namespace org_restfulipc
 {
 

@@ -1,50 +1,26 @@
-/*
- * Copyright (c) 2015, 2016 Christian Surlykke
- *
- * This file is part of the refude-services project. 
- * It is distributed under the GPL v2 license.
- * Please refer to the LICENSE file for a copy of the license.
- */
-
-#include <string.h>
 #include <sys/inotify.h>
-#include <dirent.h>
-#include <unistd.h>
 #include <poll.h>
-#include <ripc/json.h>
+#include <limits.h>
+#include <unistd.h>
+#include <ripc/errorhandling.h>
 #include <ripc/utils.h>
-#include <ripc/notifierresource.h>
-#include "handlerTemplate.h"
-
 #include "xdg.h"
-#include "mimeresourcebuilder.h"
-#include "desktopentryreader.h"
-#include "mimeappslistreader.h"
-
-#include "desktopservice.h"
-#include "desktopentryresourcesbuilder.h"
-#include "iconresourcebuilder.h"
+#include "desktopwatcher.h"
 
 #define LEN (sizeof(struct inotify_event) + NAME_MAX + 1)
 
 namespace org_restfulipc
 {
-    DesktopService::DesktopService() :
-        Service(),
-        notifier(),
-        watchThread()
+
+    desktopwatcher::desktopwatcher()
     {
-        dumpRequests = true;
-        notifier = make_shared<NotifierResource>();
-        map("/notify", notifier);
-        buildResources();
-        watchThread = thread(&DesktopService::watcher, this, setupWatches());
-        IconResourceBuilder iconResourceBuilder;
-        iconResourceBuilder.buildResources();
-        iconResourceBuilder.mapResources(*this);
     }
 
-    void DesktopService::watcher(int wd)
+    desktopwatcher::~desktopwatcher()
+    {
+    }
+    
+    void desktopwatcher::watcher(int wd)
     {
         try {
             char buf[LEN];
@@ -82,12 +58,12 @@ namespace org_restfulipc
                 }
 
                 if (somethingChanged) {
-                    buildResources();
+                    // Emit event...
                 }
             }
         }
         catch (RuntimeError e) {
-            std::cerr << "DesktopService::watcher caught RuntimeError: " << e.what() << "\n";
+            std::cerr << "desktopwatcher::watcher caught RuntimeError: " << e.what() << "\n";
             e.printStackTrace();
             std::cerr << "\n";
         }
@@ -96,7 +72,7 @@ namespace org_restfulipc
         }
     }
 
-    int DesktopService::setupWatches()
+    int desktopwatcher::setupWatches()
     {
         int wd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
         if (wd < 0) throw C_Error();
@@ -118,24 +94,12 @@ namespace org_restfulipc
         return wd;
     }
 
-    int DesktopService::addWatch(int wd, string dir)
+    int desktopwatcher::addWatch(int wd, string dir)
     {
         static int flags = IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO;
         int watch = inotify_add_watch(wd, dir.data(), flags);
         if (watch < 0) throw C_Error();
         return watch;
-    }
-
-    void DesktopService::buildResources()
-    {
-        MimeResourceBuilder mimeResourceBuilder;
-        mimeResourceBuilder.build();
-        DesktopEntryResourceBuilder desktopEntryResourceBuilder;
-        desktopEntryResourceBuilder.buildJsons();
-        mimeResourceBuilder.addAssociationsAndDefaults(desktopEntryResourceBuilder.desktopJsons,
-                                                       desktopEntryResourceBuilder.defaultApplications);
-        mimeResourceBuilder.mapResources(*this, notifier);
-        desktopEntryResourceBuilder.mapResources(*this, notifier);
     }
 
 

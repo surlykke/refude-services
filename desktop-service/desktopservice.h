@@ -15,19 +15,18 @@
 #include <map>
 #include <ripc/notifierresource.h>
 #include <ripc/service.h>
+#include "desktopentryresource.h"
 #include "mimetyperesource.h"
-#include "typedefs.h"
-#include "iconresource.h"
-#include "xdg.h"
-
 namespace org_restfulipc 
 {
     using namespace std;
-    class DesktopService : public Service
+    class DesktopResources
     {
     public:
-        DesktopService();
-        virtual ~DesktopService() {};
+        DesktopResources();
+        virtual ~DesktopResources() {};
+
+        void setup(Service& service);
 
     private:
         void setupNotification();
@@ -35,8 +34,11 @@ namespace org_restfulipc
         int addWatch(int wd, string dir);
         void watcher(int wd);
         void buildResources();
-        
+
         NotifierResource::ptr notifier;
+        DesktopEntryResource::ptr desktopEntryResource;
+        MimetypeResource::ptr mimetypeResource;
+        
         thread watchThread;
 
     };

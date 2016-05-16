@@ -27,8 +27,7 @@ namespace org_restfulipc
     public:
         DesktopEntryResourceBuilder();
         virtual ~DesktopEntryResourceBuilder();
-        void buildJsons();
-        void mapResources(Service& service, NotifierResource::ptr notifier);
+        void build();
 
         Map<Json> desktopJsons;
         Map<vector<string>> defaultApplications;

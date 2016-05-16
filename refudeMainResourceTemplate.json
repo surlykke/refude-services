@@ -1,0 +1,18 @@
+{
+    "_links": {
+        "self": {
+            "href": "http://localhost:7938"
+        },
+        "related": [
+            {
+                "profile": "http://org.ripc.refude.DesktopService.html",
+                "href": "http://localhost:7939"
+            },
+            {
+                "profile": "http://org.ripc.refude.IconService.html",
+                "href": "http://localhost:7940"
+            }
+        ]
+    }
+}
+
