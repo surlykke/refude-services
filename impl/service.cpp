@@ -233,7 +233,7 @@ namespace org_restfulipc
                     }
 
                     if (! handler) {
-                        throw Status::Http404;
+                        throw HttpCode::Http404;
                     }
                     
                     handler->handleRequest(requestSocket, request, remainingPath);
@@ -245,7 +245,7 @@ namespace org_restfulipc
                         requestSocket = -1;
                     }
                 }
-                catch (Status status) {
+                catch (HttpCode status) {
                     send(requestSocket, statusLine(status), strlen(statusLine(status)), MSG_NOSIGNAL);
                     send(requestSocket, "\r\n", 2, MSG_NOSIGNAL);
                     close(requestSocket);

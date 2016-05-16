@@ -32,7 +32,7 @@ namespace org_restfulipc
             fd = openat(dirFd, filePath, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
             if (fd < 0) {
                 if (errno == ENOENT) {
-                    throw Status::Http404;
+                    throw HttpCode::Http404;
                 }
                 else {
                     throw C_Error();

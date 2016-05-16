@@ -29,7 +29,7 @@ namespace org_restfulipc
         case Method::TRACE:   doTRACE(socket, request, remainingPath); break;
         case Method::OPTIONS: doOPTIONS(socket, request, remainingPath); break;
         case Method::CONNECT: doCONNECT(socket, request, remainingPath); break;
-        case Method::UNKNOWN: throw Status::Http406; // FIXME Is this the right one
+        case Method::UNKNOWN: throw HttpCode::Http406; // FIXME Is this the right one
         }
     }
 
@@ -42,7 +42,7 @@ namespace org_restfulipc
         
         // TODO: Maybe we should just have a generel max header length in HttpMessageReader?
         if (strlen(request.headers["accept-language"]) > 1023) {
-            throw Status::Http400; // FIXME Error message "Header too long"
+            throw HttpCode::Http400; // FIXME Error message "Header too long"
         }
 
         // First, make a copy of 'accept-language', skipping whitespace, and ensuring it ends with ','
@@ -59,7 +59,7 @@ namespace org_restfulipc
             if (*current == ';') {
                 *current = '\0';
                 if (*(++current) != 'q' || *(++current) != '=') {
-                    throw Status::Http400; // FIXME Error message
+                    throw HttpCode::Http400; // FIXME Error message
                 }
                 currentWeight = current + 1;
             } 

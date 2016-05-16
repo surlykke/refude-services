@@ -36,15 +36,15 @@ namespace org_restfulipc
 
         virtual void handleRequest(int &socket, HttpMessage& request, const char* remainingPath);
 
-        virtual void     doGET(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
-        virtual void   doPATCH(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
-        virtual void    doPOST(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
-        virtual void  doDELETE(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
-        virtual void     doPUT(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
-        virtual void    doHEAD(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
-        virtual void   doTRACE(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
-        virtual void doOPTIONS(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
-        virtual void doCONNECT(int& socket, HttpMessage& request, const char* remainingPath) { throw Status::Http405; }
+        virtual void     doGET(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void   doPATCH(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void    doPOST(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void  doDELETE(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void     doPUT(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void    doHEAD(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void   doTRACE(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void doOPTIONS(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void doCONNECT(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
 
         /**
          * Extract acceptable locales from accept-language header as an ordered  list.

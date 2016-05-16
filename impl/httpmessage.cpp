@@ -87,7 +87,7 @@ namespace org_restfulipc
         while (nextChar() != ' ');
 
         _message.method = string2Method(_message.buffer);
-        if (_message.method == Method::UNKNOWN) throw Status::Http406;
+        if (_message.method == Method::UNKNOWN) throw HttpCode::Http406;
         _message.path = _message.buffer + _currentPos + 1;
 
         for (nextChar(); currentChar() != '?' && !isspace(currentChar()); nextChar());
@@ -102,7 +102,7 @@ namespace org_restfulipc
 
         while (!isspace(nextChar()));
 
-        if (_message.buffer[_currentPos] != '\r' || nextChar() != '\n') throw Status::Http400;
+        if (_message.buffer[_currentPos] != '\r' || nextChar() != '\n') throw HttpCode::Http400;
     }
 
     void HttpMessageReader::readQueryString()
@@ -137,15 +137,15 @@ namespace org_restfulipc
     void HttpMessageReader::readStatusLine()
     {
         while (!isspace(nextChar()));
-        if (_currentPos <= 0) throw Status::Http400;
-        if (strncmp("HTTP/1.1", _message.buffer, 8) != 0) throw Status::Http400;
+        if (_currentPos <= 0) throw HttpCode::Http400;
+        if (strncmp("HTTP/1.1", _message.buffer, 8) != 0) throw HttpCode::Http400;
         while (isspace(nextChar()));
         int statuscodeStart = _currentPos;
-        if (!isdigit(currentChar())) throw Status::Http400;
+        if (!isdigit(currentChar())) throw HttpCode::Http400;
         while (isdigit(nextChar()));
         errno = 0;
         long int status = strtol(_message.buffer + statuscodeStart, 0, 10);
-        if (status <= 100 || status >= 600) throw Status::Http400;
+        if (status <= 100 || status >= 600) throw HttpCode::Http400;
         _message.status = (int) status;
 
         // We ignore what follows the status code. This means that a message like
@@ -153,11 +153,11 @@ namespace org_restfulipc
         // 'HTTP/1.1 200 Ok'
         // (Why does the http protocol specify that both the code and the text is sent?)
         while (currentChar() != '\r') {
-            if (currentChar() == '\n') throw Status::Http400;
+            if (currentChar() == '\n') throw HttpCode::Http400;
             nextChar();
         }
 
-        if (nextChar() != '\n') throw Status::Http400;
+        if (nextChar() != '\n') throw HttpCode::Http400;
     }
 
     // On entry: currentPos points to character just before next header line
@@ -166,7 +166,7 @@ namespace org_restfulipc
     {
         while (true) {
             if (nextChar() == '\r') {
-                if (nextChar() != '\n') throw Status::Http400;
+                if (nextChar() != '\n') throw HttpCode::Http400;
                 return;
             }
 
@@ -190,8 +190,8 @@ namespace org_restfulipc
             _message.buffer[_currentPos] = tolower(_message.buffer[_currentPos]);
             nextChar();
         }
-        if (currentChar() != ':') throw Status::Http400;
-        if (_currentPos <= startOfHeaderLine) throw Status::Http400;
+        if (currentChar() != ':') throw HttpCode::Http400;
+        if (_currentPos <= startOfHeaderLine) throw HttpCode::Http400;
         _message.buffer[_currentPos] = '\0';
 
         while (isblank(nextChar()));
@@ -204,7 +204,7 @@ namespace org_restfulipc
             nextChar();
         }
 
-        if (nextChar() != '\n') throw Status::Http400;
+        if (nextChar() != '\n') throw HttpCode::Http400;
         _message.buffer[endOfHeaderValue] = '\0';
         _message.headers.add(_message.buffer + startOfHeaderLine, _message.buffer + startOfHeaderValue);
     }

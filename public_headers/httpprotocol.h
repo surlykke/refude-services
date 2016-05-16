@@ -70,7 +70,7 @@ namespace org_restfulipc
         extern const char* unknown;
     }
 
-    enum class Status {
+    enum class HttpCode {
         Http200,
         Http201,
         Http202,
@@ -134,7 +134,7 @@ namespace org_restfulipc
         Http599
     };
 
-    const char* statusLine(Status status);
+    const char* statusLine(HttpCode status);
 
 
 }

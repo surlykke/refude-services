@@ -155,7 +155,7 @@ namespace org_restfulipc
     };
 
 
-    const char* statusLine(Status status) 
+    const char* statusLine(HttpCode status) 
     {
         return status_line[(int)status];
     }
