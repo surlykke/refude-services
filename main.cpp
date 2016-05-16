@@ -12,6 +12,7 @@
 #include "refudemainresource.h"
 #include "desktop-service/desktopservice.h"
 #include "icon-service/iconresourcebuilder.h"
+#include "running-applications/runningapplicationsresource.h"
 
 int main(int argc, char *argv[])
 {
@@ -28,6 +29,9 @@ int main(int argc, char *argv[])
         iconResourceBuilder.buildResources();
         iconResourceBuilder.mapResources(service);
 
+        RunningApplicationsResource::ptr runningApplicationsResource = 
+            std::make_shared<RunningApplicationsResource>();
+        service.map("/runningapplications", runningApplicationsResource);
 
         std::cout << "Listening on 7938\n";
         service.serve(7938);
