@@ -13,15 +13,13 @@
 
 namespace org_restfulipc
 {
-    using namespace std;
-
     namespace xdg
     {
-        const string& home();
-        const string& config_home();
-        const vector<string>& config_dirs();
-        const string& data_home();
-        const vector<string>& data_dirs();
+        const std::string& home();
+        const std::string& config_home();
+        const std::vector<std::string>& config_dirs();
+        const std::string& data_home();
+        const std::vector<std::string>& data_dirs();
     }
 }
 #endif /* XDG_H */

@@ -11,8 +11,6 @@
 #include <map>
 namespace org_restfulipc
 {
-    using namespace std;
-
     /**
      * Maps from an icon name to a Json. The Json should be an array of Json objects, each describing an
      * icon instance. Such an object could look like:
@@ -37,7 +35,7 @@ namespace org_restfulipc
      * Holds inheritance information 
      * inheritancemap["oxygen"] -> "hicolor" means oxygen inherits hicolor 
      */
-    typedef map<string, string> InheritanceMap; 
+    typedef std::map<std::string, std::string> InheritanceMap; 
    
 }
 #endif /* TYPES_H */

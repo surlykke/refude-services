@@ -16,33 +16,33 @@ namespace org_restfulipc
     namespace xdg
     {
 
-        const string& home() 
+        const std::string& home() 
         {
-            static string res = value("HOME");
+            static std::string res = value("HOME");
             return res; 
         }
 
-        const string& config_home()
+        const std::string& config_home()
         {
-            static string res = value("XDG_CONFIG_HOME", home() + "/.config");
+            static std::string res = value("XDG_CONFIG_HOME", home() + "/.config");
             return res; 
         }
         
-        const vector<string>& config_dirs() 
+        const std::vector<std::string>& config_dirs() 
         {
-            static vector<string> res = split(value("XDG_CONFIG_DIRS", "/etc/xdg"), ':');
+            static std::vector<std::string> res = split(value("XDG_CONFIG_DIRS", "/etc/xdg"), ':');
             return res;
         }
 
-        const string& data_home()
+        const std::string& data_home()
         {
-            static string res = value("XDG_DATA_HOME", home() + "/.local/share");
+            static std::string res = value("XDG_DATA_HOME", home() + "/.local/share");
             return res;
         }
 
-        const vector<string>& data_dirs() 
+        const std::vector<std::string>& data_dirs() 
         {
-            static vector<string> res = split(value("XDG_DATA_DIRS", "/usr/share:/usr/local/share"), ':');
+            static std::vector<std::string> res = split(value("XDG_DATA_DIRS", "/usr/share:/usr/local/share"), ':');
             return res;
         }
     }

@@ -1,7 +1,7 @@
 #ifndef DESKTOPWATCHER_H
 #define DESKTOPWATCHER_H
 #include <string>
-using namespace std;
+
 namespace org_restfulipc
 {
 
@@ -12,7 +12,7 @@ namespace org_restfulipc
         virtual ~desktopwatcher();
     private:
         int setupWatches();
-        int addWatch(int wd, string dir);
+        int addWatch(int wd, std::string dir);
         void watcher(int wd);
     };
 }

@@ -15,7 +15,7 @@
 namespace org_restfulipc
 {
 
-    ThemeReader::ThemeReader(Json& theme, const string& dirPath) :
+    ThemeReader::ThemeReader(Json& theme, const std::string& dirPath) :
         IniReader(dirPath + "/index.theme"),
         themeJson(theme),
         dirPath(dirPath)
@@ -29,7 +29,7 @@ namespace org_restfulipc
 
     void ThemeReader::read()
     {
-        set<string> declaredDirectories;
+        std::set<std::string> declaredDirectories;
         if (lineType == EndOfFile) {
             return;
         }
@@ -53,10 +53,10 @@ namespace org_restfulipc
             if (declaredDirectories.count(heading) > 0) {
                 int minSize;
                 int maxSize;
-                string sizeType = "Threshold";
+                std::string sizeType = "Threshold";
                 int size = -1;
                 int threshold = 2;
-                string context;
+                std::string context;
 
                 while (getNextLine() == KeyValue) {
                     if (key == "Size") {
@@ -109,8 +109,6 @@ namespace org_restfulipc
                 directoryObj["Size"] = size;
                 directoryObj["MinSize"] = minSize;
                 directoryObj["MaxSize"] = maxSize;
-
-    //            IconCollector(dirPath + '/' + heading, minSize, maxSize, context).collectInto(iconMap);
             }
             else {
                 throw RuntimeError("Directory group '%' not listed in 'Directories'");
@@ -118,7 +116,7 @@ namespace org_restfulipc
         }
     }
 
-    bool ThemeReader::oneOf(string str, std::list<std::string> list)
+    bool ThemeReader::oneOf(std::string str, std::list<std::string> list)
     {
         for (std::string val : list) if (str == val) return true;
         return false;

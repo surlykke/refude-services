@@ -15,19 +15,17 @@
 
 namespace org_restfulipc
 {
-    using namespace std;
-
     class ThemeReader : private IniReader
     {
     public:
-        ThemeReader(Json& theme, const string& dirPath);
+        ThemeReader(Json& theme, const std::string& dirPath);
         virtual ~ThemeReader();
         Json& themeJson;
 
     private:
         void read();
-        bool oneOf(string str, std::list<std::string> list);
-        const string& dirPath; 
+        bool oneOf(std::string str, std::list<std::string> list);
+        const std::string& dirPath; 
     };
     
 }

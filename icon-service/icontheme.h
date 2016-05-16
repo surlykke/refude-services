@@ -13,7 +13,7 @@
 #include <map>
 namespace org_restfulipc
 {
-    /*using namespace std;
+    /*
     struct IconInstance
     {
         string path;

@@ -16,11 +16,8 @@
 
 namespace org_restfulipc
 {
-    using namespace std;
-
-    typedef Map<vector<string>> AppLists;
-    typedef Map<set<string>> AppSets;
-
+    typedef Map<std::vector<std::string>> AppLists;
+    typedef Map<std::set<std::string>> AppSets;
 }
 
 

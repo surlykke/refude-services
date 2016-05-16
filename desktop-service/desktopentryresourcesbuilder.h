@@ -20,8 +20,6 @@
 
 namespace org_restfulipc
 {
-    using namespace std;
-    
     class DesktopEntryResourceBuilder
     {
     public:
@@ -30,12 +28,12 @@ namespace org_restfulipc
         void build();
 
         Map<Json> desktopJsons;
-        Map<vector<string>> defaultApplications;
+        Map<std::vector<std::string>> defaultApplications;
 
     private:
-        vector<string> desktopFiles(string directory);
-        void readDesktopFiles(vector<string> applicationsDirs);
-        void readMimeappsListFile(string dir);
+        std::vector<std::string> desktopFiles(std::string directory);
+        void readDesktopFiles(std::vector<std::string> applicationsDirs);
+        void readMimeappsListFile(std::string dir);
    };
 
 }

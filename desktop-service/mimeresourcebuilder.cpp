@@ -15,7 +15,7 @@
 #include "subtypeTemplate.h"
 #include "mimeresourcebuilder.h"
 #include "mimetyperesource.h"
-using namespace tinyxml2;
+
 namespace org_restfulipc
 {
 
@@ -30,11 +30,13 @@ namespace org_restfulipc
 
     // Caller must ensure that mimetypeElement->FirstChildElement exists...
 
-    void handleLocalizedXmlElement(XMLElement* mimetypeElement, const char* elementName, Json& json)
+    void handleLocalizedXmlElement(tinyxml2::XMLElement* mimetypeElement, 
+                                   const char* elementName, 
+                                   Json& json)
     {
         json[elementName] = JsonConst::EmptyObject;
         json[elementName]["_ripc:localized"] = "";
-        for (XMLElement* element = mimetypeElement->FirstChildElement(elementName);
+        for (tinyxml2::XMLElement* element = mimetypeElement->FirstChildElement(elementName);
             element;
             element = element->NextSiblingElement(elementName)) {
 
@@ -49,24 +51,24 @@ namespace org_restfulipc
 
     void MimeResourceBuilder::build()
     {
-        XMLDocument* doc = new XMLDocument;
+        tinyxml2::XMLDocument* doc = new tinyxml2::XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
-        XMLElement* rootElement = doc->FirstChildElement("mime-info");
+        tinyxml2::XMLElement* rootElement = doc->FirstChildElement("mime-info");
 
 
         if (!rootElement) throw RuntimeError("No 'mime-info' root-element");
-        for (XMLElement* mimetypeElement = rootElement->FirstChildElement("mime-type");
+        for (tinyxml2::XMLElement* mimetypeElement = rootElement->FirstChildElement("mime-type");
             mimetypeElement;
             mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
 
-            string mimetype = mimetypeElement->Attribute("type");
-            vector<string> tmp = split(mimetype, '/');
+            std::string mimetype = mimetypeElement->Attribute("type");
+            std::vector<std::string> tmp = split(mimetype, '/');
             if (tmp.size() != 2 || tmp[0].empty() || tmp[1].empty()) {
                 std::cerr << "Incomprehensible mimetype: " << mimetype;
                 continue;
             }
-            string& typeName = tmp[0];
-            string& subtypeName = tmp[1];
+            std::string& typeName = tmp[0];
+            std::string& subtypeName = tmp[1];
             Json& json = mimetypeJsons[mimetype];
             json << subtypeTemplate_json;
             json["type"] = typeName;
@@ -84,25 +86,25 @@ namespace org_restfulipc
                 handleLocalizedXmlElement(mimetypeElement, "expanded-acronym", json);
             }
 
-            for (XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
+            for (tinyxml2::XMLElement* aliasElement = mimetypeElement->FirstChildElement("alias");
                 aliasElement;
                 aliasElement = aliasElement->NextSiblingElement("alias")) {
                 json["aliases"].append(aliasElement->Attribute("type"));
             }
 
-            for (XMLElement* globElement = mimetypeElement->FirstChildElement("glob");
+            for (tinyxml2::XMLElement* globElement = mimetypeElement->FirstChildElement("glob");
                 globElement;
                 globElement = globElement->NextSiblingElement("glob")) {
                 json["globs"].append(globElement->Attribute("pattern"));
             }
 
-            for (XMLElement* subclassOfElement = mimetypeElement->FirstChildElement("sub-class-of");
+            for (tinyxml2::XMLElement* subclassOfElement = mimetypeElement->FirstChildElement("sub-class-of");
                 subclassOfElement;
                 subclassOfElement = subclassOfElement->NextSiblingElement("sub-class-of")) {
                 json["subclassOf"].append(subclassOfElement->Attribute("type"));
             }
 
-            XMLElement* iconElement = mimetypeElement->FirstChildElement("icon");
+            tinyxml2::XMLElement* iconElement = mimetypeElement->FirstChildElement("icon");
             if (iconElement) {
                 json["icon"] = iconElement->Attribute("name");
             }
@@ -110,7 +112,7 @@ namespace org_restfulipc
                 json["icon"] = typeName + '-' + subtypeName;
             }
 
-            XMLElement* genericIconElement = mimetypeElement->FirstChildElement("generic-icon");
+            tinyxml2::XMLElement* genericIconElement = mimetypeElement->FirstChildElement("generic-icon");
             if (genericIconElement) {
                 json["genericIcon"] = genericIconElement->Attribute("name");
             }
@@ -120,21 +122,23 @@ namespace org_restfulipc
         }
     }
 
-    void MimeResourceBuilder::addAssociationsAndDefaults(Map<Json>& desktopJsons, Map<vector<string>>&defaultApplications)
+    void MimeResourceBuilder::addAssociationsAndDefaults(Map<Json>& desktopJsons, 
+                                                         Map<std::vector<std::string>>&defaultApplications)
     {
         desktopJsons.each([this](const char* desktopId, Json& desktopJson) {
             Json& mimetypes = desktopJson["MimeType"];
             for (int i = 0; i < mimetypes.size(); i++) {
-                string mimetype = (const char*)mimetypes[i];
+                std::string mimetype = (const char*)mimetypes[i];
                 if (mimetypeJsons.contains(mimetype)) {
                     mimetypeJsons[mimetype]["associatedApplications"].append(desktopId);
                 }
             }
         });
 
-        defaultApplications.each([this](const char* mimetype, vector<string>& defaultApplicationIds) {
+        defaultApplications.each([this](const char* mimetype, 
+                                        std::vector<std::string>& defaultApplicationIds) {
             if (mimetypeJsons.contains(mimetype)) {
-                for (string& defaultApplicationId : defaultApplicationIds) {
+                for (std::string& defaultApplicationId : defaultApplicationIds) {
                     mimetypeJsons[mimetype]["defaultApplications"].append(defaultApplicationId);
                 }
             }

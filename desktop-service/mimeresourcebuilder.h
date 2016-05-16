@@ -16,14 +16,14 @@
 #include "typedefs.h"
 namespace org_restfulipc
 {
-    using namespace std;
     class MimeResourceBuilder
     {
     public:
         MimeResourceBuilder();
         virtual ~MimeResourceBuilder();
         void build();
-        void addAssociationsAndDefaults(Map<Json>& desktopJsons,  Map<vector<string>>& defaultApplications);
+        void addAssociationsAndDefaults(Map<Json>& desktopJsons,  
+                                        Map<std::vector<std::string>>& defaultApplications);
         Map<Json> mimetypeJsons;
     };
 }

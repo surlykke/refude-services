@@ -77,24 +77,24 @@ namespace org_restfulipc
         int wd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
         if (wd < 0) throw C_Error();
         addWatch(wd, xdg::config_home());
-        for (const string& configDir : xdg::config_dirs()) {
+        for (const std::string& configDir : xdg::config_dirs()) {
             addWatch(wd, configDir);
         }
-        string usersApplicationsDir = xdg::data_home() + "/applications";
-        for (const string& applicationDir : directoryTree(usersApplicationsDir)) {
+        std::string usersApplicationsDir = xdg::data_home() + "/applications";
+        for (const std::string& applicationDir : directoryTree(usersApplicationsDir)) {
             addWatch(wd, applicationDir);
         }
-        vector<string> sysApplicationsDirs = append(xdg::data_dirs(), "/applications");
-        for (const string& systemApplicationDirRoot : sysApplicationsDirs) {
-            vector<string> tree = directoryTree(systemApplicationDirRoot);
-            for (const string& applicationDir : directoryTree(systemApplicationDirRoot)) {
+        std::vector<std::string> sysApplicationsDirs = append(xdg::data_dirs(), "/applications");
+        for (const std::string& systemApplicationDirRoot : sysApplicationsDirs) {
+            std::vector<std::string> tree = directoryTree(systemApplicationDirRoot);
+            for (const std::string& applicationDir : directoryTree(systemApplicationDirRoot)) {
                 addWatch(wd, applicationDir);
             }
         }
         return wd;
     }
 
-    int desktopwatcher::addWatch(int wd, string dir)
+    int desktopwatcher::addWatch(int wd, std::string dir)
     {
         static int flags = IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO;
         int watch = inotify_add_watch(wd, dir.data(), flags);

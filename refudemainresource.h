@@ -16,7 +16,8 @@ namespace org_restfulipc
         virtual ~RefudeMainResource();
 
     protected:
-        Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers) override;
+        Buffer buildContent(HttpMessage& request, const char* remainingPath, 
+                            std::map<std::string, std::string>& headers) override;
 
     };
 }

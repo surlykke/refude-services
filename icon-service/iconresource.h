@@ -30,7 +30,6 @@ namespace org_restfulipc
         PathMimetypePair findByPath(const char *path); 
         Json* findPathOfClosest(Json& iconList, int size);
         bool othersHavePermissions(const char* filePath, mode_t permissions);
-        string parent(string themeName);
         
         ThemeIconMap themeIconMap;
         IconMap usrSharePixmapsIcons;

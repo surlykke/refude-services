@@ -21,7 +21,7 @@ foreach (JSON_TEMPLATE ${JSON_TEMPLATES})
 endforeach (JSON_TEMPLATE) 
 
 add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
-target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl)
+target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl X11)
 
 install(FILES refudeservice.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
 install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_BINDIR})

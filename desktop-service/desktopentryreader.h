@@ -18,11 +18,10 @@
 
 namespace org_restfulipc 
 {
-    using namespace std;
     class DesktopEntryReader : private IniReader
     {
     public:
-        DesktopEntryReader(string desktopFilePath);
+        DesktopEntryReader(std::string desktopFilePath);
         virtual ~DesktopEntryReader();
         Json json;
     

@@ -109,10 +109,10 @@ namespace org_restfulipc
             }
         
             if (locale.empty()) {
-                json[key]["_ripc:localized"] = move(keywords);
+                json[key]["_ripc:localized"] = std::move(keywords);
             }
             else {
-                json[key][locale] = move(keywords);
+                json[key][locale] = std::move(keywords);
             }
         } 
         else if (key == "Actions") {
@@ -129,7 +129,7 @@ namespace org_restfulipc
         std::list<std::string> result;
         std::size_t startOfRemaining = 0; 
         std::size_t semicolonPos;
-        while ((semicolonPos = value.find(";", startOfRemaining)) != string::npos) {
+        while ((semicolonPos = value.find(";", startOfRemaining)) != std::string::npos) {
             result.push_back(value.substr(startOfRemaining, semicolonPos - startOfRemaining));
             startOfRemaining = semicolonPos + 1;
         }; 

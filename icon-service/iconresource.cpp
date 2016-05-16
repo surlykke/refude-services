@@ -19,9 +19,9 @@ namespace org_restfulipc
 
     IconResource::IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap) :
         WebServer("/"),
-        themeIconMap(move(themeIconMap)),
-        usrSharePixmapsIcons(move(usrSharePixmapIcons)),
-        inheritanceMap(move(inheritanceMap))
+        themeIconMap(std::move(themeIconMap)),
+        usrSharePixmapsIcons(std::move(usrSharePixmapIcons)),
+        inheritanceMap(std::move(inheritanceMap))
     {
     }
 
@@ -31,13 +31,13 @@ namespace org_restfulipc
 
     PathMimetypePair IconResource::findFile(HttpMessage& request, const char* remainingPath)
     {
-        vector<string> names;
-        string themeName;
+        std::vector<std::string> names;
+        std::string themeName;
         int size;
 
-        if (request.queryParameterMap["name"].size() < 1) throw Status::Http422;
-        if (request.queryParameterMap["theme"].size() > 1) throw Status::Http422;
-        if (request.queryParameterMap["size"].size() > 1) throw Status::Http422;
+        if (request.queryParameterMap["name"].size() < 1) throw HttpCode::Http422;
+        if (request.queryParameterMap["theme"].size() > 1) throw HttpCode::Http422;
+        if (request.queryParameterMap["size"].size() > 1) throw HttpCode::Http422;
 
         if (request.queryParameterMap["name"].size() == 1 && *(request.queryParameterMap["name"][0]) == '/') {
             // We do not support mixing names and absolute paths in one request, nor giving more than one 
@@ -54,19 +54,19 @@ namespace org_restfulipc
 
         if (!themeIconMap.contains(themeName)) {
             std::cerr << "No theme '" << themeName << "'\n";
-            throw Status::Http404;
+            throw HttpCode::Http404;
         }
 
         if (request.queryParameterMap["size"].size() == 1) {
-            size = stoi(request.queryParameterMap["size"][0]);
+            size = std::stoi(request.queryParameterMap["size"][0]);
         }
         else {
             size = 32; // FIXME
         }
 
-        for (string& name = themeName; !name.empty(); name = inheritanceMap[name]) {
+        for (std::string& name = themeName; !name.empty(); name = inheritanceMap[name]) {
             IconMap& iconMap = themeIconMap[name];
-            for (const string& name : request.queryParameterMap["name"]) {
+            for (const std::string& name : request.queryParameterMap["name"]) {
                 if (iconMap.contains(name)) {
                     Json* icon = findPathOfClosest(iconMap[name], size);
                     if (icon) {
@@ -81,7 +81,7 @@ namespace org_restfulipc
 
         // So no icons in theme or it's ancestors. We look for an icon in
         // /usr/share/pixmaps, where some application icons can be found
-        for (const string& name : request.queryParameterMap["name"]) {
+        for (const std::string& name : request.queryParameterMap["name"]) {
             if (usrSharePixmapsIcons.contains(name)) {
                 Json* icon = findPathOfClosest(usrSharePixmapsIcons[name], size);
                 if (icon) {
@@ -94,7 +94,7 @@ namespace org_restfulipc
         }
 
         // Abandon all hope
-        throw Status::Http404;
+        throw HttpCode::Http404;
     }
 
     PathMimetypePair IconResource::findByPath(const char* path)
@@ -106,7 +106,7 @@ namespace org_restfulipc
         // Check that 'others' have read permission to file and execute permission
         // to all directories above it.        
         std::cout << "resolvedpath: "  << resolvedPath;
-        if (!othersHavePermissions(resolvedPath, 4)) throw Status::Http405;
+        if (!othersHavePermissions(resolvedPath, 4)) throw HttpCode::Http405;
         const char* fileName = basename(resolvedPath);
         std::cout << "fileName: " << fileName << "\n";
         std::cout << "resolvedPath now: " << resolvedPath;
@@ -125,13 +125,13 @@ namespace org_restfulipc
             }
         }
         if (!strlen(mimetype)) {
-            throw Status::Http404;
+            throw HttpCode::Http404;
         }
 
         do {
             if (!dirname(resolvedPath)) throw C_Error();
             std::cout << "Checing permissions on " << resolvedPath << "\n";
-            if (!othersHavePermissions(resolvedPath, 1)) throw Status::Http405;
+            if (!othersHavePermissions(resolvedPath, 1)) throw HttpCode::Http405;
         } 
         while (strcmp("/", resolvedPath));
         
@@ -153,7 +153,7 @@ namespace org_restfulipc
     
     Json* IconResource::findPathOfClosest(Json& iconList, int size)
     {
-        double bestDistanceSoFar = numeric_limits<double>::max();
+        double bestDistanceSoFar = std::numeric_limits<double>::max();
         Json* candidate = NULL;
         for (int i = 0; i < iconList.size(); i++) {
             Json* instance = &iconList[i];
@@ -176,11 +176,6 @@ namespace org_restfulipc
             }
         }
         return candidate;
-    }
-
-    string IconResource::parent(string themeName)
-    {
-        return string();
     }
 
 }

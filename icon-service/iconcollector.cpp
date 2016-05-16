@@ -17,7 +17,7 @@
 namespace org_restfulipc
 {
 
-    IconCollector::IconCollector(string directoryPath, Json& iconDirJson) :
+    IconCollector::IconCollector(std::string directoryPath, Json& iconDirJson) :
         directoryPath(directoryPath),
         iconDirJson(iconDirJson)
     {
@@ -38,8 +38,8 @@ namespace org_restfulipc
         }
 
         for (;;) {
-            string fileName;
-            string filePath;
+            std::string fileName;
+            std::string filePath;
 
             errno = 0;
             struct dirent* dirent = readdir(dir);
@@ -50,13 +50,13 @@ namespace org_restfulipc
                 break;
             }
             else if (dirent->d_type == DT_REG || dirent->d_type == DT_LNK) {
-                string fileName = dirent->d_name;
+                std::string fileName = dirent->d_name;
                 if (fileName.size() <= 4) {
                     continue;
                 }
-                string fileEnding = fileName.substr(fileName.size() - 4, 4); // All endings '.png', '.xpm', and '.svg' 
-                string iconName = fileName.substr(0, fileName.size() - 4);   // have same length.
-                string filePath = directoryPath + '/' + fileName;
+                std::string fileEnding = fileName.substr(fileName.size() - 4, 4); // All endings '.png', '.xpm', and '.svg' 
+                std::string iconName = fileName.substr(0, fileName.size() - 4);   // have same length.
+                std::string filePath = directoryPath + '/' + fileName;
                 if (dirent->d_type == DT_LNK) {
                     if (!realpath(filePath.data(), buffer)) {
                         std::cerr << "Unable to resolve " << filePath << " - " << strerror(errno) << "\n";
@@ -88,7 +88,7 @@ namespace org_restfulipc
                 if (iconMap[iconName].undefined()) {
                     iconMap[iconName] = JsonConst::EmptyArray;
                 }
-                iconMap[iconName].append(move(instance));
+                iconMap[iconName].append(std::move(instance));
             }
         }
     }

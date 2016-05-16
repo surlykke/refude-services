@@ -33,23 +33,23 @@ namespace org_restfulipc
 
     void DesktopEntryResourceBuilder::build()
     {
-        for (const string& applicationsDir : append(xdg::data_dirs(), "/applications")) {
+        for (const std::string& applicationsDir : append(xdg::data_dirs(), "/applications")) {
             readDesktopFiles(directoryTree(applicationsDir));
             readMimeappsListFile(applicationsDir);
         }
 
         readDesktopFiles(directoryTree(xdg::data_home() + "/applications"));
 
-        for (string configDir : xdg::config_dirs()) {
+        for (std::string configDir : xdg::config_dirs()) {
             readMimeappsListFile(configDir);
         }
 
         readMimeappsListFile(xdg::config_home());
     }
 
-    vector<string> DesktopEntryResourceBuilder::desktopFiles(string directory)
+    std::vector<std::string> DesktopEntryResourceBuilder::desktopFiles(std::string directory)
     {
-        vector<string> files;
+        std::vector<std::string> files;
         DIR* dir = opendir(directory.data());
         if (dir == NULL) throw C_Error();
         
@@ -73,12 +73,12 @@ namespace org_restfulipc
         return files;
     } 
     
-    void DesktopEntryResourceBuilder::readDesktopFiles(vector<string> applicationsDirs)
+    void DesktopEntryResourceBuilder::readDesktopFiles(std::vector<std::string> applicationsDirs)
     {
-        for (const string& applicationsDir : applicationsDirs) {
-            for (const string& desktopFilePath : desktopFiles(applicationsDir)) {
+        for (const std::string& applicationsDir : applicationsDirs) {
+            for (const std::string& desktopFilePath : desktopFiles(applicationsDir)) {
                 DesktopEntryReader reader(desktopFilePath);
-                string entryId = replaceAll(string(desktopFilePath.data() + applicationsDirs[0].size()), '/', '-');
+                std::string entryId = replaceAll(std::string(desktopFilePath.data() + applicationsDirs[0].size()), '/', '-');
                 if (reader.json.contains("Hidden") && (bool)reader.json["Hidden"]) {
                     desktopJsons.take(entryId);
                 }
@@ -92,11 +92,12 @@ namespace org_restfulipc
         }
     }
 
-    void DesktopEntryResourceBuilder::readMimeappsListFile(string dir)
+    void DesktopEntryResourceBuilder::readMimeappsListFile(std::string dir)
     {
         MimeappsList mimeappsList(dir + "/mimeapps.list");
-        mimeappsList.removedAssociations.each([this](const char* mimetype, set<string>& deAssociatedApplications) {
-            for (const string& deAssociatedApplication : deAssociatedApplications) {
+        mimeappsList.removedAssociations.each([this](const char* mimetype, 
+                                                     std::set<std::string>& deAssociatedApplications) {
+            for (const std::string& deAssociatedApplication : deAssociatedApplications) {
                 if (desktopJsons.contains(deAssociatedApplication)) {
                     Json& associatedAppsArray = desktopJsons[deAssociatedApplication]["MimeType"];
                     while (int index = associatedAppsArray.find(deAssociatedApplication) > -1) {
@@ -106,22 +107,24 @@ namespace org_restfulipc
             }
         });
         
-        mimeappsList.addedAssociations.each([this](const char* mimetype, set<string>& associatedApplications) {
-            for (const string& associatedApplication : associatedApplications) {
+        mimeappsList.addedAssociations.each([this](const char* mimetype, 
+                                                   std::set<std::string>& associatedApplications) {
+            for (const std::string& associatedApplication : associatedApplications) {
                 if (desktopJsons.contains(associatedApplication)) {
                     desktopJsons[associatedApplication]["MimeType"].append(mimetype);
                 }
             }
         });
 
-        mimeappsList.defaultApps.each([this](const char* mimetype, vector<string>& defaultApplicationIds){
-            for (string& defaultApplicationId : defaultApplicationIds) {
-                vector<string>& defaults = defaultApplications[mimetype];
+        mimeappsList.defaultApps.each([this](const char* mimetype, 
+                                             std::vector<std::string>& defaultApplicationIds){
+            for (std::string& defaultApplicationId : defaultApplicationIds) {
+                std::vector<std::string>& defaults = defaultApplications[mimetype];
                 defaults.erase(std::remove(defaults.begin(), defaults.end(), defaultApplicationId), defaults.end());
             }
             
             int pos = 0;
-            for (string& defaultApplicationId : defaultApplicationIds) {
+            for (std::string& defaultApplicationId : defaultApplicationIds) {
                 defaultApplications[mimetype].insert(defaultApplications[mimetype].begin() + pos++, defaultApplicationId);
             }
         });

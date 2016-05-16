@@ -20,16 +20,14 @@ typedef struct __dirstream DIR;
 
 namespace org_restfulipc
 {
-    using namespace std;
-    
     struct IconCollector
     {
-        IconCollector(string directoryPath, Json& iconDirectoryJson);
+        IconCollector(std::string directoryPath, Json& iconDirectoryJson);
         virtual ~IconCollector();
         void collectInto(IconMap& iconMap);
     
     private: 
-        string directoryPath;
+        std::string directoryPath;
         Json& iconDirJson;
         DIR* dir;
         char buffer[PATH_MAX];

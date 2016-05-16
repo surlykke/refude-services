@@ -49,27 +49,27 @@ namespace org_restfulipc
         std::ofstream stream(filePath);
     
         stream << "[Default Applications]\n";
-        defaultApps.each([&stream](const char* mimetype, vector<string>& defaultApps){
+        defaultApps.each([&stream](const char* mimetype, std::vector<std::string>& defaultApps){
             stream << mimetype << "=";
-            for (string defaultApp : defaultApps) {
+            for (std::string defaultApp : defaultApps) {
                 stream << defaultApp << ";";
             }
             stream << "\n";
         });
 
         stream << "[Added Associations]\n";
-        addedAssociations.each([&stream](const char* mimetype, set<string>& associatedApps){
+        addedAssociations.each([&stream](const char* mimetype, std::set<std::string>& associatedApps){
             stream << mimetype << "=";
-            for (string associatedApp : associatedApps) {
+            for (std::string associatedApp : associatedApps) {
                 stream << associatedApp << ";";
             }
             stream << "\n";
         });
 
         stream << "[Removed Associations]\n";
-        removedAssociations.each([&stream](const char* mimetype, set<string>& deAssociatedApps){
+        removedAssociations.each([&stream](const char* mimetype, std::set<std::string>& deAssociatedApps){
             stream << mimetype << "=";
-            for (string deAssociatedApp : deAssociatedApps) {
+            for (std::string deAssociatedApp : deAssociatedApps) {
                 stream << deAssociatedApp << ";";
             }
             stream << "\n";

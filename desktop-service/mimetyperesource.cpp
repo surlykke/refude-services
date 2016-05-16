@@ -21,7 +21,7 @@ namespace org_restfulipc
 
     MimetypeResource::MimetypeResource(Map<Json>&& mimetypeJsons) :
         AbstractCachingResource(),
-        mimetypeJsons(move(mimetypeJsons))
+        mimetypeJsons(std::move(mimetypeJsons))
     {
     }
 
@@ -36,7 +36,7 @@ namespace org_restfulipc
         const char* mimetypeRemoved = "mimetype-removed";
         Map<const char*> affectedMimetypes;
         {
-            unique_lock<recursive_mutex> lock(m);
+            std::unique_lock<std::recursive_mutex> lock(m);
             clearCache();
             this->mimetypeJsons.each([&](const char* mimetype, Json& mimetypeJson){
                 if (! mimetypeJsons.contains(mimetype)) {
@@ -51,7 +51,7 @@ namespace org_restfulipc
                     affectedMimetypes[mimetype] = mimetypeUpdated;
                 }
             });
-            this->mimetypeJsons = move(mimetypeJsons);
+            this->mimetypeJsons = std::move(mimetypeJsons);
         }
         affectedMimetypes.each([&](const char* key, const char* value) {
             notifier->notifyClients(value, key);
@@ -61,7 +61,9 @@ namespace org_restfulipc
     /* 
      * This is called from AbstractCachingResource::doGET, which will take the lock, so no need to do that here
      */
-    Buffer MimetypeResource::buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers)
+    Buffer MimetypeResource::buildContent(HttpMessage& request, 
+                                          const char* remainingPath, 
+                                          std::map<std::string, std::string>& headers)
     {
         if (remainingPath[0] == '\0') {
             Json mimetypes = JsonConst::EmptyObject;
@@ -73,8 +75,8 @@ namespace org_restfulipc
             }
             else if (request.queryParameterMap.size() == 1 &&
                      request.queryParameterMap.contains("search")) {
-                const vector<const char*>& terms = request.queryParameterMap["search"];
-                vector<string> locales = getAcceptedLocales(request);
+                const std::vector<const char*>& terms = request.queryParameterMap["search"];
+                std::vector<std::string> locales = getAcceptedLocales(request);
                 mimetypeJsons.each([&](const char* key, Json & value) {
                     if (match(terms, value, locales)) {
                         add(value["type"], value["subtype"], mimetypes);
@@ -83,12 +85,12 @@ namespace org_restfulipc
 
             }
             else {
-                throw Status::Http422;
+                throw HttpCode::Http422;
             }
 
             Json result; 
             result << rootTemplate_json;
-            result["mimetypes"] = move(mimetypes);
+            result["mimetypes"] = std::move(mimetypes);
             return JsonWriter(result).buffer;
         }
         else {
@@ -97,7 +99,7 @@ namespace org_restfulipc
             }
         }
 
-        throw Status::Http404;
+        throw HttpCode::Http404;
     }
 
     void MimetypeResource::add(const char* type, const char* subtype, Json& mimetypes)
@@ -109,9 +111,9 @@ namespace org_restfulipc
     }
 
 
-    bool MimetypeResource::match(const vector<const char*>& searchTerms,
+    bool MimetypeResource::match(const std::vector<const char*>& searchTerms,
                                  Json& mimetypeJson,
-                                 const vector<string>& acceptableLocales)
+                                 const std::vector<std::string>& acceptableLocales)
     {
         for (const char* searchTerm : searchTerms) {
             if (strcasestr(mimetypeJson["subtype"], searchTerm)) {
@@ -129,7 +131,7 @@ namespace org_restfulipc
             if (mimetypeJson.contains("comment")) {
                 Json& commentObj = mimetypeJson["comment"];
                 const char* locale = NULL;
-                for (const string& acceptableLocale : acceptableLocales) {
+                for (const std::string& acceptableLocale : acceptableLocales) {
                     if (commentObj.contains(acceptableLocale)) {
                         locale = acceptableLocale.data();
                         break;
@@ -155,7 +157,7 @@ namespace org_restfulipc
     void MimetypeResource::doPATCH(int& socket, HttpMessage& request, const char* remainingPath)
     {
         if (!mimetypeJsons.contains(remainingPath)) {
-            throw Status::Http404;
+            throw HttpCode::Http404;
         }
 
         static const char* successfulResponse =
@@ -165,18 +167,18 @@ namespace org_restfulipc
         Json mergeJson;
         mergeJson << request.body;
         if (mergeJson.type() != JsonType::Object) {
-            throw Status::Http406;
+            throw HttpCode::Http406;
         }
         else if (mergeJson.size() != 1 ||
                  !mergeJson.contains("defaultApplication") ||
                  mergeJson["defaultApplication"].type() != JsonType::String) {
-            throw Status::Http422; // FIXME Some error message here
+            throw HttpCode::Http422; // FIXME Some error message here
         }
         else {
-            unique_lock<recursive_mutex> lock(m);
+            std::unique_lock<std::recursive_mutex> lock(m);
 
-            string thisMimetype = remainingPath;
-            string defaultApplication = (string) mergeJson["defaultApplication"];
+            std::string thisMimetype = remainingPath;
+            std::string defaultApplication = (std::string) mergeJson["defaultApplication"];
             MimeappsList mimeappsList(xdg::config_home() + "/mimeapps.list");
             auto& defaultAppsForMime = mimeappsList.defaultApps[thisMimetype];
             for (auto it = defaultAppsForMime.begin(); it != defaultAppsForMime.end();) {

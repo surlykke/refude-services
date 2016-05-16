@@ -13,14 +13,13 @@
 #include "desktop-service/desktopservice.h"
 #include "icon-service/iconresourcebuilder.h"
 
-using namespace org_restfulipc;
-using namespace std;
 int main(int argc, char *argv[])
 {
+    using namespace org_restfulipc;
     try {
         Service service;
         service.dumpRequests = true;
-        service.map("/", make_shared<RefudeMainResource>());
+        service.map("/", std::make_shared<RefudeMainResource>());
 
         DesktopResources desktopResources;
         desktopResources.setup(service);
@@ -30,13 +29,13 @@ int main(int argc, char *argv[])
         iconResourceBuilder.mapResources(service);
 
 
-        cout << "Listening on 7938\n";
+        std::cout << "Listening on 7938\n";
         service.serve(7938);
         service.wait();
     }
     catch (RuntimeError re) {
-        cerr << re.what() << "\n";
+        std::cerr << re.what() << "\n";
         re.printStackTrace();
-        cerr << "\n";
+        std::cerr << "\n";
     }
 }

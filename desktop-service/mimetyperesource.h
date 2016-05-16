@@ -24,13 +24,15 @@ namespace org_restfulipc
         void doPATCH(int& socket, HttpMessage& request, const char* remainingPath) override;
 
     protected:
-        Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers) override;
+        Buffer buildContent(HttpMessage& request, 
+                            const char* remainingPath, 
+                            std::map<std::string, std::string>& headers) override;
 
     private:
         void add(const char* type, const char* subtype, Json& mimetypes);
-        bool match(const vector<const char*>& searchTerms, 
+        bool match(const std::vector<const char*>& searchTerms, 
                    Json& mimetypeJson, 
-                   const vector<string>& acceptableLocales);
+                   const std::vector<std::string>& acceptableLocales);
         
         Map<Json> mimetypeJsons;
     };

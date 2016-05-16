@@ -16,8 +16,6 @@
  */
 namespace org_restfulipc
 {
-    using namespace std;
-
     struct MimeappsList 
     {
         MimeappsList(std::string path);
@@ -28,7 +26,7 @@ namespace org_restfulipc
         AppSets removedAssociations;
         
     private:
-        string filePath;
+        std::string filePath;
 
     };
 }

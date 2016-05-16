@@ -19,7 +19,6 @@
 #include "mimetyperesource.h"
 namespace org_restfulipc 
 {
-    using namespace std;
     class DesktopResources
     {
     public:
@@ -31,7 +30,7 @@ namespace org_restfulipc
     private:
         void setupNotification();
         int setupWatches();
-        int addWatch(int wd, string dir);
+        int addWatch(int wd, std::string dir);
         void watcher(int wd);
         void buildResources();
 
@@ -39,7 +38,7 @@ namespace org_restfulipc
         DesktopEntryResource::ptr desktopEntryResource;
         MimetypeResource::ptr mimetypeResource;
         
-        thread watchThread;
+        std::thread watchThread;
 
     };
 }

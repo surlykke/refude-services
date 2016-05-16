@@ -18,11 +18,18 @@ namespace org_restfulipc
         virtual void doPOST(int& socket, HttpMessage& request, const char* remainingPath);
 
     protected:
-        virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, map<string, string>& headers);
+        virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, 
+                                    std::map<std::string, std::string>& headers);
 
     private:
-        bool matchCommand(Json& desktopJson, vector<const char*>* searchTerms, const vector<string>& locales);
-        bool matchDesktopEntry(Json& desktopJson, vector<const char*>* searchTerms, const vector<string>& locales);
+        bool matchCommand(Json& desktopJson, 
+                          std::vector<const char*>* searchTerms, 
+                          const std::vector<std::string>& locales);
+
+        bool matchDesktopEntry(Json& desktopJson, 
+                               std::vector<const char*>* searchTerms, 
+                               const std::vector<std::string>& locales);
+
         Map<Json> desktopJsons;
     };
 }
