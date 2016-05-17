@@ -22,6 +22,7 @@
 
 #define SOCK_PATH "test_speed"
 
+using namespace org_restfulipc;
 void runAsClient() 
 {
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -33,12 +34,12 @@ void runAsClient()
     if (connect(sock, (const sockaddr*)&addr, sizeof(struct sockaddr_un)) != 0) throw C_Error();
         
     char c = 'a';
-    cout << "client loop start\n";
+    std::cout << "client loop start\n";
     for (int i = 0; i < 100000; i++) {
         if (write(sock, &c, 1) <= 0) throw C_Error();
         if (read(sock, &c, 1) <= 0) throw C_Error();
     }
-    cout << "client loop end\n";
+    std::cout << "client loop end\n";
 
     close(sock);
 
@@ -73,7 +74,7 @@ void runAsServer()
     }
     catch (int errorNumber) {
         if (errorNumber > 0) {
-            cerr << "Error: " << errorNumber << " - " << strerror(errorNumber) << "\n";
+            std::cerr << "Error: " << errorNumber << " - " << strerror(errorNumber) << "\n";
             exit(errorNumber);
         }
         else {

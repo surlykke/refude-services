@@ -14,6 +14,7 @@
 #include "jsonwriter.h"
 #include "json.h"
 
+using namespace org_restfulipc;
 int main()
 {
 
@@ -23,7 +24,7 @@ int main()
     json["baa"] = JsonConst::FALSE;
     json.take("foo");
     std::cout << json.size() << "\n";
-    std::cout << JsonWriter(json).buffer.data << "\n"; 
+    std::cout << JsonWriter(json).buffer.data() << "\n"; 
     std::cout << "\n";
 
     json = JsonConst::EmptyArray;
@@ -33,5 +34,5 @@ int main()
     json.take(2);
     Json taken = json.take(0);
     std::cout << "At 0: " << (double)taken << "\n";
-    std::cout << JsonWriter(json).buffer.data << "\n";
+    std::cout << JsonWriter(json).buffer.data() << "\n";
 }

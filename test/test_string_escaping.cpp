@@ -20,7 +20,7 @@ using namespace org_restfulipc;
 int main()
 {
     try {
-        int dataFd = open("./data.json", O_RDONLY | O_CLOEXEC); 
+        int dataFd = open("./test/string.json", O_RDONLY | O_CLOEXEC); 
         char buf[2048];
         int bufSize = 0;
         int bytesRead = 0;
@@ -29,7 +29,9 @@ int main()
         buf[bufSize++] = '\0';
         std::cout << "Parsing " << buf << "\n";
         Json json = JsonReader(buf).read();
-        std::cout << JsonWriter(json).buffer.data() << "\n";
+        std::cout << "JsonReader done, json.mType: " << json.typeAsString() << "\n";
+        std::cout << "Som const char: " << (const char*)json << "\n";
+        std::cout << "Udskrevet: "  << JsonWriter(json).buffer.data() << "\n";
     }
     catch (RuntimeError re) {
         std::cout << "Caught error: " << re.errorMsg << "\n";

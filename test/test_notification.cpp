@@ -14,12 +14,13 @@
 #include "genericresource.h"
 #include "notifierresource.h"
 
+using namespace org_restfulipc;
 int main(int argc, char** argv)
 {
     
     Service service;
-    NotifierResource::ptr notifier = make_shared<NotifierResource>();
-    GenericResource::ptr resource = make_shared<GenericResource>("", notifier);
+    NotifierResource::ptr notifier = std::make_shared<NotifierResource>();
+    GenericResource::ptr resource = std::make_shared<GenericResource>("", notifier);
     service.map("/res", resource, true);
     service.map("/notify", notifier);
     service.serve(7938);
