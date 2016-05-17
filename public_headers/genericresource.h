@@ -26,6 +26,8 @@ namespace org_restfulipc
 
         void update(const char* data);
 
+        Buffer buildContent(HttpMessage& request, const char* remainingPath, std::map<std::string, std::string>& headers) override;
+
     private:
         NotifierResource::ptr notifierResource;
         std::string doc;
