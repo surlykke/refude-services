@@ -34,7 +34,7 @@ namespace org_restfulipc
         char* table = new char[256] {'\0'};
         table['/'] = '/';
         table['\\'] = '\\';
-        table['"'] = '/';
+        table['"'] = '"';
         table['t'] = '\t';
         table['n'] = '\n';
         table['b'] = '\b';
@@ -130,7 +130,7 @@ namespace org_restfulipc
                 throw RuntimeError("Runaway string");
             }
         }
-
+        
         char* result = strndup(stringStart, cc - stringStart);
         replaceEscapes(result);
         skip('"');
@@ -160,6 +160,7 @@ namespace org_restfulipc
             }
         } 
         while (*string);
+        *dest = '\0';
     }
 
     void JsonReader::readUnicodeEscape(char*& dest, char*& src)
