@@ -15,6 +15,20 @@ namespace org_restfulipc
 
     namespace xdg
     {
+        std::vector<std::string> getDataDirs() {
+            std::vector<std::string> tmp = split(value("XDG_DATA_DIRS", "/usr/share:/usr/local/share"), ':');
+            std::vector<std::string> res;
+            for (const std::string& data_dir : tmp) {
+                // Some desktop environments seem to add XDG_DATA_HOME to XDG_DATA_DIRS
+                // which is not, I think, correct according to the standard
+                // see: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+                if (data_dir != data_home()) {
+                    res.push_back(data_dir);
+                }
+            }
+
+            return res;
+        }
 
         const std::string& home() 
         {
@@ -42,7 +56,7 @@ namespace org_restfulipc
 
         const std::vector<std::string>& data_dirs() 
         {
-            static std::vector<std::string> res = split(value("XDG_DATA_DIRS", "/usr/share:/usr/local/share"), ':');
+            static std::vector<std::string> res = getDataDirs();
             return res;
         }
     }

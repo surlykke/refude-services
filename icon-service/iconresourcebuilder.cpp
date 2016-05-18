@@ -32,13 +32,15 @@ namespace org_restfulipc
     void IconResourceBuilder::buildResources()
     {
         std::vector<std::string> iconsDirs;
-        iconsDirs.push_back(xdg::home() + "/.icons");
-
         for (const auto& dir : append(xdg::data_dirs(), "/icons")) {
             iconsDirs.push_back(dir);
         }
+        iconsDirs.push_back(xdg::data_home() + "/icons");
+        iconsDirs.push_back(xdg::home() + "/.icons");
 
-        for (auto dirIterator =  iconsDirs.rbegin(); dirIterator != iconsDirs.rend(); dirIterator++) {
+    
+        for (auto dirIterator =  iconsDirs.begin(); dirIterator != iconsDirs.end(); dirIterator++) {
+            std::cout << "Collecting from " << *dirIterator << "\n";
             for (std::string themeDir : subdirectories(*dirIterator)) {
                 Json& themeJson = themeJsonMap[themeDir]; 
                 if (themeJson.undefined()) {
