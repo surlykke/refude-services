@@ -181,7 +181,7 @@ namespace org_restfulipc
             }
 
             if (pollRes > 0) {
-                int requestSocket = accept(listenSocket, NULL, 0);
+                int requestSocket = accept4(listenSocket, NULL, NULL, SOCK_CLOEXEC);
                 if (requestSocket < 0) {
                     continue;
                 }
