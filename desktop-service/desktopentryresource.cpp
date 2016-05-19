@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include "handlerTemplate.h"
 #include "commandsTemplate.h"
+#include "runapplication.h"
 #include "desktopentryresource.h"
 
 namespace org_restfulipc
@@ -63,24 +64,13 @@ namespace org_restfulipc
             const char* desktopEntryId = remainingPath + strlen("commands/") ;
             if (desktopJsons.contains(desktopEntryId)) {
                 Json& desktopJson = desktopJsons[desktopEntryId];
-                char command[1024];
-                const char* execPtr = (const char*) desktopJson["Exec"];
-                if (strlen(execPtr) > 1000) {
-                    throw RuntimeError("Exec string for %s too long", desktopEntryId);
+
+                if (!desktopJson.contains("Exec")) {
+                    throw RuntimeError("No 'Exec' field in %s\n", desktopEntryId);
                 }
-                char* p2 = command;
-                p2 += sprintf(p2, "cd; ");
-                while (*execPtr) {
-                    if (!strncasecmp(execPtr, "%f", 2) || !strncasecmp(execPtr, "%u", 2)) {
-                        execPtr += 2;
-                    }
-                    else {
-                        *(p2++) = *(execPtr++);
-                    }
-                }
-                sprintf(p2, ">/dev/null 2>/dev/null &"); 
-                std::cout << "doing '" << command << "'...\n";
-                system(command); 
+
+                runApplication((const char*)desktopJson["Exec"]);
+                
                 throw HttpCode::Http200;
             }
             else {
