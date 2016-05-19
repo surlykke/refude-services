@@ -110,7 +110,7 @@ namespace org_restfulipc
         memset(&sockaddr, 0, sizeof(struct sockaddr_un));
         sockaddr.sun_family = AF_UNIX;
         strncpy(&sockaddr.sun_path[0], socketPath, strlen(socketPath));
-        if ((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
+        if ((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
         unlink(socketPath);
         if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) < 0) {
             throw C_Error();

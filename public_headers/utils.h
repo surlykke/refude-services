@@ -14,6 +14,7 @@
 
 namespace org_restfulipc
 {
+    std::vector<std::string> splitByWhitespace(std::string str);
     std::vector<std::string> split(std::string str, char c);
     std::set<std::string> splitToSet(std::string str, char c);
     std::string value(const std::string& envVarName, const std::string& fallback = "");

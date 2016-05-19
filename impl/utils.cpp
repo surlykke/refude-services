@@ -14,6 +14,23 @@
 
 namespace org_restfulipc
 {
+    std::vector<std::string> splitByWhitespace(std::string str) {
+        std::vector<std::string> result;
+        int k = 0;
+        for (int i = 0; i < str.size(); i++) {
+            if (isspace(str[i])) {
+                if (i > k) {
+                    result.push_back(str.substr(k, i - k));
+                }
+                k = i + 1;
+            }
+        }
+
+        if (k < str.size()) {
+            result.push_back(str.substr(k));
+        }
+        return result;
+    }
 
     std::vector<std::string> split(std::string str, char c)
     {
