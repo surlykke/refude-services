@@ -16,6 +16,7 @@ namespace org_restfulipc
     {
         pid_t pid = fork();
         if ( pid == 0) {
+            setsid(); // Detach
             // In child process. Soon to exit, so we don't care about memory leaks
             char* buf = strdup(appAndArguments);
 
@@ -29,18 +30,16 @@ namespace org_restfulipc
             char* argv[32]; 
             int argc = 0;
 
-            bool lastWasWhiteSpace = true;
+            bool justSawWhitespace = true;
             for (char* c = buf; *c; c++) {
                 if (isspace(*c)) {
-                    if (!lastWasWhiteSpace) {
-                        *c = '\0';
-                    }
-                    lastWasWhiteSpace = true;
+                    *c = '\0';
+                    justSawWhitespace = true;
                 }
                 else {
-                    if (lastWasWhiteSpace) {
+                    if (justSawWhitespace) {
                         argv[argc++] = c;
-                        lastWasWhiteSpace = false;
+                        justSawWhitespace = false;
                         if (argc >= 31) {
                             throw RuntimeError("Too many arguments: %s\n", appAndArguments);
                         }
