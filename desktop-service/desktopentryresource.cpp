@@ -71,7 +71,7 @@ namespace org_restfulipc
 
                 runApplication((const char*)desktopJson["Exec"]);
                 
-                throw HttpCode::Http200;
+                throw HttpCode::Http204;
             }
             else {
                 throw HttpCode::Http404;

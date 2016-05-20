@@ -191,6 +191,7 @@ namespace org_restfulipc
             }
             defaultAppsForMime.insert(defaultAppsForMime.begin(), defaultApplication);
             mimeappsList.write();
+            throw HttpCode::Http204;
         }
     }
 }
