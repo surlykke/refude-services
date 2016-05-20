@@ -58,6 +58,9 @@ namespace org_restfulipc
         if (_message.header(Header::content_length)) {
             readBody();
         }
+        if (dumpRequest) {
+            printf("\n");            
+        }
     }
 
     void HttpMessageReader::readResponse()
