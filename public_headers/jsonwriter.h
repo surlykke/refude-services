@@ -31,7 +31,8 @@ namespace org_restfulipc
         void write(Json& json);
         virtual void writeObject(Json& json);
 
-        virtual void writeString(const char *string);
+        void writeString(const char *string);
+        void writeChar(const char chr);
     };
 
     struct LocalizingJsonWriter : public JsonWriter
@@ -46,25 +47,6 @@ namespace org_restfulipc
         std::vector<std::string> acceptableLocales;
         const char* lastResort;
     };
-
-    struct FilteringJsonWriter : public JsonWriter
-    {
-        FilteringJsonWriter(Json& json, 
-                            const char* marker, 
-                            Json& replacements, 
-                            Json& fallbackReplacements,
-                            const char* lastResort);
-        virtual ~FilteringJsonWriter();
-
-        const char* marker;
-        Json& replacements;
-        Json& fallbackReplacements;
-        const char* lastResort;
-
-    protected:
-        virtual void writeString(const char *string);
-    };
- 
 
 }
 

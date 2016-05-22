@@ -90,22 +90,29 @@ namespace org_restfulipc
     void JsonWriter::writeString(const char* string)
     {
         buffer.write('"');
-        for (int i = 0; string[i]; i++) {
-            if (0 <= string[i] && string[i] < 32) {
-                buffer.write(escapeStrings[string[i]]);
-            }
-            else if (string[i] == '"') {
-                buffer.write("\\\"");
-            }
-            else if (string[i] == '\\') {
-                buffer.write("\\\\");
-            }
-            else {
-                buffer.write(string[i]); 
-            }
+        const char* c = string;
+        while (*c) {
+            writeChar(*(c++));
         }
         buffer.write('"');
     }
+
+    void JsonWriter::writeChar(const char chr)
+    {
+        if (0 <= chr && chr < 32) {
+            buffer.write(escapeStrings[chr]);
+        }
+        else if (chr == '"') {
+            buffer.write("\\\"");
+        }
+        else if (chr == '\\') {
+            buffer.write("\\\\");
+        }
+        else {
+            buffer.write(chr); 
+        }
+    }
+
 
     LocalizingJsonWriter::LocalizingJsonWriter(Json& json, std::vector<std::string> acceptableLocales):
         JsonWriter(),
@@ -134,45 +141,6 @@ namespace org_restfulipc
         else {
             JsonWriter::writeObject(json);
         }
-    }
-
-    FilteringJsonWriter::FilteringJsonWriter(Json& json, 
-            const char* marker, 
-            Json& replacements, 
-            Json& fallbackReplacements, 
-            const char* lastResort) :
-        JsonWriter(),
-        marker(marker),
-        replacements(replacements),
-        fallbackReplacements(fallbackReplacements),
-        lastResort(lastResort)
-    {
-        write(json);
-    }
- 
-    
-    FilteringJsonWriter::~FilteringJsonWriter()
-    {
-    }
-
-    void FilteringJsonWriter::writeString(const char* str)
-    {
-        if (! strncmp(marker, str, strlen(marker))) {
-            if (replacements.contains(str)) {
-                str = (const char*)replacements[str];
-            }
-            else if (fallbackReplacements.contains(str)) {
-                str = (const char*) fallbackReplacements[str];
-            }
-            else {
-                str = lastResort;
-            }
-        }
-        buffer.write('"');
-        for (const char *c = str; *c; c++) {
-            buffer.write(*c); // FIXME
-        }
-        buffer.write('"');
     }
 }
 

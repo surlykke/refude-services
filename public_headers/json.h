@@ -108,7 +108,6 @@ namespace org_restfulipc
         friend class JsonReader;
         friend class JsonWriter;
         friend class LocalizingJsonWriter;
-        friend class FilteringJsonWriter;
     };
 
     Json& operator<<(Json& json, const char* serialized);
