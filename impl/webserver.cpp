@@ -90,20 +90,21 @@ namespace org_restfulipc
         }
         // FIXME deallocate in destructor...
     }
-    void WebServer::doGET(int& socket, HttpMessage& request, const char* remainingPath)
+    void WebServer::doGET(int& socket, HttpMessage& request)
     {
-        PathMimetypePair pair = findFile(request, remainingPath);
+        PathMimetypePair pair = findFile(request);
         FileWriter(socket, rootFd, pair.path, pair.mimetype).writeFile();
     }
 
-    PathMimetypePair WebServer::findFile(HttpMessage& request, const char* remainingPath)
+    PathMimetypePair WebServer::findFile(HttpMessage& request)
     {
         PathMimetypePair resp;
-        if (remainingPath[0] == '\0' || remainingPath[1] == '\0') { // A non-empty remainingPath always starts with '/'
+
+        if (request.remainingPath[0] == '\0') { 
             resp.path = "index.html";
         }
         else {
-            resp.path = remainingPath;
+            resp.path = request.remainingPath;
         }
         
         // TODO Maybe we can avoid a (costly?) call to magic_file by looking at fileendings... 

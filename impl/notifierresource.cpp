@@ -30,7 +30,7 @@ namespace org_restfulipc
     {
     }
 
-    void NotifierResource::doGET(int& socket, HttpMessage& request, const char* remainingPath)
+    void NotifierResource::doGET(int& socket, HttpMessage& request)
     {
         struct timeval tv;
         tv.tv_sec = 0;

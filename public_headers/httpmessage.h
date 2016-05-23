@@ -28,6 +28,13 @@ namespace org_restfulipc
         
         char buffer[8192];
 
+        /**
+         * This field is not really part of the Http Message. Used to 
+         * communicate between service and request handlers the part of the request 
+         * path that was matched (which may be different from the request path when 
+         * wildcarding is in play).
+         */
+        char* remainingPath; 
 
         HttpMessage();
         virtual ~HttpMessage();
@@ -35,6 +42,8 @@ namespace org_restfulipc
         void clear();
         
         Buffer toBuf();
+        
+        void setMatchedPathLength(size_t matchedPathLength); 
     };
 
     class HttpMessageReader

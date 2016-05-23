@@ -24,8 +24,8 @@ namespace org_restfulipc
     public:
         typedef std::shared_ptr<WebServer> ptr;
         WebServer(const char* rootDir);
-        void doGET(int& socket, HttpMessage& request, const char* remainingPath) override;
-        virtual PathMimetypePair findFile(HttpMessage& request, const char* remainingPath);
+        void doGET(int& socket, HttpMessage& request) override;
+        virtual PathMimetypePair findFile(HttpMessage& request);
     
     private:
         magic_t magic_cookie;

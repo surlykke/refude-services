@@ -39,6 +39,7 @@ namespace org_restfulipc
         headers.clear();
         contentLength = 0;
         body = 0;
+        remainingPath = 0;
     }
 
     HttpMessageReader::HttpMessageReader(int socket, HttpMessage& message, bool dumpRequest) :
@@ -295,6 +296,18 @@ namespace org_restfulipc
         return buf;
     }
 
+    void HttpMessage::setMatchedPathLength(size_t matchedPathLength)
+    {
+        if (matchedPathLength > strlen(path)) {
+            throw RuntimeError("matchedPathLength too big: %d, path length: %d", matchedPathLength, strlen(path));
+        }
+
+        remainingPath = path + matchedPathLength;
+        if (*remainingPath == '/') {
+            remainingPath++;
+        }
+
+    }
 }
 
 //Method method;

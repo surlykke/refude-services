@@ -23,7 +23,7 @@ namespace org_restfulipc
         typedef std::shared_ptr<NotifierResource> ptr;
         NotifierResource();
 
-        virtual void doGET(int& socket, HttpMessage& request, const char* remainingPath) override;
+        virtual void doGET(int& socket, HttpMessage& request) override;
         void notifyClients(const char* event, const char* resourceIdentification);
 
     private:

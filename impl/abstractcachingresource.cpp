@@ -14,14 +14,14 @@ namespace org_restfulipc
     {
     }
 
-    void AbstractCachingResource::doGET(int& socket, HttpMessage& request, const char* remainingPath)
+    void AbstractCachingResource::doGET(int& socket, HttpMessage& request)
     {
         std::unique_lock<std::recursive_mutex> lock(m);
     
-        Buffer requestSignature = getSignature(request, remainingPath);
+        Buffer requestSignature = getSignature(request);
         if (!cache.contains(requestSignature.data())) {
             std::map<std::string, std::string> additionalHeaders;
-            Buffer content = buildContent(request, remainingPath, additionalHeaders);
+            Buffer content = buildContent(request, additionalHeaders);
             Buffer& response = cache[requestSignature.data()];
             response.write("HTTP/1.1 200 OK\r\n"
                            "Content-Type: application/json; charset=UTF-8\r\n");
@@ -40,7 +40,7 @@ namespace org_restfulipc
         sendFully(socket, response.data(), response.size());
     }
 
-    Buffer AbstractCachingResource::getSignature(HttpMessage& request, const char* remainingPath)
+    Buffer AbstractCachingResource::getSignature(HttpMessage& request)
     {
         static std::vector<const char*> interestingHeaders = {"accept-language"}; // FIXME: What else?
 

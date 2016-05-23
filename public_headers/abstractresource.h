@@ -34,17 +34,17 @@ namespace org_restfulipc
         {
         }
 
-        virtual void handleRequest(int &socket, HttpMessage& request, const char* remainingPath);
+        virtual void handleRequest(int &socket, HttpMessage& request);
 
-        virtual void     doGET(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
-        virtual void   doPATCH(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
-        virtual void    doPOST(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
-        virtual void  doDELETE(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
-        virtual void     doPUT(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
-        virtual void    doHEAD(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
-        virtual void   doTRACE(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
-        virtual void doOPTIONS(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
-        virtual void doCONNECT(int& socket, HttpMessage& request, const char* remainingPath) { throw HttpCode::Http405; }
+        virtual void     doGET(int& socket, HttpMessage& request);
+        virtual void   doPATCH(int& socket, HttpMessage& request);
+        virtual void    doPOST(int& socket, HttpMessage& request);
+        virtual void  doDELETE(int& socket, HttpMessage& request);
+        virtual void     doPUT(int& socket, HttpMessage& request);
+        virtual void    doHEAD(int& socket, HttpMessage& request);
+        virtual void   doTRACE(int& socket, HttpMessage& request);
+        virtual void doOPTIONS(int& socket, HttpMessage& request);
+        virtual void doCONNECT(int& socket, HttpMessage& request);
 
         /**
          * Extract acceptable locales from accept-language header as an ordered  list.
@@ -58,11 +58,15 @@ namespace org_restfulipc
          */
         std::vector<std::string> getAcceptedLocales(HttpMessage& request);
 
+        void setMappedTo(const char* mappedTo);
+
     protected:
         void buildResponse(Buffer& response, Buffer&& content, 
                            const std::map<std::string, std::string>& headers);
 
         void sendFully(int socket, const char* data, int nbytes);
+
+        const char* mappedTo;
     };
 
 }

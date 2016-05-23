@@ -133,6 +133,8 @@ namespace org_restfulipc
         else {
             resourceMappings.add(path, resource);
         }
+            
+        resource->setMappedTo(path);
     }
 
     void Service::unMap(const char* path)
@@ -212,22 +214,19 @@ namespace org_restfulipc
                     reader.dumpRequest = dumpRequests;
                     reader.readRequest();
                     AbstractResource::ptr handler; 
-                    const char* remainingPath;
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex > -1) {
                         handler = resourceMappings.valueAt(resourceIndex);
-                        remainingPath = "";
+                        request.setMatchedPathLength(strlen(resourceMappings.keyAt(resourceIndex)));
                     }
                     else { 
                         resourceIndex = prefixMappings.find_longest_prefix(request.path);
                         if (resourceIndex >= 0) {
                             const char* matchedPath = prefixMappings.keyAt(resourceIndex); 
-                            remainingPath = request.path + strlen(matchedPath);
-                            if (remainingPath[0] == '\0' || remainingPath[0] == '/') {
+                            const char firstCharAfterMatch = request.path[strlen(matchedPath)];
+                            if ( firstCharAfterMatch == '\0' || firstCharAfterMatch == '/') {
+                                request.setMatchedPathLength(strlen(matchedPath));
                                 handler = prefixMappings.valueAt(resourceIndex);
-                            }
-                            if (remainingPath[0] == '/') {
-                                remainingPath++;
                             }
                         }
                     }
@@ -236,7 +235,7 @@ namespace org_restfulipc
                         throw HttpCode::Http404;
                     }
                     
-                    handler->handleRequest(requestSocket, request, remainingPath);
+                    handler->handleRequest(requestSocket, request);
 
                     if (requestSocket > -1 &&
                         request.header(Header::connection) != 0 &&

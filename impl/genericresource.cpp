@@ -31,7 +31,7 @@ namespace org_restfulipc
         clearCache();
     }
 
-    Buffer GenericResource::buildContent(HttpMessage& request, const char* remainingPath, std::map<std::string, std::string>& headers)
+    Buffer GenericResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
     {
         Buffer buf;
         buf.write(doc.data());

@@ -15,13 +15,12 @@ namespace org_restfulipc
         typedef std::shared_ptr<AbstractCachingResource> ptr;
         AbstractCachingResource();
         virtual ~AbstractCachingResource();
-        virtual void doGET(int& socket, HttpMessage& request, const char* remainingPath) override;
+        virtual void doGET(int& socket, HttpMessage& request) override;
 
     protected:
-        virtual Buffer buildContent(HttpMessage& request, const char* remainingPath, 
-                                    std::map<std::string, std::string>& headers) = 0;
+        virtual Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers) = 0;
         
-        Buffer getSignature(HttpMessage& request, const char* remainingPath);
+        Buffer getSignature(HttpMessage& request);
         void clearCache();
 
     protected:

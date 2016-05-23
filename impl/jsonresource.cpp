@@ -38,8 +38,7 @@ namespace org_restfulipc
         clearCache();
     }
 
-    Buffer JsonResource::buildContent(HttpMessage& request, const char* remainingPath, 
-                                      std::map<std::string, std::string>& headers)
+    Buffer JsonResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
     {
         return JsonWriter(json).buffer;
     }
@@ -66,8 +65,7 @@ namespace org_restfulipc
         clearCache();
     }
 
-    Buffer LocalizedJsonResource::buildContent(HttpMessage& request, const char* remainingPath, 
-                                               std::map<std::string, std::string>& headers)
+    Buffer LocalizedJsonResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
     {
         return LocalizingJsonWriter(json, getAcceptedLocales(request)).buffer;
     }
