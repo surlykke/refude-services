@@ -14,9 +14,7 @@ namespace org_restfulipc
     {
     }
 
-    Buffer RefudeMainResource::buildContent(HttpMessage& request, 
-                                            const char* remainingPath, 
-                                            std::map<std::string, std::string>& headers)
+    Buffer RefudeMainResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
     {
         Json refudeMainJson;
         refudeMainJson << refudeMainResourceTemplate_json;

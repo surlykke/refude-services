@@ -1,11 +1,11 @@
 {
     "_links" : {
         "self" : {
-            "href" : "@self_href@"
+            "href" : "REPLACEME"
         },
         "application" : {
             "templated" : true,
-            "href": "@application_href@"
+            "href": "REPLACEME"
         }
     },
     "desktopEntries" : []

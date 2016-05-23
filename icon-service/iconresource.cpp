@@ -29,7 +29,7 @@ namespace org_restfulipc
     {
     }
 
-    PathMimetypePair IconResource::findFile(HttpMessage& request, const char* remainingPath)
+    PathMimetypePair IconResource::findFile(HttpMessage& request)
     {
         std::vector<std::string> names;
         std::string themeName;

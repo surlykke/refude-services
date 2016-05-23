@@ -24,7 +24,7 @@ namespace org_restfulipc
         typedef std::shared_ptr<IconResource> ptr;
         IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap);
         virtual ~IconResource();
-        virtual PathMimetypePair findFile(HttpMessage& request, const char* remainingPath) override;
+        virtual PathMimetypePair findFile(HttpMessage& request) override;
         
     private:
         PathMimetypePair findByPath(const char *path); 

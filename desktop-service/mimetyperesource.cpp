@@ -61,11 +61,9 @@ namespace org_restfulipc
     /* 
      * This is called from AbstractCachingResource::doGET, which will take the lock, so no need to do that here
      */
-    Buffer MimetypeResource::buildContent(HttpMessage& request, 
-                                          const char* remainingPath, 
-                                          std::map<std::string, std::string>& headers)
+    Buffer MimetypeResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
     {
-        if (remainingPath[0] == '\0') {
+        if (request.remainingPath[0] == '\0') {
             Json mimetypes = JsonConst::EmptyObject;
             if (request.queryParameterMap.size() == 0) {
                 mimetypeJsons.each([&](const char* key, Json & value)
@@ -94,8 +92,8 @@ namespace org_restfulipc
             return JsonWriter(result).buffer;
         }
         else {
-            if (mimetypeJsons.contains(remainingPath)) {
-                return LocalizingJsonWriter(mimetypeJsons[remainingPath], getAcceptedLocales(request)).buffer;
+            if (mimetypeJsons.contains(request.remainingPath)) {
+                return LocalizingJsonWriter(mimetypeJsons[request.remainingPath], getAcceptedLocales(request)).buffer;
             }
         }
 
@@ -154,9 +152,9 @@ namespace org_restfulipc
         return false;
     }
 
-    void MimetypeResource::doPATCH(int& socket, HttpMessage& request, const char* remainingPath)
+    void MimetypeResource::doPATCH(int& socket, HttpMessage& request)
     {
-        if (!mimetypeJsons.contains(remainingPath)) {
+        if (!mimetypeJsons.contains(request.remainingPath)) {
             throw HttpCode::Http404;
         }
 
@@ -177,7 +175,7 @@ namespace org_restfulipc
         else {
             std::unique_lock<std::recursive_mutex> lock(m);
 
-            std::string thisMimetype = remainingPath;
+            std::string thisMimetype = request.remainingPath;
             std::string defaultApplication = (std::string) mergeJson["defaultApplication"];
             MimeappsList mimeappsList(xdg::config_home() + "/mimeapps.list");
             auto& defaultAppsForMime = mimeappsList.defaultApps[thisMimetype];

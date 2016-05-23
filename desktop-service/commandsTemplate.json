@@ -7,10 +7,6 @@
 		"self" : {
             "href" : "@HREF@"
 		},
-		"exec" : {
-			"templated" : true,
-			"href" : "@ROOT@/commands/{id}"
-		}
 	}
 }
 		

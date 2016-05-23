@@ -21,12 +21,10 @@ namespace org_restfulipc
         MimetypeResource(Map<Json>&& mimetypeJsons);
         virtual ~MimetypeResource();
         void setMimetypeJsons(Map<Json>&& mimetypeJsons, NotifierResource::ptr notifier);
-        void doPATCH(int& socket, HttpMessage& request, const char* remainingPath) override;
+        void doPATCH(int& socket, HttpMessage& request) override;
 
     protected:
-        Buffer buildContent(HttpMessage& request, 
-                            const char* remainingPath, 
-                            std::map<std::string, std::string>& headers) override;
+        Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers) override;
 
     private:
         void add(const char* type, const char* subtype, Json& mimetypes);
