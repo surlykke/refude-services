@@ -11,6 +11,8 @@
 #include <ripc/json.h>
 #include <ripc/jsonwriter.h>
 
+#include "commandsTemplate.h"
+#include "runningAppCommandTemplate.h"
 #include "runningapplicationsresource.h"
 
 namespace org_restfulipc
@@ -64,7 +66,7 @@ namespace org_restfulipc
                 break;
             default: return NULL; // FIXME
             }
-            std::cout << "actual_format_return: " << actual_format_return << ", bytesPrItem: " << bytesPrItem << "\n";
+            
             void* result = malloc(nitems_return * bytesPrItem + 1);
             memcpy(result, prop_return, nitems_return * bytesPrItem);
             memset((char*) result + nitems_return*bytesPrItem, 0, bytesPrItem);
@@ -76,31 +78,6 @@ namespace org_restfulipc
 
     Json getApplist()
     {
-        Json runningApps = JsonConst::EmptyArray; 
-        unsigned long len;
-        Display *disp = XOpenDisplay(NULL);
-        Window *list;
-        char *name;
-
-        if (!disp) {
-            puts("no display!");
-            return -1;
-        }
-
-        unsigned long nitems;
-
-        Window *clients = (Window*) getProp(disp, XDefaultRootWindow(disp), "_NET_CLIENT_LIST", nitems);
-
-        for (Window *client = clients; *client; client++) {
-            Json runningApp = JsonConst::EmptyObject;
-            unsigned long dummy;
-            runningApp["Name"] = (char*) getProp(disp, *client, "_NET_WM_VISIBLE_NAME", dummy);
-            runningApps.append(std::move(runningApp));
-        }
-
-        XCloseDisplay(disp);
-
-        return runningApps;
     }
 
     RunningApplicationsResource::RunningApplicationsResource() :
@@ -112,12 +89,42 @@ namespace org_restfulipc
     {
     }
 
-    void RunningApplicationsResource::doGET(int& socket, HttpMessage& request, const char* remainingPath)
+    void RunningApplicationsResource::doGET(int& socket, HttpMessage& request)
     {
         Buffer response;
         std::map<std::string, std::string> headers;
-        Json applist = getApplist();
-        Buffer content = JsonWriter(applist).buffer;
+
+        Json commands;
+        commands << commandsTemplate_json;
+        
+        unsigned long len;
+        Display *disp = XOpenDisplay(NULL);
+        Window *list;
+        char *name;
+
+        if (!disp) {
+            puts("no display!");
+            throw HttpCode::Http500;
+        }
+
+        unsigned long nitems;
+
+        Window *clients = (Window*) getProp(disp, XDefaultRootWindow(disp), "_NET_CLIENT_LIST", nitems);
+
+        for (Window *client = clients; *client; client++) {
+            Json runningApp;
+            runningApp << runningAppCommandTemplate_json;
+            unsigned long dummy;
+            std::string windowId = std::to_string(*client);
+            runningApp["Name"] = (char*) getProp(disp, *client, "_NET_WM_VISIBLE_NAME", dummy);
+            runningApp["Comment"] = "";
+            runningApp["_links"]["self"]["href"] = std::string(mappedTo) + "/" + windowId;
+            commands["commands"].append(std::move(runningApp));
+        }
+
+        XCloseDisplay(disp);
+
+        Buffer content = JsonWriter(commands).buffer;
         buildResponse(response, std::move(content), headers);
         sendFully(socket, response.data(), response.size());
     }

@@ -1,0 +1,14 @@
+{
+    "_links" : {
+        "self" : {
+            "href" : "REPLACEME"
+        },
+        "execute" : {
+            "href" : "REPLACEME"
+        },
+        "icon" : {
+            "href" : "REPLACEME"
+        }
+
+    }
+}

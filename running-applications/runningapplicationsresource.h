@@ -19,7 +19,7 @@ namespace org_restfulipc
         typedef std::shared_ptr<RunningApplicationsResource> ptr;
         RunningApplicationsResource();
         virtual ~RunningApplicationsResource();
-        virtual void doGET(int& socket, HttpMessage& request, const char* remainingPath);
+        void doGET(int& socket, HttpMessage& request) override;
 
     private:
         /**
