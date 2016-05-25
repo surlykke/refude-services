@@ -1,4 +1,4 @@
-
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -14,10 +14,11 @@ namespace org_restfulipc
 {
     void runApplication(const char* appAndArguments) 
     {
-        pid_t pid = fork();
-        if ( pid == 0) {
-            pid_t second_pid = fork();
-            if (second_pid == 0) {
+        std::cout << "Ind i runApplication, pid: "  << getpid() << "\n";
+        pid_t childPid = fork();
+        if ( childPid == 0) {
+            pid_t grandChildPid = fork();
+            if (grandChildPid == 0) {
                 setsid(); // Detach
                 // In child process. Soon to exit, so we don't care about memory leaks
                 char* buf = strdup(appAndArguments);
@@ -58,7 +59,7 @@ namespace org_restfulipc
                 std::cout << "\n";
 
                 execvp(argv[0], argv);
-                
+                 
                 // If we arrive here an error occurred;
                 int errorNumber = (errno);
                 dprintf(2, "Error: doing execvpe: %s\n", errno);
@@ -68,9 +69,14 @@ namespace org_restfulipc
                 exit(0);
             }
         }
-        else if (pid < 0) {
+        else if (childPid < 0) {
             // In parent process, child creation failed
             throw C_Error();
+        }
+        else { 
+	    // In parent process, child creation succeeded 
+            int dontCare;
+            waitpid(childPid, &dontCare, 0);
         }
 
     }
