@@ -96,8 +96,8 @@ namespace org_restfulipc
 
         Json commands;
         commands << commandsTemplate_json;
-        
-        unsigned long len;
+        commands["_links"]["self"]["href"] = mappedTo;
+
         Display *disp = XOpenDisplay(NULL);
         Window *list;
         char *name;
@@ -119,6 +119,9 @@ namespace org_restfulipc
             runningApp["Name"] = (char*) getProp(disp, *client, "_NET_WM_VISIBLE_NAME", dummy);
             runningApp["Comment"] = "";
             runningApp["_links"]["self"]["href"] = std::string(mappedTo) + "/" + windowId;
+            runningApp["_links"]["execute"]["href"] = std::string(mappedTo) + "/" + windowId;
+            runningApp["_links"]["icon"]["href"] =  std::string(mappedTo) + "/icon/" + windowId;
+            
             commands["commands"].append(std::move(runningApp));
         }
 
@@ -128,4 +131,49 @@ namespace org_restfulipc
         buildResponse(response, std::move(content), headers);
         sendFully(socket, response.data(), response.size());
     }
+
+    void RunningApplicationsResource::doPOST(int& socket, HttpMessage& request)
+    {
+        std::cout << "Into doPost\n";
+
+        if (request.remainingPath[0] == '\0') {
+            throw HttpCode::Http405;
+        }
+        
+        std::cout << "Remaining path: " << request.remainingPath << "\n";
+        errno = 0;
+        Window windowToRaise = strtoul(request.remainingPath, NULL, 0);
+        if (errno != 0) throw C_Error();
+        std::cout << "windowToRaise: " << windowToRaise << "\n";
+
+        Display *disp = XOpenDisplay(NULL);
+        Window *list;
+        char *name;
+
+        if (!disp) {
+            puts("no display!");
+            throw HttpCode::Http500;
+        }
+
+        unsigned long nitems;
+
+        Window *clients = (Window*) getProp(disp, XDefaultRootWindow(disp), "_NET_CLIENT_LIST", nitems);
+
+        for (Window *client = clients; *client; client++) {
+            std::cout << "Looking at: " << *client << "\n";
+            if (*client == windowToRaise) {
+                std::cout << "raising..\n";
+                XRaiseWindow(disp, *client);
+                XSetInputFocus(disp, *client, RevertToNone, CurrentTime);
+                XCloseDisplay(disp); 
+                throw HttpCode::Http204;
+            }
+        }
+
+        XCloseDisplay(disp);
+        std::cout << "Giving up\n";
+        throw HttpCode::Http405;
+        
+    }
+
 }

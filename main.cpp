@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
         RunningApplicationsResource::ptr runningApplicationsResource = 
             std::make_shared<RunningApplicationsResource>();
-        service.map("/runningapplications", runningApplicationsResource);
+        service.map("/runningapplications", runningApplicationsResource, true);
 
         std::cout << "Listening on 7938\n";
         service.serve(7938);

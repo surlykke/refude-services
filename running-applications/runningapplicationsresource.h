@@ -20,6 +20,7 @@ namespace org_restfulipc
         RunningApplicationsResource();
         virtual ~RunningApplicationsResource();
         void doGET(int& socket, HttpMessage& request) override;
+        void doPOST(int& socket, HttpMessage& request) override;
 
     private:
         /**
