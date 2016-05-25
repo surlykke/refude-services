@@ -17,21 +17,6 @@
 
 namespace org_restfulipc
 {
-    const char* asStr(Atom x)
-    {
-        switch (x) {
-        case XA_PRIMARY: return ("XA_PRIMARY");
-        case XA_SECONDARY: return ("XA_SECONDARY");
-        case XA_ARC: return ("XA_ARC");
-        case XA_ATOM: return ("XA_ATOM");
-        case XA_CARDINAL: return ("XA_CARDINAL");
-        case XA_INTEGER: return ("XA_INTEGER");
-        case XA_STRING: return ("XA_STRING");
-        case XA_WINDOW: return ("XA_WINDOW");
-        case XA_WM_HINTS: return ("XA_WM_HINTS");
-        default: return ("??");
-        }
-    }
 
 
     void* getProp(Display *display, Window w, const char* propName, unsigned long& nitems_return)
@@ -66,7 +51,7 @@ namespace org_restfulipc
                 break;
             default: return NULL; // FIXME
             }
-            
+
             void* result = malloc(nitems_return * bytesPrItem + 1);
             memcpy(result, prop_return, nitems_return * bytesPrItem);
             memset((char*) result + nitems_return*bytesPrItem, 0, bytesPrItem);
@@ -76,9 +61,58 @@ namespace org_restfulipc
 
     }
 
-    Json getApplist()
+    struct DefaultDisplay
     {
-    }
+        DefaultDisplay() {
+            _disp = XOpenDisplay(NULL);
+        }
+
+        ~DefaultDisplay() {
+            XCloseDisplay(_disp);
+        }
+
+        operator Display*() { return _disp; }
+
+        Display *_disp;
+    };
+    
+    static Atom _NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(DefaultDisplay(), "_NET_WM_WINDOW_TYPE_NORMAL", False);
+
+    struct WindowInfo
+    {
+        WindowInfo(Window window)
+        {
+            DefaultDisplay disp;
+            unsigned long nitems;
+            title = (char*) getProp(disp, window, "_NET_WM_VISIBLE_NAME", nitems);
+            windowType = (Atom*) getProp(disp, window, "_NET_WM_WINDOW_TYPE", nitems);
+            clients = (Window*) getProp(disp, window, "_NET_CLIENT_LIST", nitems);
+
+            XWindowAttributes attr;
+		    XGetWindowAttributes(disp, window, &attr);
+	        x = attr.x;
+            y = attr.y;
+            w = attr.width;
+            h = attr.height;
+        }
+
+        ~WindowInfo()
+        {
+            if (title) {
+                free(title);
+            }
+            if (windowType) {
+                free(windowType);
+            }
+        }
+
+        char* title;
+        Atom* windowType;
+        Window* clients; 
+        int x, y, w, h;
+
+    };
+
 
     RunningApplicationsResource::RunningApplicationsResource() :
         AbstractResource()
@@ -97,35 +131,34 @@ namespace org_restfulipc
         Json commands;
         commands << commandsTemplate_json;
         commands["_links"]["self"]["href"] = mappedTo;
+        commands["geometry"] = JsonConst::EmptyObject;
 
-        Display *disp = XOpenDisplay(NULL);
-        Window *list;
-        char *name;
+        WindowInfo rootWindow(XDefaultRootWindow(DefaultDisplay()));
+        commands["geometry"]["x"] = rootWindow.x;
+        commands["geometry"]["y"] = rootWindow.y;
+        commands["geometry"]["w"] = rootWindow.w;
+        commands["geometry"]["h"] = rootWindow.h;
 
-        if (!disp) {
-            puts("no display!");
-            throw HttpCode::Http500;
-        }
+        for (Window *client = rootWindow.clients; *client; client++) {
+            WindowInfo clientInfo(*client); 
 
-        unsigned long nitems;
-
-        Window *clients = (Window*) getProp(disp, XDefaultRootWindow(disp), "_NET_CLIENT_LIST", nitems);
-
-        for (Window *client = clients; *client; client++) {
             Json runningApp;
             runningApp << runningAppCommandTemplate_json;
-            unsigned long dummy;
-            std::string windowId = std::to_string(*client);
-            runningApp["Name"] = (char*) getProp(disp, *client, "_NET_WM_VISIBLE_NAME", dummy);
+            runningApp["Name"] = clientInfo.title ? clientInfo.title : "";
             runningApp["Comment"] = "";
-            runningApp["_links"]["self"]["href"] = std::string(mappedTo) + "/" + windowId;
-            runningApp["_links"]["execute"]["href"] = std::string(mappedTo) + "/" + windowId;
-            runningApp["_links"]["icon"]["href"] =  std::string(mappedTo) + "/icon/" + windowId;
-            
+            runningApp["geometry"] = JsonConst::EmptyObject;
+            runningApp["geometry"]["x"] = clientInfo.x;
+            runningApp["geometry"]["y"] = clientInfo.y;
+            runningApp["geometry"]["w"] = clientInfo.w;
+            runningApp["geometry"]["h"] = clientInfo.h;
+
+            runningApp["_links"]["self"]["href"] = std::string(mappedTo) + "/" + std::to_string(*client);
+            runningApp["_links"]["execute"]["href"] = std::string(mappedTo) + "/" + std::to_string(*client);
+            runningApp["_links"]["icon"]["href"] = "/icons/icon?name=application-x-executable&size=64";
+
             commands["commands"].append(std::move(runningApp));
         }
 
-        XCloseDisplay(disp);
 
         Buffer content = JsonWriter(commands).buffer;
         buildResponse(response, std::move(content), headers);
@@ -134,46 +167,27 @@ namespace org_restfulipc
 
     void RunningApplicationsResource::doPOST(int& socket, HttpMessage& request)
     {
-        std::cout << "Into doPost\n";
-
         if (request.remainingPath[0] == '\0') {
             throw HttpCode::Http405;
         }
-        
-        std::cout << "Remaining path: " << request.remainingPath << "\n";
+
         errno = 0;
         Window windowToRaise = strtoul(request.remainingPath, NULL, 0);
         if (errno != 0) throw C_Error();
-        std::cout << "windowToRaise: " << windowToRaise << "\n";
 
-        Display *disp = XOpenDisplay(NULL);
-        Window *list;
-        char *name;
+        WindowInfo rootWindow(XDefaultRootWindow(DefaultDisplay()));
 
-        if (!disp) {
-            puts("no display!");
-            throw HttpCode::Http500;
-        }
-
-        unsigned long nitems;
-
-        Window *clients = (Window*) getProp(disp, XDefaultRootWindow(disp), "_NET_CLIENT_LIST", nitems);
-
-        for (Window *client = clients; *client; client++) {
-            std::cout << "Looking at: " << *client << "\n";
+        for (Window *client = rootWindow.clients; *client; client++) {
             if (*client == windowToRaise) {
                 std::cout << "raising..\n";
+                DefaultDisplay disp; 
                 XRaiseWindow(disp, *client);
                 XSetInputFocus(disp, *client, RevertToNone, CurrentTime);
-                XCloseDisplay(disp); 
                 throw HttpCode::Http204;
             }
         }
 
-        XCloseDisplay(disp);
         std::cout << "Giving up\n";
         throw HttpCode::Http405;
-        
     }
-
 }
