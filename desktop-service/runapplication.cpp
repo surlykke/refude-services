@@ -62,6 +62,7 @@ namespace org_restfulipc
                 // If we arrive here an error occurred;
                 int errorNumber = (errno);
                 dprintf(2, "Error: doing execvpe: %s\n", errno);
+                exit(errorNumber);
             }
             else {
                 exit(0);
