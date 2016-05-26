@@ -22,10 +22,6 @@ namespace org_restfulipc
         void doGET(int& socket, HttpMessage& request) override;
         void doPOST(int& socket, HttpMessage& request) override;
 
-    private:
-        /**
-         * returns an array of jsons, each representing a running application
-         */
     };
 }
 #endif /* RUNNINGAPPLICATIONSRESOURCE_H */

@@ -113,6 +113,26 @@ namespace org_restfulipc
 
     };
 
+    bool include(WindowInfo& client, std::vector<const char*>* searchTerms) {
+        if (_NET_WM_WINDOW_TYPE_NORMAL != *client.windowType) {
+            return false;
+        }
+        if (!client.title) {
+            return false;
+        }
+        if (searchTerms) {
+            for (const char* searchTerm : *searchTerms) {
+                if (strcasestr(client.title, searchTerm)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
 
     RunningApplicationsResource::RunningApplicationsResource() :
         AbstractResource()
@@ -125,8 +145,20 @@ namespace org_restfulipc
 
     void RunningApplicationsResource::doGET(int& socket, HttpMessage& request)
     {
+         
         Buffer response;
         std::map<std::string, std::string> headers;
+
+        std::vector<const char*>* searchTerms = NULL;
+
+        request.queryParameterMap.each([&searchTerms] (const char* key, std::vector<const char*>& values){
+            if (!strcmp("search", key)) {
+                searchTerms = &values;
+            }
+            else {
+                throw HttpCode::Http422;
+            }
+        }); 
 
         Json commands;
         commands << commandsTemplate_json;
@@ -141,6 +173,10 @@ namespace org_restfulipc
 
         for (Window *client = rootWindow.clients; *client; client++) {
             WindowInfo clientInfo(*client); 
+          
+            if (! include(clientInfo, searchTerms)) {
+                continue;
+            }
 
             Json runningApp;
             runningApp << runningAppCommandTemplate_json;
