@@ -113,16 +113,16 @@ namespace org_restfulipc
 
     };
 
-    bool include(WindowInfo& client, std::vector<const char*>* searchTerms) {
-        if (_NET_WM_WINDOW_TYPE_NORMAL != *client.windowType) {
+    bool include(WindowInfo& clientInfo, std::vector<const char*>* searchTerms) {
+        if (!clientInfo.windowType || _NET_WM_WINDOW_TYPE_NORMAL != *clientInfo.windowType) {
             return false;
         }
-        if (!client.title) {
+        if (!clientInfo.title) {
             return false;
         }
         if (searchTerms) {
             for (const char* searchTerm : *searchTerms) {
-                if (strcasestr(client.title, searchTerm)) {
+                if (strcasestr(clientInfo.title, searchTerm)) {
                     return true;
                 }
             }
