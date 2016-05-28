@@ -17,6 +17,7 @@
 
 namespace org_restfulipc
 {
+
     RuntimeError::RuntimeError(const char* fmt, ...)
     {
         numFrames = backtrace(frames, 128);

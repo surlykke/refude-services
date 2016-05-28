@@ -30,6 +30,7 @@ namespace org_restfulipc
     class Buffer
     {
     public:
+        static Buffer fromFile(const char* filePath);
         Buffer();
         Buffer(Buffer& other) = delete;
         Buffer(Buffer&& other);
@@ -39,9 +40,12 @@ namespace org_restfulipc
 
         ~Buffer();
         Buffer& write(const char* string);
+        Buffer& writen(const char* string, size_t n);
         Buffer& write(char ch);
         Buffer& write(double d);
         Buffer& write(int i); 
+
+        void toFile(const char* filePath);
         void clear();
 
         bool operator==(Buffer& other);

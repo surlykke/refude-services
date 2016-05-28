@@ -7,12 +7,56 @@
  */
 
 #include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <string.h>
 #include "errorhandling.h"
 #include "buffer.h"
 
 namespace org_restfulipc
 {
+
+    struct FileDescriptor 
+    {
+        FileDescriptor(const char* path, int flags) 
+        {
+            _fd = open(path, flags);
+            C_ERROR_IF(_fd < 0);
+        }
+
+        FileDescriptor(const char* path, int flags, int mode) 
+        {
+            _fd = open(path, flags, mode); 
+            C_ERROR_IF(_fd < 0);
+        }
+
+        ~FileDescriptor() 
+        {
+            if (_fd > -1) {
+                close(_fd);
+            }
+        }
+
+        operator int() { return _fd; }
+
+        int _fd;
+    };
+
+    Buffer Buffer::fromFile(const char* filePath)
+    {
+        Buffer buf;
+        FileDescriptor fd(filePath, O_RDONLY | O_CLOEXEC);
+        int bytesRead = 0;
+        buf.ensureCapacity(1024);
+        while((bytesRead = read(fd, buf._data, 1024)) > 0) {
+            buf._size += bytesRead;
+            buf._data[buf._size] = '\0';
+            buf.ensureCapacity(1024);
+        }
+        C_ERROR_IF(bytesRead < 0);
+        return buf;
+    }
+
 
     Buffer::Buffer() :
         _size(0),
@@ -46,13 +90,19 @@ namespace org_restfulipc
 
     Buffer& Buffer::write(const char* string)
     {
-        size_t len = strlen(string);
-        ensureCapacity(len);
-        strncpy(_data + _size, string, len + 1);
-        _size += len;
+        return writen(string, strlen(string));
+    }
+
+    Buffer& Buffer::writen(const char* string, size_t n)
+    {
+        ensureCapacity(n);
+        strncpy(_data + _size, string, n);
+        _size += n;
+        _data[_size] = '\0';
         return *this;
     }
 
+    
     Buffer& Buffer::write(char ch)
     {
         ensureCapacity(1);
@@ -94,6 +144,18 @@ namespace org_restfulipc
     {
         return _size;
     }
+
+    void Buffer::toFile(const char* filePath)
+    {
+        FileDescriptor fd(filePath, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
+        int bytesWritten = 0;
+        int bytesWrittenTotal = 0;
+        while ((bytesWritten = ::write(fd, _data + bytesWrittenTotal, _size - bytesWrittenTotal)) > 0) {
+            bytesWrittenTotal += bytesWritten;
+        }
+        C_ERROR_IF(bytesWritten < 0);
+    }
+
 
     void Buffer::ensureCapacity(int numChars)
     {

@@ -56,6 +56,8 @@ namespace org_restfulipc
         C_Error(const char* info) : RuntimeError("%s: %s", strerror(errno), info), errorNumber(errno) {}
         int errorNumber;
     };
+    
+    #define C_ERROR_IF(expr) if (expr) throw C_Error();
 
 }
 
