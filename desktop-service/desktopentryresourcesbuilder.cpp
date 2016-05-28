@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <algorithm>
+#include <experimental/filesystem>
 #include <ripc/utils.h>
 #include <ripc/notifierresource.h>
 #include <ripc/jsonwriter.h>

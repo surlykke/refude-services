@@ -5,6 +5,7 @@
  * It is distributed under the GPL v2 license.
  * Please refer to the LICENSE file for a copy of the license.
  */
+#include <stdlib.h>
 #include <iostream>
 #include <ripc/service.h>
 #include <ripc/errorhandling.h>
@@ -13,11 +14,15 @@
 #include "desktop-service/desktopservice.h"
 #include "icon-service/iconresourcebuilder.h"
 #include "running-applications/runningapplicationsresource.h"
+#include "xdg.h"
 
 int main(int argc, char *argv[])
 {
     using namespace org_restfulipc;
     try {
+        std::string configDir = xdg::config_home() + "/RefudeService";
+        system((std::string("mkdir -p ") + configDir).data());
+
         Service service;
         service.dumpRequests = true;
         service.map("/", std::make_shared<RefudeMainResource>());

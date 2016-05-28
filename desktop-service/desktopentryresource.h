@@ -33,6 +33,7 @@ namespace org_restfulipc
                           const std::vector<std::string>& locales);
 
         Map<Json> desktopJsons;
+        Json commandLastUsed;
     };
 }
 #endif /* DESKTOPENTRYRESOURCE_H */

@@ -191,7 +191,7 @@ namespace org_restfulipc
             runningApp["_links"]["self"]["href"] = std::string(mappedTo) + "/" + std::to_string(*client);
             runningApp["_links"]["execute"]["href"] = std::string(mappedTo) + "/" + std::to_string(*client);
             runningApp["_links"]["icon"]["href"] = "/icons/icon?name=application-x-executable&size=64";
-
+            runningApp["lastActivated"] = (double) 0;
             commands["commands"].append(std::move(runningApp));
         }
 

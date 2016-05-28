@@ -1,19 +1,31 @@
+#include <fstream>
+#include <unistd.h>
 #include <ripc/json.h>
 #include <ripc/jsonwriter.h>
-#include <unistd.h>
+#include <ripc/buffer.h>
 #include "handlerTemplate.h"
 #include "commandTemplate.h"
 #include "commandsTemplate.h"
 #include "runapplication.h"
 #include "desktopentryresource.h"
+#include "xdg.h"
 
 namespace org_restfulipc
 {
+    static const std::string lastUsedFilePath = 
+         xdg::config_home() + "/RefudeService/desktopEntryResourceLastUsed.json";
 
     DesktopEntryResource::DesktopEntryResource(Map<Json>&& desktopJsons) :
         AbstractCachingResource(),
         desktopJsons(std::move(desktopJsons))
     {
+        try {
+            Buffer buf = Buffer::fromFile(lastUsedFilePath.data());
+            commandLastUsed << buf.data();
+        }
+        catch (...) {
+            commandLastUsed = JsonConst::EmptyObject;
+        }
     }
 
     DesktopEntryResource::~DesktopEntryResource()
@@ -72,6 +84,8 @@ namespace org_restfulipc
         }
 
         runApplication((const char*) desktopJson["Exec"]);
+        commandLastUsed[(const char*)request.remainingPath] = (double) time(NULL);
+        JsonWriter(commandLastUsed).buffer.toFile(lastUsedFilePath.data());
 
         throw HttpCode::Http204;
     }
@@ -206,6 +220,12 @@ namespace org_restfulipc
                 command["Exec"] = (const char*) desktopJson["Exec"];
                 command["_links"]["self"]["href"] = std::string(mappedTo) + "/commands/" + desktopEntryId;
                 command["_links"]["execute"]["href"] = std::string(mappedTo) + "/" + desktopEntryId;
+                if (commandLastUsed.contains(desktopEntryId)) {
+                    command["lastActivated"] = (double) commandLastUsed[desktopEntryId];
+                }
+                else {
+                    command["lastActivated"] = (double) 0;
+                }
                 content["commands"].append(std::move(command));
             }
         });
