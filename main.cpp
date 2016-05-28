@@ -15,6 +15,7 @@
 #include "icon-service/iconresourcebuilder.h"
 #include "running-applications/runningapplicationsresource.h"
 #include "xdg.h"
+#include "display/displayresource.h"
 
 int main(int argc, char *argv[])
 {
@@ -37,6 +38,9 @@ int main(int argc, char *argv[])
         RunningApplicationsResource::ptr runningApplicationsResource = 
             std::make_shared<RunningApplicationsResource>();
         service.map("/runningapplications", runningApplicationsResource, true);
+
+        DisplayResource::ptr displayResource = std::make_shared<DisplayResource>();
+        service.map("/display", displayResource);
 
         std::cout << "Listening on 7938\n";
         service.serve(7938);
