@@ -19,7 +19,10 @@ namespace org_restfulipc
         char* title;
         Atom* windowType;
         Window* clients; 
-        int x, y, w, h;
+        int x;
+        int y;
+        unsigned int width;
+        unsigned int height;
 
     };
         

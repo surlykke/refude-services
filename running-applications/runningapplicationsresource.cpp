@@ -89,8 +89,8 @@ namespace org_restfulipc
             runningApp["geometry"] = JsonConst::EmptyObject;
             runningApp["geometry"]["x"] = clientInfo.x;
             runningApp["geometry"]["y"] = clientInfo.y;
-            runningApp["geometry"]["w"] = clientInfo.w;
-            runningApp["geometry"]["h"] = clientInfo.h;
+            runningApp["geometry"]["w"] = clientInfo.width;
+            runningApp["geometry"]["h"] = clientInfo.height;
 
             runningApp["_links"]["self"]["href"] = std::string(mappedTo) + "/" + std::to_string(*client);
             runningApp["_links"]["execute"]["href"] = std::string(mappedTo) + "/" + std::to_string(*client);

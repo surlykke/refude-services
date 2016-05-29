@@ -37,8 +37,8 @@ namespace org_restfulipc
         WindowInfo rootWindowInfo = WindowInfo::rootWindow();
         geometry["x"] = rootWindowInfo.x;
         geometry["y"] = rootWindowInfo.y;
-        geometry["h"] = rootWindowInfo.h;
-        geometry["w"] = rootWindowInfo.w;
+        geometry["h"] = rootWindowInfo.height;
+        geometry["w"] = rootWindowInfo.width;
 
         return JsonWriter(displayJson).buffer;
     }

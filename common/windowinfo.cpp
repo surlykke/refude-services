@@ -75,12 +75,16 @@ namespace org_restfulipc
         windowType = (Atom*) getProp(disp, window, "_NET_WM_WINDOW_TYPE", nitems);
         clients = (Window*) getProp(disp, window, "_NET_CLIENT_LIST", nitems);
 
-        XWindowAttributes attr;
-        XGetWindowAttributes(disp, window, &attr);
-        x = attr.x;
-        y = attr.y;
-        w = attr.width;
-        h = attr.height;
+        int tempX, tempY; 
+        unsigned int borderWidth, depth;
+        Window tempRoot;
+        XGetGeometry(disp, window, &tempRoot, &tempX, &tempY, &width, &height, &borderWidth, &depth);
+        XTranslateCoordinates(disp, window, tempRoot, tempX, tempY, &x, &y, &tempRoot); 
+        std::cout << (title ? title : "") 
+                  << " x, y, w, h: " 
+                  << x << ", " << y << ", " << width << ", " << height << "\n";
+
+        
     }
 
     WindowInfo::~WindowInfo()
