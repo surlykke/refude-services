@@ -33,9 +33,9 @@ namespace org_restfulipc
                 break;
             case 8: bytesPrItem = sizeof (char);
                 break;
-            default: return NULL; // FIXME
+            default: 
+                return NULL; 
             }
-
             void* result = malloc(nitems_return * bytesPrItem + 1);
             memcpy(result, prop_return, nitems_return * bytesPrItem);
             memset((char*) result + nitems_return*bytesPrItem, 0, bytesPrItem);
@@ -62,47 +62,96 @@ namespace org_restfulipc
     
     static Atom _NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(DefaultDisplay(), "_NET_WM_WINDOW_TYPE_NORMAL", False);
 
+    
+
+
     WindowInfo WindowInfo::rootWindow()
     {
         return WindowInfo(XDefaultRootWindow(DefaultDisplay()));
+    }
+
+    std::vector<WindowInfo> WindowInfo::normalWindows()
+    {
+        std::vector<WindowInfo> result;
+        DefaultDisplay disp;
+        Window root = XDefaultRootWindow(disp);
+        unsigned long nitems;
+        Window* windows = (Window*) getProp(disp, root, "_NET_CLIENT_LIST_STACKING", nitems);
+        for (Window* w = windows; *w; w++) {
+            WindowInfo windowInfo(*w);
+            if (windowInfo.title.size() > 0 && windowInfo.windowType == _NET_WM_WINDOW_TYPE_NORMAL) {
+                result.push_back(windowInfo);
+            }
+        }
+
+        return result;
+         
     }
 
     WindowInfo::WindowInfo(Window window)
     {
         DefaultDisplay disp;
         unsigned long nitems;
-        title = (char*) getProp(disp, window, "_NET_WM_VISIBLE_NAME", nitems);
-        windowType = (Atom*) getProp(disp, window, "_NET_WM_WINDOW_TYPE", nitems);
-        clients = (Window*) getProp(disp, window, "_NET_CLIENT_LIST", nitems);
+        
+        char* tmpTitle = (char*) getProp(disp, window, "_NET_WM_VISIBLE_NAME", nitems);
+        if (tmpTitle) {
+            title = tmpTitle;
+            XFree(tmpTitle);
+        }
+        else {
+            title = "";
+        }
+        
+        Atom* tmpAtomPtr = (Atom*) getProp(disp, window, "_NET_WM_WINDOW_TYPE", nitems);
+        if (tmpAtomPtr) {
+            windowType = *tmpAtomPtr;
+            XFree(tmpAtomPtr);
+        }
+        else {
+            windowType = 0;
+        }
+       
+        long frameExtents[4] = {0,0,0,0};
+        long* frameExtentsTmp = (long*) getProp(disp, window, "_NET_FRAME_EXTENTS", nitems);
+        if (frameExtentsTmp) {
+            if (nitems >= 4) {
+                frameExtents[0] = frameExtentsTmp[0];
+                frameExtents[1] = frameExtentsTmp[1];
+                frameExtents[2] = frameExtentsTmp[2];
+                frameExtents[3] = frameExtentsTmp[3];
+            }
+            XFree(frameExtentsTmp);
+        }
 
-        int tempX, tempY; 
-        unsigned int borderWidth, depth;
-        Window tempRoot;
-        XGetGeometry(disp, window, &tempRoot, &tempX, &tempY, &width, &height, &borderWidth, &depth);
-        XTranslateCoordinates(disp, window, tempRoot, tempX, tempY, &x, &y, &tempRoot); 
-        std::cout << (title ? title : "") 
-                  << " x, y, w, h: " 
-                  << x << ", " << y << ", " << width << ", " << height << "\n";
+        XWindowAttributes attr;
+        XGetWindowAttributes(disp, window, &attr);
+        Window root, parent;
+        Window *children;
+        unsigned int nchildren;
 
+        XQueryTree(disp, window, &root, &parent, &children, &nchildren);
+        if (nchildren) {
+            XFree(children);
+        }
+        
+        if (parent) {
+            XTranslateCoordinates(disp, parent, root, attr.x, attr.y, &x, &y, &attr.root); 
+            x = x - frameExtents[0];
+            y = y - frameExtents[2];
+            
+            width = attr.width + frameExtents[0] + frameExtents[1];
+            height = attr.height + frameExtents[2] + frameExtents[3];
+        }
+        else {
+            x = attr.x;
+            y = attr.y;
+            width = attr.width;
+            height = attr.height;
+        }
         
     }
 
-    WindowInfo::~WindowInfo()
-    {
-        if (title) {
-            free(title);
-        }
-        if (windowType) {
-            free(windowType);
-        }
-    }
-    
-    bool WindowInfo::isNormal()
-    {
-        return windowType && _NET_WM_WINDOW_TYPE_NORMAL == *windowType;
-    }
-
-    void raiseAndFocus(Window window)
+    void WindowInfo::raiseAndFocus()
     {
         DefaultDisplay disp; 
         XRaiseWindow(disp, window);

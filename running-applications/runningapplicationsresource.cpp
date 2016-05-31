@@ -20,17 +20,9 @@ namespace org_restfulipc
 {
 
     bool include(WindowInfo& clientInfo, std::vector<const char*>* searchTerms) {
-        if (!clientInfo.isNormal()) {
-            return false;
-        }
-
-        if (!clientInfo.title) {
-            return false;
-        }
-
         if (searchTerms) {
             for (const char* searchTerm : *searchTerms) {
-                if (strcasestr(clientInfo.title, searchTerm)) {
+                if (strcasestr(clientInfo.title.data(), searchTerm)) {
                     return true;
                 }
             }
@@ -75,25 +67,24 @@ namespace org_restfulipc
 
         WindowInfo rootWindow = WindowInfo::rootWindow(); 
 
-        for (Window *client = rootWindow.clients; *client; client++) {
-            WindowInfo clientInfo(*client); 
+        for (WindowInfo& window : WindowInfo::normalWindows()) {
           
-            if (! include(clientInfo, searchTerms)) {
+            if (! include(window, searchTerms)) {
                 continue;
             }
 
             Json runningApp;
             runningApp << runningAppCommandTemplate_json;
-            runningApp["Name"] = clientInfo.title ? clientInfo.title : "";
+            runningApp["Name"] = window.title;
             runningApp["Comment"] = "";
             runningApp["geometry"] = JsonConst::EmptyObject;
-            runningApp["geometry"]["x"] = clientInfo.x;
-            runningApp["geometry"]["y"] = clientInfo.y;
-            runningApp["geometry"]["w"] = clientInfo.width;
-            runningApp["geometry"]["h"] = clientInfo.height;
+            runningApp["geometry"]["x"] = window.x;
+            runningApp["geometry"]["y"] = window.y;
+            runningApp["geometry"]["w"] = window.width;
+            runningApp["geometry"]["h"] = window.height;
 
-            runningApp["_links"]["self"]["href"] = std::string(mappedTo) + "/" + std::to_string(*client);
-            runningApp["_links"]["execute"]["href"] = std::string(mappedTo) + "/" + std::to_string(*client);
+            runningApp["_links"]["self"]["href"] = std::string(mappedTo) + "/" + std::to_string(window.window);
+            runningApp["_links"]["execute"]["href"] = std::string(mappedTo) + "/" + std::to_string(window.window);
             runningApp["_links"]["icon"]["href"] = "/icons/icon?name=application-x-executable&size=64";
             runningApp["lastActivated"] = (double) 0;
             commands["commands"].append(std::move(runningApp));
@@ -117,10 +108,10 @@ namespace org_restfulipc
 
         WindowInfo rootWindow = WindowInfo::rootWindow();
 
-        for (Window *client = rootWindow.clients; *client; client++) {
-            if (*client == windowToRaise) {
+        for (WindowInfo& window : rootWindow.normalWindows()) {
+            if (window.window == windowToRaise) {
                 std::cout << "raising..\n";
-                raiseAndFocus(*client); 
+                window.raiseAndFocus(); 
                 throw HttpCode::Http204;
             }
         }

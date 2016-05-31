@@ -4,29 +4,35 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
+#include <vector>
 
 namespace org_restfulipc 
 {
-    struct WindowInfo
-    {
-        static WindowInfo rootWindow();
-        WindowInfo(Window window);
-        WindowInfo(WindowInfo& other) = delete;
-        WindowInfo(WindowInfo&& other);
+    struct geometry {
+        int left,top;
+        unsigned int width, height;
+    };
 
-        ~WindowInfo();
-        bool isNormal();
-        char* title;
-        Atom* windowType;
-        Window* clients; 
+    class WindowInfo
+    {
+    public:
+        static WindowInfo rootWindow();
+        static std::vector<WindowInfo> normalWindows();
+    
+        void raiseAndFocus();
+        
+        std::string title;
+        Atom windowType;
         int x;
         int y;
         unsigned int width;
         unsigned int height;
 
+        Window window;
+    private:
+        WindowInfo(Window window);
     };
         
-    void raiseAndFocus(Window window);
 }
 
 #endif /* WINDOWINFO_H */
