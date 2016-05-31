@@ -90,6 +90,7 @@ namespace org_restfulipc
 
     WindowInfo::WindowInfo(Window window)
     {
+        this->window = window;
         DefaultDisplay disp;
         unsigned long nitems;
         
