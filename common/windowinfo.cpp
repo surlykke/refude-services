@@ -109,7 +109,7 @@ namespace org_restfulipc
             XFree(tmpAtomPtr);
         }
         else {
-            windowType = 0;
+            windowType = _NET_WM_WINDOW_TYPE_NORMAL;
         }
        
         long frameExtents[4] = {0,0,0,0};
@@ -154,6 +154,7 @@ namespace org_restfulipc
 
     void WindowInfo::raiseAndFocus()
     {
+        printf("Raising window %x\n", window);
         DefaultDisplay disp; 
         XRaiseWindow(disp, window);
         XSetInputFocus(disp, window, RevertToNone, CurrentTime);
