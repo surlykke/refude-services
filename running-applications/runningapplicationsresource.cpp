@@ -110,13 +110,11 @@ namespace org_restfulipc
 
         for (WindowInfo& window : rootWindow.normalWindows()) {
             if (window.window == windowToRaise) {
-                std::cout << "raising..\n";
                 window.raiseAndFocus(); 
                 throw HttpCode::Http204;
             }
         }
 
-        std::cout << "Giving up\n";
         throw HttpCode::Http405;
     }
 }

@@ -40,7 +40,6 @@ namespace org_restfulipc
 
     
         for (auto dirIterator =  iconsDirs.begin(); dirIterator != iconsDirs.end(); dirIterator++) {
-            std::cout << "Collecting from " << *dirIterator << "\n";
             for (std::string themeDir : subdirectories(*dirIterator)) {
                 Json& themeJson = themeJsonMap[themeDir]; 
                 if (themeJson.undefined()) {

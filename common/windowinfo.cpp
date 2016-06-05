@@ -21,7 +21,6 @@ namespace org_restfulipc
         if (XGetWindowProperty(display, w, property, long_offset, long_length, _delete,
                                req_type, &actual_type_return, &actual_format_return,
                                &nitems_return, &bytes_after_return, &prop_return) != Success) {
-            std::cout << "Fail\n";
             return NULL;
         }
         else {

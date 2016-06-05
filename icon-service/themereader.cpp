@@ -39,8 +39,11 @@ namespace org_restfulipc
             throw RuntimeError("'[Icon Theme]' expected");
         }
         while (getNextLine() == KeyValue) {
-            if (oneOf(key,{"Name", "Comment"})) {
-                themeJson[key][locale] = value;
+            if (key == "Name") {
+                themeJson["_ripc:localized:Name"][locale] = value;
+            }
+            else if (key == "Comment") {
+                themeJson["_ripc:localized:Comment"][locale] = value;
             }
             else if (key == "Directories") {
                 declaredDirectories = splitToSet(value, ',');

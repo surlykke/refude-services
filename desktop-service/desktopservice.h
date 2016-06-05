@@ -23,7 +23,7 @@ namespace org_restfulipc
     {
     public:
         DesktopResources();
-        virtual ~DesktopResources() {};
+        virtual ~DesktopResources() {}
 
         void setup(Service& service);
 

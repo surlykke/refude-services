@@ -14,7 +14,6 @@ namespace org_restfulipc
 {
     void runApplication(const char* appAndArguments) 
     {
-        std::cout << "Ind i runApplication, pid: "  << getpid() << "\n";
         pid_t childPid = fork();
         if ( childPid == 0) {
             pid_t grandChildPid = fork();
@@ -51,12 +50,6 @@ namespace org_restfulipc
                 }
 
                 argv[argc] = NULL;
-
-                std::cout << "Doing: ";
-                for (char** ptr = argv; *ptr; ptr++) {
-                    std::cout << *ptr << " ";
-                }
-                std::cout << "\n";
 
                 execvp(argv[0], argv);
                  

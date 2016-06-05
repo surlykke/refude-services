@@ -28,10 +28,6 @@ namespace org_restfulipc
                                std::vector<const char*>* searchTerms, 
                                const std::vector<std::string>& locales);
 
-        bool matchCommand(Json& desktopJson, 
-                          std::vector<const char*>* searchTerms, 
-                          const std::vector<std::string>& locales);
-
         Map<Json> desktopJsons;
         Json commandLastUsed;
     };

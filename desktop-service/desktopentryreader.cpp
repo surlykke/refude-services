@@ -26,7 +26,7 @@ namespace org_restfulipc
     {
         json << desktopTemplate_json;
         read();
-    }
+     }
 
     DesktopEntryReader::~DesktopEntryReader() 
     {
@@ -78,12 +78,8 @@ namespace org_restfulipc
             json[key] = value;
         }
         else if (keyOneOf({"Name", "GenericName", "Comment"})) {
-            if (locale.empty()) {
-                json[key]["_ripc:localized"] = value;
-            }
-            else {
-                json[key][locale] = value;
-            }
+            std::string _ripc_localized_key = std::string("_ripc:localized:") + key;
+            json[_ripc_localized_key][locale] = value;
         }
         else if (keyOneOf({"NoDisplay", "DBusActivatable", "Terminal", "StartupNotify"})) {
             if (value == "true") { 
@@ -108,12 +104,7 @@ namespace org_restfulipc
                 keywords.append(keyword);
             }
         
-            if (locale.empty()) {
-                json[key]["_ripc:localized"] = std::move(keywords);
-            }
-            else {
-                json[key][locale] = std::move(keywords);
-            }
+            json["_ripc:localized:Keywords"][locale] = std::move(keywords);
         } 
         else if (key == "Actions") {
             json["Actions"] = JsonConst::EmptyObject;

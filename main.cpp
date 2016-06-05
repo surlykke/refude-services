@@ -20,6 +20,7 @@
 int main(int argc, char *argv[])
 {
     using namespace org_restfulipc;
+    DesktopResources desktopResources;
     try {
         std::string configDir = xdg::config_home() + "/RefudeService";
         system((std::string("mkdir -p ") + configDir).data());
@@ -28,7 +29,6 @@ int main(int argc, char *argv[])
         service.dumpRequests = true;
         service.map("/", std::make_shared<RefudeMainResource>());
 
-        DesktopResources desktopResources;
         desktopResources.setup(service);
 
         IconResourceBuilder iconResourceBuilder;

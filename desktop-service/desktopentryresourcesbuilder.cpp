@@ -79,6 +79,7 @@ namespace org_restfulipc
         for (const std::string& applicationsDir : applicationsDirs) {
             for (const std::string& desktopFilePath : desktopFiles(applicationsDir)) {
                 DesktopEntryReader reader(desktopFilePath);
+            
                 std::string entryId = replaceAll(std::string(desktopFilePath.data() + applicationsDirs[0].size()), '/', '-');
                 if (reader.json.contains("Hidden") && (bool)reader.json["Hidden"]) {
                     desktopJsons.take(entryId);

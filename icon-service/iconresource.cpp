@@ -99,21 +99,16 @@ namespace org_restfulipc
 
     PathMimetypePair IconResource::findByPath(const char* path)
     {
-        std::cout << "findByPath, path: " << path << "\n";
         char resolvedPath[PATH_MAX];
         if (!realpath(path, resolvedPath)) throw C_Error();
 
         // Check that 'others' have read permission to file and execute permission
         // to all directories above it.        
-        std::cout << "resolvedpath: "  << resolvedPath;
         if (!othersHavePermissions(resolvedPath, 4)) throw HttpCode::Http405;
         const char* fileName = basename(resolvedPath);
-        std::cout << "fileName: " << fileName << "\n";
-        std::cout << "resolvedPath now: " << resolvedPath;
         const char* mimetype = "";
         if (strlen(fileName) > 4) {
             const char* fileEnding = fileName + strlen(fileName) - 4;
-            std::cout << "fileEnding: " << fileEnding << "\n";
             if (!strcmp(fileEnding, ".png")) {
                 mimetype = "image/png";
             }
@@ -130,21 +125,15 @@ namespace org_restfulipc
 
         do {
             if (!dirname(resolvedPath)) throw C_Error();
-            std::cout << "Checing permissions on " << resolvedPath << "\n";
             if (!othersHavePermissions(resolvedPath, 1)) throw HttpCode::Http405;
         } 
         while (strcmp("/", resolvedPath));
         
-
-       
-        std::cout << "Return {" << path << ", " << mimetype << "}\n";
-
         return { path, mimetype };
     }
 
     bool IconResource::othersHavePermissions(const char* filePath, mode_t permissions)
     {
-        std::cout << "Check permissions " << permissions << " on " << filePath << "\n";
         struct stat buf;
         if (stat(filePath, &buf) < 0) throw C_Error();
         return (buf.st_mode & permissions);

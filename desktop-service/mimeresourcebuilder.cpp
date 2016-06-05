@@ -34,17 +34,17 @@ namespace org_restfulipc
                                    const char* elementName, 
                                    Json& json)
     {
-        json[elementName] = JsonConst::EmptyObject;
-        json[elementName]["_ripc:localized"] = "";
+        std::string _ripc_localized_elementName = std::string("_ripc:localized:") + elementName;
+        json[_ripc_localized_elementName] = JsonConst::EmptyObject;
         for (tinyxml2::XMLElement* element = mimetypeElement->FirstChildElement(elementName);
             element;
             element = element->NextSiblingElement(elementName)) {
 
             if (element->Attribute("xml:lang")) {
-                json[elementName][element->Attribute("xml:lang")] = element->GetText();
+                json[_ripc_localized_elementName][element->Attribute("xml:lang")] = element->GetText();
             }
             else {
-                json[elementName]["_ripc:localized"] = element->GetText();
+                json[_ripc_localized_elementName][""] = element->GetText();
             }
         }
     }

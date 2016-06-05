@@ -12,8 +12,8 @@
 
 namespace org_restfulipc
 {
-    static const std::string lastUsedFilePath = 
-         xdg::config_home() + "/RefudeService/desktopEntryResourceLastUsed.json";
+    static const std::string lastUsedFilePath =
+        xdg::config_home() + "/RefudeService/desktopEntryResourceLastUsed.json";
 
     DesktopEntryResource::DesktopEntryResource(Map<Json>&& desktopJsons) :
         AbstractCachingResource(),
@@ -72,7 +72,6 @@ namespace org_restfulipc
 
     void DesktopEntryResource::doPOST(int& socket, HttpMessage& request)
     {
-        std::cout << "doPost: '" << request.remainingPath << "'\n";
         if (request.remainingPath == NULL || !desktopJsons.contains(request.remainingPath)) {
             throw HttpCode::Http404;
         }
@@ -84,7 +83,7 @@ namespace org_restfulipc
         }
 
         runApplication((const char*) desktopJson["Exec"]);
-        commandLastUsed[(const char*)request.remainingPath] = (double) time(NULL);
+        commandLastUsed[(const char*) request.remainingPath] = (double) time(NULL);
         JsonWriter(commandLastUsed).buffer.toFile(lastUsedFilePath.data());
 
         throw HttpCode::Http204;
@@ -92,20 +91,17 @@ namespace org_restfulipc
 
     Buffer DesktopEntryResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
     {
-        std::cout << "DesktopEntryResource, path: " << request.path << "\n"
-                  << "- remaining path: " << request.remainingPath << "\n";
         if (request.remainingPath[0] == '\0') {
             return handleDesktopEntrySearch(request);
         }
         else if (!strcmp(request.remainingPath, "commands")) {
-            return handleCommandSearch(request); 
+            return handleCommandSearch(request);
         }
         else {
-            std::cout << "Looking at " << request.remainingPath << "\n";
             if (desktopJsons.contains(request.remainingPath)) {
                 Json& desktopJson = desktopJsons[request.remainingPath];
                 desktopJson["_links"]["self"]["href"] = std::string(mappedTo) + "/" + request.remainingPath;
-                return LocalizingJsonWriter(desktopJsons[request.remainingPath], 
+                return LocalizingJsonWriter(desktopJsons[request.remainingPath],
                                             getAcceptedLocales(request)).buffer;
             }
             else {
@@ -121,7 +117,8 @@ namespace org_restfulipc
         std::vector<const char*>* searchTerms = NULL;
         std::vector<std::string> locales = getAcceptedLocales(request);
         Json desktopEntryList = JsonConst::EmptyArray;
-        request.queryParameterMap.each([&](const char* parameterName, std::vector<const char*>& values) {
+        request.queryParameterMap.each([&](const char* parameterName, std::vector<const char*>& values)
+        {
             if (!strcmp("handles", parameterName)) {
                 for (const char* value : values) {
                     if (!strcmp("files", value)) {
@@ -145,22 +142,22 @@ namespace org_restfulipc
         {
             bool add;
             if (onlyFileHandlers) {
-                add = desktopJson.contains("Exec") && strcasestr(desktopJson["Exec"], "%f");
+                          add = desktopJson.contains("Exec") && strcasestr(desktopJson["Exec"], "%f");
             }
             else if (onlyUrlHandlers) {
-                add = desktopJson.contains("Exec") &&
-                (strcasestr(desktopJson["Exec"], "%f") || strcasestr(desktopJson["Exec"], "%u"));
+                          add = desktopJson.contains("Exec") &&
+                          (strcasestr(desktopJson["Exec"], "%f") || strcasestr(desktopJson["Exec"], "%u"));
             }
             else {
-                add = true;
+                          add = true;
             }
 
             if (searchTerms) {
-                add = matchDesktopEntry(desktopJson, searchTerms, locales);
+                          add = matchDesktopEntry(desktopJson, searchTerms, locales);
             }
 
             if (add) {
-                desktopEntryList.append(desktopEntryId);
+                          desktopEntryList.append(desktopEntryId);
             }
         });
 
@@ -169,7 +166,8 @@ namespace org_restfulipc
 
         std::string selfRef = mappedTo;
         char separator = '?';
-        request.queryParameterMap.each([&selfRef, &separator](const char* key, std::vector<const char*>& values) {
+        request.queryParameterMap.each([&selfRef, &separator](const char* key, std::vector<const char*>& values)
+        {
             for (const char* value : values) {
                 selfRef.append(1, separator).append(key).append(1, '=').append(value);
                 separator = '&';
@@ -177,9 +175,9 @@ namespace org_restfulipc
         });
 
         result["_links"]["self"]["href"] = selfRef;
-        
-        result["_links"]["application"]["href"] = std::string(mappedTo) + "/{desktopEntryId}" ;
-        
+
+        result["_links"]["application"]["href"] = std::string(mappedTo) + "/{desktopEntryId}";
+
         result["desktopEntries"] = std::move(desktopEntryList);
         return JsonWriter(result).buffer;
 
@@ -193,7 +191,7 @@ namespace org_restfulipc
         std::vector<const char*>* searchTerms = NULL;
         std::vector<std::string> locales = getAcceptedLocales(request);
         request.queryParameterMap.each([&searchTerms, &selfRef](const char* parameterName,
-                                        std::vector<const char*>& values)
+                                       std::vector<const char*>& values)
         {
             if (!strcmp("search", parameterName)) {
                 searchTerms = &values;
@@ -211,11 +209,11 @@ namespace org_restfulipc
 
         desktopJsons.each([&, this](const char* desktopEntryId, Json & desktopJson)
         {
-            if (matchCommand(desktopJson, searchTerms, locales)) {
+            if (matchDesktopEntry(desktopJson, searchTerms, locales)) {
                 Json command;
                 command << commandTemplate_json;
-                command["Name"] = desktopJson["Name"].copy();
-                command["Comment"] = desktopJson["Comment"].copy();
+                command["_ripc:localized:Name"] = desktopJson["_ripc:localized:Name"].copy();
+                command["_ripc:localized:Comment"] = desktopJson["_ripc:localized:Comment"].copy();
                 command["Icon"] = (const char*) desktopJson["Icon"];
                 command["Exec"] = (const char*) desktopJson["Exec"];
                 command["_links"]["self"]["href"] = std::string(mappedTo) + "/commands/" + desktopEntryId;
@@ -238,11 +236,18 @@ namespace org_restfulipc
                                                  std::vector<const char*>* searchTerms,
                                                  const std::vector<std::string>& locales)
     {
+
+        if (desktopJson.contains("NoDisplay")) {
+            if ((bool)desktopJson["NoDisplay"]) {
+                return false;
+            }
+        }
+
         if (!searchTerms) {
             return true;
         }
 
-        Json& nameObj = desktopJson["Name"];
+        Json& nameObj = desktopJson["_ripc:localized:Name"];
 
         for (const char* searchTerm : *searchTerms) {
             for (std::string locale : locales) {
@@ -258,30 +263,4 @@ namespace org_restfulipc
 
         return false;
     }
-
-    bool DesktopEntryResource::matchCommand(Json& desktopJson,
-                                            std::vector<const char*>* searchTerms,
-                                            const std::vector<std::string>& locales)
-    {
-        if (!searchTerms) {
-            return true;
-        }
-
-        Json& nameObj = desktopJson["Name"];
-
-        for (const char* searchTerm : *searchTerms) {
-            for (std::string locale : locales) {
-                if (nameObj.contains(locale) && strcasestr(nameObj[locale], searchTerm)) {
-                    return true;
-                }
-            }
-
-            if (strcasestr(nameObj["_ripc:localized"], searchTerm)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
 }

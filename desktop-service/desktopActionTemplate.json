@@ -1,5 +1,3 @@
 {
-    "Name" : {
-        "_ripc:localized" : true
-    }
+    "_ripc:localized:Name" : {}
 }
