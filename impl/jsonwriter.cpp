@@ -38,35 +38,38 @@ namespace org_restfulipc
     }
 
     void JsonWriter::writeObject(Json& json){
-        buffer.write('{');
-        if (json.entries->size() > 0) {
-            writeString(json.entries->keyAt(0));
-            buffer.write(": ");
-            write(json.entries->valueAt(0));
-            
-            for (int i = 1; i < json.entries->size(); i++) {
+    }
+
+    void JsonWriter::writeKeyValue(int& written, const char* key, Json& value)
+    {
+        if (!value.undefined()) {
+            if (written) {
                 buffer.write(", ");
-                writeString(json.entries->keyAt(i));
-                buffer.write(": ");
-                write(json.entries->valueAt(i));
             }
+            writeString(key);
+            buffer.write(": ");
+            write(value);
+            written++;
         }
-        buffer.write('}');
     }
 
     void JsonWriter::write(Json& json)
     {
         if (json.mType == JsonType::Object) {
-            writeObject(json);
+            buffer.write('{');
+            int written = 0; 
+            for (int i = 0; i < json.entries->size(); i++) {
+                writeKeyValue(written, json.entries->keyAt(i), json.entries->valueAt(i));
+            }
+            buffer.write('}');
         }
         else if (json.mType == JsonType::Array) {
             buffer.write('[');
-            if (json.elements->size() > 0) {
-                write(json.elements->at(0)); 
-                for (int i = 1; i < json.elements->size(); i++) {
+            for (int i = 0; i < json.elements->size(); i++) {
+                if (i) {
                     buffer.write(", ");
-                    write(json.elements->at(i));
                 }
+                write(json.elements->at(i));
             }
             buffer.write(']');
         }
@@ -126,21 +129,35 @@ namespace org_restfulipc
     {
     }
 
-    void LocalizingJsonWriter::writeObject(Json& json)
+    void LocalizingJsonWriter::writeKeyValue(int& written, const char* key, Json& value)
     {
-        if (json.contains("_ripc:localized")) {
-            bool found = false;
+        if (!strncmp("_ripc:localized:", key, 16)) {
+            key += 16;
+            Json* localizedValue = NULL;
             for (std::string locale : acceptableLocales) {
-                if (json.contains(locale)) {
-                    write(json[locale]);
-                    return;
+                if (value.contains(locale)) {
+                    localizedValue = &value[locale];
+                    break;
                 }
             }
-            write(json["_ripc:localized"]);
+            if (localizedValue == NULL && value.contains("")) {
+                localizedValue = &value[""];
+            }
+
+            if (localizedValue) {
+                if (written) {
+                    buffer.write(", ");
+                }
+                writeString(key);
+                buffer.write(": ");
+                write(*localizedValue);
+                written++;
+            }
         }
         else {
-            JsonWriter::writeObject(json);
+            JsonWriter::writeKeyValue(written, key, value);
         }
     }
+
 }
 

@@ -29,8 +29,8 @@ namespace org_restfulipc
     protected:
         JsonWriter();
         void write(Json& json);
-        virtual void writeObject(Json& json);
-
+        void writeObject(Json& json);
+        virtual void writeKeyValue(int& written, const char* key, Json& value);
         void writeString(const char *string);
         void writeChar(const char chr);
     };
@@ -41,7 +41,7 @@ namespace org_restfulipc
         virtual ~LocalizingJsonWriter();
     
     protected:
-        void writeObject(Json& json) override;
+        virtual void writeKeyValue(int& written, const char* key, Json& value) override;
     
     private:
         std::vector<std::string> acceptableLocales;
