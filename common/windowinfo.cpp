@@ -1,16 +1,22 @@
 #include <string.h>
 #include <iostream>
+#include <png++/png.hpp>
 #include "windowinfo.h"
 namespace org_restfulipc
 {
-    void* getProp(Display *display, Window w, const char* propName, unsigned long& nitems_return)
+
+    void* getProp(Display *display,
+                  Window w,
+                  const char* propName,
+                  unsigned long& nitems_return,
+                  bool show = false)
     {
         // Naming of these variables (and parameters above) should match whats used 
         // in XGetWindowPropterty man page  (except for '_delete' -> 'delete'). 
         // So have a look at that.
         Atom property = XInternAtom(display, propName, False);
         long long_offset = 0;
-        long long_length = 1024;
+        long long_length = 32;
         Bool _delete = False;
         Atom req_type = AnyPropertyType;
         Atom actual_type_return;
@@ -18,51 +24,80 @@ namespace org_restfulipc
         unsigned long bytes_after_return;
         unsigned char* prop_return;
 
-        if (XGetWindowProperty(display, w, property, long_offset, long_length, _delete,
-                               req_type, &actual_type_return, &actual_format_return,
-                               &nitems_return, &bytes_after_return, &prop_return) != Success) {
-            return NULL;
-        }
-        else {
-            int bytesPrItem;
-            switch (actual_format_return) {
-            case 32: bytesPrItem = sizeof (long);
-                break;
-            case 16: bytesPrItem = sizeof (short int);
-                break;
-            case 8: bytesPrItem = sizeof (char);
-                break;
-            default: 
-                return NULL; 
-            }
-            void* result = malloc(nitems_return * bytesPrItem + 1);
-            memcpy(result, prop_return, nitems_return * bytesPrItem);
-            memset((char*) result + nitems_return*bytesPrItem, 0, bytesPrItem);
-            XFree(prop_return);
-            return result;
-        }
+        void* buf = NULL;
+        unsigned long bufsize = 0;
 
+        do {
+            if (show) std::cout << "Calling XGetWindowProperty with:\n"
+                << "   long_offset -> " << long_offset << "\n"
+                << "  long_length  -> " << long_length << "\n"
+                << "\n";
+
+            if (XGetWindowProperty(display, w, property, long_offset, long_length, _delete,
+                                   req_type, &actual_type_return, &actual_format_return,
+                                   &nitems_return, &bytes_after_return, &prop_return) != Success) {
+                return NULL;
+            }
+            else {
+                if (show) std::cout << "Return: \n"
+                    << "   actual_format_return => " << actual_format_return << "\n"
+                    << "   nitems_return        => " << nitems_return << "\n"
+                    << "   bytes_after_return   => " << bytes_after_return << "\n"
+                    << "\n";
+                int bytesPrItem;
+                switch (actual_format_return) {
+                case 32:
+                    bytesPrItem = sizeof (long);
+                    long_offset += nitems_return;
+                    break;
+                case 16: bytesPrItem = sizeof (short int);
+                    long_offset += nitems_return / 2;
+                    break;
+                case 8: bytesPrItem = sizeof (char);
+                    long_offset += nitems_return / 4;
+                    break;
+                default:
+                    return NULL;
+                }
+                long_length = bytes_after_return / 4;
+
+                unsigned long newsize = bufsize + nitems_return*bytesPrItem;
+                if (show) std::cout << "realloc(" << (long) buf << ", " << newsize + bytesPrItem << ")\n\n";
+
+                buf = realloc(buf, newsize + bytesPrItem);
+                memcpy((char*) buf + bufsize, prop_return, newsize - bufsize);
+                memset((char*) buf + newsize, 0, bytesPrItem);
+                bufsize = newsize;
+                XFree(prop_return);
+            }
+        }
+        while (long_length > 0);
+
+        return buf;
     }
 
     struct DefaultDisplay
     {
-        DefaultDisplay() {
+
+        DefaultDisplay()
+        {
             _disp = XOpenDisplay(NULL);
         }
 
-        ~DefaultDisplay() {
+        ~DefaultDisplay()
+        {
             XCloseDisplay(_disp);
         }
 
-        operator Display*() { return _disp; }
+        operator Display*()
+        {
+            return _disp;
+        }
 
         Display *_disp;
     };
-    
+
     static Atom _NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(DefaultDisplay(), "_NET_WM_WINDOW_TYPE_NORMAL", False);
-
-    
-
 
     WindowInfo WindowInfo::rootWindow()
     {
@@ -84,7 +119,7 @@ namespace org_restfulipc
         }
 
         return result;
-         
+
     }
 
     WindowInfo::WindowInfo(Window window)
@@ -92,7 +127,7 @@ namespace org_restfulipc
         this->window = window;
         DefaultDisplay disp;
         unsigned long nitems;
-        
+
         char* tmpTitle = (char*) getProp(disp, window, "_NET_WM_VISIBLE_NAME", nitems);
         if (tmpTitle) {
             title = tmpTitle;
@@ -101,7 +136,7 @@ namespace org_restfulipc
         else {
             title = "";
         }
-        
+
         Atom* tmpAtomPtr = (Atom*) getProp(disp, window, "_NET_WM_WINDOW_TYPE", nitems);
         if (tmpAtomPtr) {
             windowType = *tmpAtomPtr;
@@ -110,8 +145,8 @@ namespace org_restfulipc
         else {
             windowType = _NET_WM_WINDOW_TYPE_NORMAL;
         }
-       
-        long frameExtents[4] = {0,0,0,0};
+
+        long frameExtents[4] = {0, 0, 0, 0};
         long* frameExtentsTmp = (long*) getProp(disp, window, "_NET_FRAME_EXTENTS", nitems);
         if (frameExtentsTmp) {
             if (nitems >= 4) {
@@ -133,12 +168,12 @@ namespace org_restfulipc
         if (nchildren) {
             XFree(children);
         }
-        
+
         if (parent) {
-            XTranslateCoordinates(disp, parent, root, attr.x, attr.y, &x, &y, &attr.root); 
+            XTranslateCoordinates(disp, parent, root, attr.x, attr.y, &x, &y, &attr.root);
             x = x - frameExtents[0];
             y = y - frameExtents[2];
-            
+
             width = attr.width + frameExtents[0] + frameExtents[1];
             height = attr.height + frameExtents[2] + frameExtents[3];
         }
@@ -148,13 +183,39 @@ namespace org_restfulipc
             width = attr.width;
             height = attr.height;
         }
-        
+
+        if (strstr(title.data(), "NetBeans")) {
+            unsigned long* icon = (unsigned long*) getProp(disp, window, "_NET_WM_ICON", nitems, true);
+
+            int pos = 0;
+            while (pos < nitems) {
+                unsigned long width = icon[pos];
+                unsigned long height = icon[pos + 1];
+                png::image<png::rgba_pixel> img(width, height); 
+                for (unsigned int i = 0; i < height; i++) {
+                    for (unsigned int j = 0; j < width; j++) {
+                        unsigned long pxl = icon[pos + 2 + i * width + j];
+                        png::byte A = (pxl & 0xFF000000) >> 24;
+                        png::byte R = (pxl & 0xFF0000) >> 16;
+                        png::byte G = (pxl & 0xFF00) >> 8;
+                        png::byte B = (pxl & 0xFF);
+                        img[i][j] = png::rgba_pixel(R, G, B, A);
+                    }
+                }
+                char filename[128];
+                sprintf(filename, "/tmp/netbeans%dx%d.png", width, height);
+                std::cout << "Writing " << filename << "\n";
+                img.write(filename);
+                printf("\n");
+                pos = pos + 2 + width*height;
+            }
+        }
     }
 
     void WindowInfo::raiseAndFocus()
     {
         printf("Raising window %x\n", window);
-        DefaultDisplay disp; 
+        DefaultDisplay disp;
         XRaiseWindow(disp, window);
         XSetInputFocus(disp, window, RevertToNone, CurrentTime);
     }
