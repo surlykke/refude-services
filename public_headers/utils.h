@@ -24,7 +24,10 @@ namespace org_restfulipc
 
     
     std::vector<std::string> subdirectories(std::string directory);
-
+    std::vector<std::string> files(const std::string& directory, 
+                                   const std::vector<std::string>& fileEndings,
+                                   bool includeLinks = true);
+    
     /**
      * Given a directory produces a vector containing, as first, the starting directory, and, after that,
      * all its sub- subsub- etc- directories. All directorypaths end with '/'.

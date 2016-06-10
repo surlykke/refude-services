@@ -14,7 +14,9 @@
 
 namespace org_restfulipc
 {
-    std::vector<std::string> splitByWhitespace(std::string str) {
+
+    std::vector<std::string> splitByWhitespace(std::string str)
+    {
         std::vector<std::string> result;
         int k = 0;
         for (int i = 0; i < str.size(); i++) {
@@ -107,6 +109,48 @@ namespace org_restfulipc
         }
         closedir(dir);
         return result;
+    }
+
+    bool hasOneOfEndings(const char* fileName, const std::vector<std::string>& endings)
+    {
+        for (const std::string& ending : endings) {
+            int fileNameLength = strlen(fileName);
+            int endingLength = strlen(ending.data());
+            if (fileNameLength > endingLength + 1 &&
+                fileName[fileNameLength - endingLength - 1] == '.' &&
+                !strcmp(fileName + fileNameLength - endingLength, ending.data())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    std::vector<std::string> files(const std::string& directory,
+                                   const std::vector<std::string>& fileEndings,
+                                   bool includeLinks)
+    {
+        std::vector<std::string> files;
+        DIR* dir = opendir(directory.data());
+        if (dir != NULL) {
+            for (;;) {
+                errno = 0;
+                struct dirent* dirent = readdir(dir);
+                if (errno && !dirent) {
+                    throw C_Error();
+                }
+                else if (!dirent) {
+                    break;
+                }
+                else if ((dirent->d_type == DT_REG || dirent->d_type == DT_LNK) &&
+                         hasOneOfEndings(dirent->d_name, fileEndings)) {
+                    files.push_back(dirent->d_name);
+                }
+            }
+
+            closedir(dir);
+        }
+        return files;
     }
 
     std::vector<std::string> directoryTree(std::string directory)
