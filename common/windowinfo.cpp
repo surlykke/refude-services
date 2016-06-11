@@ -5,6 +5,14 @@
 namespace org_restfulipc
 {
 
+    int forgiving_X_error_handler(Display *d, XErrorEvent *e)
+    {
+        char errorMsg[80];
+        XGetErrorText(d, e->error_code, errorMsg, 80);
+        printf("Got error: %s\n", errorMsg);
+        return 0;
+    }
+
     void* getProp(Display *display,
                   Window w,
                   const char* propName,
@@ -31,10 +39,15 @@ namespace org_restfulipc
             if (XGetWindowProperty(display, w, property, long_offset, long_length, _delete,
                                    req_type, &actual_type_return, &actual_format_return,
                                    &nitems_return, &bytes_after_return, &prop_return) != Success) {
+                printf("error in getProp...\n"); 
+                if (buf) {
+                    free(buf);
+                }
                 return NULL;
+
             }
             else {
-               int bytesPrItem;
+                int bytesPrItem;
                 switch (actual_format_return) {
                 case 32:
                     bytesPrItem = sizeof (long);
@@ -87,6 +100,11 @@ namespace org_restfulipc
     };
 
     static Atom _NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(DefaultDisplay(), "_NET_WM_WINDOW_TYPE_NORMAL", False);
+
+    void WindowInfo::init()
+    {
+        XSetErrorHandler(forgiving_X_error_handler);
+    }
 
     WindowInfo WindowInfo::rootWindow()
     {
@@ -186,7 +204,7 @@ namespace org_restfulipc
         XRaiseWindow(disp, window);
         XSetInputFocus(disp, window, RevertToNone, CurrentTime);
     }
-    
+
     void WindowInfo::calculateIconName()
     {
         static const char hexDigit[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
@@ -194,7 +212,7 @@ namespace org_restfulipc
         char hash[8];
         memset(hash, 0, 8);
         for (unsigned long i = 0; i < iconLength; i++) {
-            hash[4 * i % 8] ^=       ((icon[i] & 0xFF000000) >> 24);
+            hash[4 * i % 8] ^= ((icon[i] & 0xFF000000) >> 24);
             hash[(4 * i + 1) % 8] ^= ((icon[i] & 0xFF0000) >> 16);
             hash[(4 * i + 2) % 8] ^= ((icon[i] & 0xFF00) >> 8);
             hash[(4 * i + 3) % 8] ^= (icon[i] & 0xFF);

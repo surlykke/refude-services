@@ -17,6 +17,7 @@ namespace org_restfulipc
     class WindowInfo
     {
     public:
+        static void init();
         static WindowInfo rootWindow();
         static std::vector<WindowInfo> normalWindows();
 

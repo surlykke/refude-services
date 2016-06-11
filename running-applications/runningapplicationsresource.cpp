@@ -38,6 +38,7 @@ namespace org_restfulipc
         AbstractResource(),
         iconsResource(iconsResource)
     {
+        WindowInfo::init();
     }
 
     RunningApplicationsResource::~RunningApplicationsResource()
