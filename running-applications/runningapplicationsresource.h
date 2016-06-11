@@ -11,17 +11,20 @@
 
 #include <ripc/abstractresource.h>
 
+#include "runningappsicons.h"
+
 namespace org_restfulipc
 {
     class RunningApplicationsResource : public AbstractResource
     {
     public:
         typedef std::shared_ptr<RunningApplicationsResource> ptr;
-        RunningApplicationsResource();
+        RunningApplicationsResource(RunningAppsIcons::ptr iconsResource);
         virtual ~RunningApplicationsResource();
         void doGET(int& socket, HttpMessage& request) override;
         void doPOST(int& socket, HttpMessage& request) override;
-
+    private:
+        RunningAppsIcons::ptr iconsResource;
     };
 }
 #endif /* RUNNINGAPPLICATIONSRESOURCE_H */

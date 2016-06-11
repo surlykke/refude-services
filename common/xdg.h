@@ -17,6 +17,7 @@ namespace org_restfulipc
     {
         const std::string& home();
         const std::string& config_home();
+        const std::string& cache_home();
         const std::vector<std::string>& config_dirs();
         const std::string& data_home();
         const std::vector<std::string>& data_dirs();

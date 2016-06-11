@@ -4,6 +4,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
+#include <string>
 #include <vector>
 
 namespace org_restfulipc 
@@ -18,7 +19,7 @@ namespace org_restfulipc
     public:
         static WindowInfo rootWindow();
         static std::vector<WindowInfo> normalWindows();
-    
+
         void raiseAndFocus();
         
         std::string title;
@@ -27,10 +28,14 @@ namespace org_restfulipc
         int y;
         unsigned int width;
         unsigned int height;
-
+        long* icon;
+        unsigned long iconLength;
+        char iconName[20];
         Window window;
     private:
         WindowInfo(Window window);
+
+        void calculateIconName();
     };
         
 }

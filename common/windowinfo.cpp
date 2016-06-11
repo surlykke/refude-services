@@ -1,7 +1,7 @@
 #include <string.h>
-#include <iostream>
-#include <png++/png.hpp>
 #include "windowinfo.h"
+#include "xdg.h"
+
 namespace org_restfulipc
 {
 
@@ -28,23 +28,13 @@ namespace org_restfulipc
         unsigned long bufsize = 0;
 
         do {
-            if (show) std::cout << "Calling XGetWindowProperty with:\n"
-                << "   long_offset -> " << long_offset << "\n"
-                << "  long_length  -> " << long_length << "\n"
-                << "\n";
-
             if (XGetWindowProperty(display, w, property, long_offset, long_length, _delete,
                                    req_type, &actual_type_return, &actual_format_return,
                                    &nitems_return, &bytes_after_return, &prop_return) != Success) {
                 return NULL;
             }
             else {
-                if (show) std::cout << "Return: \n"
-                    << "   actual_format_return => " << actual_format_return << "\n"
-                    << "   nitems_return        => " << nitems_return << "\n"
-                    << "   bytes_after_return   => " << bytes_after_return << "\n"
-                    << "\n";
-                int bytesPrItem;
+               int bytesPrItem;
                 switch (actual_format_return) {
                 case 32:
                     bytesPrItem = sizeof (long);
@@ -62,7 +52,6 @@ namespace org_restfulipc
                 long_length = bytes_after_return / 4;
 
                 unsigned long newsize = bufsize + nitems_return*bytesPrItem;
-                if (show) std::cout << "realloc(" << (long) buf << ", " << newsize + bytesPrItem << ")\n\n";
 
                 buf = realloc(buf, newsize + bytesPrItem);
                 memcpy((char*) buf + bufsize, prop_return, newsize - bufsize);
@@ -184,31 +173,9 @@ namespace org_restfulipc
             height = attr.height;
         }
 
-        if (strstr(title.data(), "NetBeans")) {
-            unsigned long* icon = (unsigned long*) getProp(disp, window, "_NET_WM_ICON", nitems, true);
-
-            int pos = 0;
-            while (pos < nitems) {
-                unsigned long width = icon[pos];
-                unsigned long height = icon[pos + 1];
-                png::image<png::rgba_pixel> img(width, height); 
-                for (unsigned int i = 0; i < height; i++) {
-                    for (unsigned int j = 0; j < width; j++) {
-                        unsigned long pxl = icon[pos + 2 + i * width + j];
-                        png::byte A = (pxl & 0xFF000000) >> 24;
-                        png::byte R = (pxl & 0xFF0000) >> 16;
-                        png::byte G = (pxl & 0xFF00) >> 8;
-                        png::byte B = (pxl & 0xFF);
-                        img[i][j] = png::rgba_pixel(R, G, B, A);
-                    }
-                }
-                char filename[128];
-                sprintf(filename, "/tmp/netbeans%dx%d.png", width, height);
-                std::cout << "Writing " << filename << "\n";
-                img.write(filename);
-                printf("\n");
-                pos = pos + 2 + width*height;
-            }
+        icon = (long*) getProp(disp, window, "_NET_WM_ICON", iconLength, true);
+        if (icon) {
+            calculateIconName();
         }
     }
 
@@ -218,6 +185,26 @@ namespace org_restfulipc
         DefaultDisplay disp;
         XRaiseWindow(disp, window);
         XSetInputFocus(disp, window, RevertToNone, CurrentTime);
+    }
+    
+    void WindowInfo::calculateIconName()
+    {
+        static const char hexDigit[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
+            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+        char hash[8];
+        memset(hash, 0, 8);
+        for (unsigned long i = 0; i < iconLength; i++) {
+            hash[4 * i % 8] ^=       ((icon[i] & 0xFF000000) >> 24);
+            hash[(4 * i + 1) % 8] ^= ((icon[i] & 0xFF0000) >> 16);
+            hash[(4 * i + 2) % 8] ^= ((icon[i] & 0xFF00) >> 8);
+            hash[(4 * i + 3) % 8] ^= (icon[i] & 0xFF);
+        }
+        for (int i = 0; i < 8; i++) {
+            iconName[2 * i + 2 * i / 4] = hexDigit[(hash[i] & 0xF0) >> 4];
+            iconName[2 * i + 1 + (2 * i + 1) / 4] = hexDigit[hash[i] & 0xF];
+        }
+        iconName[4] = iconName[9] = iconName[14] = '-';
+        iconName[19] = '\0';
     }
 
 }

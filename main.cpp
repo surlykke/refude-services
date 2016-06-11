@@ -35,8 +35,10 @@ int main(int argc, char *argv[])
         iconResourceBuilder.buildResources();
         iconResourceBuilder.mapResources(service);
 
+        RunningAppsIcons::ptr runningAppsIcons = std::make_shared<RunningAppsIcons>();
+        service.map("/runningappsicons", runningAppsIcons);
         RunningApplicationsResource::ptr runningApplicationsResource = 
-            std::make_shared<RunningApplicationsResource>();
+            std::make_shared<RunningApplicationsResource>(runningAppsIcons);
         service.map("/runningapplications", runningApplicationsResource, true);
 
         DisplayResource::ptr displayResource = std::make_shared<DisplayResource>();

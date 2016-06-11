@@ -31,7 +31,6 @@ namespace org_restfulipc
         Map<std::vector<std::string>> defaultApplications;
 
     private:
-        std::vector<std::string> desktopFiles(std::string directory);
         void readDesktopFiles(std::vector<std::string> applicationsDirs);
         void readMimeappsListFile(std::string dir);
    };

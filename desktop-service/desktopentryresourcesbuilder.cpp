@@ -48,36 +48,13 @@ namespace org_restfulipc
         readMimeappsListFile(xdg::config_home());
     }
 
-    std::vector<std::string> DesktopEntryResourceBuilder::desktopFiles(std::string directory)
-    {
-        std::vector<std::string> files;
-        DIR* dir = opendir(directory.data());
-        if (dir == NULL) throw C_Error();
-        
-        for (;;) {
-            errno = 0;
-            struct dirent* dirent = readdir(dir);
-            if (errno && !dirent) { 
-                throw C_Error();
-            }
-            else if (!dirent) {
-                break;
-            } 
-            else if ( (dirent->d_type == DT_REG || dirent->d_type == DT_LNK) && 
-                        (strlen(dirent->d_name) > 8 && 
-                        !strcmp(".desktop", dirent->d_name + strlen(dirent->d_name) - 8))) {
-                files.push_back(directory + dirent->d_name);        
-            }
-        }
-       
-        closedir(dir);
-        return files;
-    } 
-    
+   
     void DesktopEntryResourceBuilder::readDesktopFiles(std::vector<std::string> applicationsDirs)
     {
         for (const std::string& applicationsDir : applicationsDirs) {
-            for (const std::string& desktopFilePath : desktopFiles(applicationsDir)) {
+            std::cout << "Look for desktopfiles in " << applicationsDir << "\n";
+            for (const std::string& desktopFile : files(applicationsDir, {"desktop"})) {
+                std::string desktopFilePath = applicationsDir + "/" + desktopFile;
                 DesktopEntryReader reader(desktopFilePath);
             
                 std::string entryId = replaceAll(std::string(desktopFilePath.data() + applicationsDirs[0].size()), '/', '-');

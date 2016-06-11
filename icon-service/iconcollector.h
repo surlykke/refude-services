@@ -29,7 +29,6 @@ namespace org_restfulipc
     private: 
         std::string directoryPath;
         Json& iconDirJson;
-        DIR* dir;
         char buffer[PATH_MAX];
     };
 

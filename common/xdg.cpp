@@ -41,7 +41,13 @@ namespace org_restfulipc
             static std::string res = value("XDG_CONFIG_HOME", home() + "/.config");
             return res; 
         }
-        
+       
+        const std::string& cache_home()
+        {
+            static std::string res = value("XDG_CACHE_HOME", home() + "/.cache");
+            return res; 
+        }
+
         const std::vector<std::string>& config_dirs() 
         {
             static std::vector<std::string> res = split(value("XDG_CONFIG_DIRS", "/etc/xdg"), ':');
