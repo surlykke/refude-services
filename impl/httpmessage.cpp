@@ -30,6 +30,17 @@ namespace org_restfulipc
         return index == -1 ? NULL : headers.valueAt(index);
     }
 
+    const char* HttpMessage::parameter(const char* parameterName)
+    {
+        if (queryParameterMap.contains(parameterName)) {
+            return queryParameterMap[parameterName][0];
+        }
+        else {
+            return NULL;
+        }
+    }
+
+
     void HttpMessage::clear()
     {
         method = Method::UNKNOWN;

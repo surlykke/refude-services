@@ -93,7 +93,12 @@ namespace org_restfulipc
     void WebServer::doGET(int& socket, HttpMessage& request)
     {
         PathMimetypePair pair = findFile(request);
-        FileWriter(socket, rootFd, pair.path, pair.mimetype).writeFile();
+        if (pair.path) {
+            FileWriter(socket, rootFd, pair.path, pair.mimetype).writeFile();
+        }
+        else { 
+            throw HttpCode::Http404;
+        }
     }
 
     PathMimetypePair WebServer::findFile(HttpMessage& request)

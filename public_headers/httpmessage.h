@@ -39,6 +39,7 @@ namespace org_restfulipc
         HttpMessage();
         virtual ~HttpMessage();
         const char* header(const char* headerName);
+        const char* parameter(const char* parameterName);
         void clear();
         
         Buffer toBuf();
