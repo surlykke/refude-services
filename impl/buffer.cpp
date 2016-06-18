@@ -114,7 +114,18 @@ namespace org_restfulipc
     Buffer& Buffer::write(double d)
     {
         ensureCapacity(25);
-        _size += snprintf(_data + _size, 25, "%.17g", d);
+        int newSize = _size + snprintf(_data + _size, 25, "%.16g", d);
+    
+        // Annoyingly snprintf formats floats according to locale, which 
+        // breaks json serialization, and we can't set locale from library.
+        // Seemingly locale only affects the decimal point, so we band-aid it here.
+        // TODO: Write better double to string converter
+        for (; _size < newSize; _size++) {
+            if (_data[_size] == ',') {
+                _data[_size] = '.';
+            }
+        }
+
         return *this;
     }
 
