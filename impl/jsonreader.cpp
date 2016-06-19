@@ -109,7 +109,7 @@ namespace org_restfulipc
             skipKeyword("null");
             json = JsonConst::Null;
         }
-        else if (*cc == '+' || *cc == '-' || (*cc >= '0' && *cc <= '9')) {
+        else if (*cc == '-' || (*cc >= '0' && *cc <= '9')) {
             json = readNumber();
         }
         else {
@@ -192,12 +192,65 @@ namespace org_restfulipc
 
     double JsonReader::readNumber()
     {
-        char *endPtr;
-        double number = strtod(cc, &endPtr);
-        if (number == HUGE_VAL || number == -HUGE_VAL) throw RuntimeError("Overflow");
-        cc = cc + (endPtr - cc);
+        // The problem with C's built in strtod atof and such is that the parse according to 
+        // locale, so the decimal point is expected to be ',' when locale is - eg.- ' da_DK.UTF-8. 
+        // Thats not legal in json, hence this handcoded number reader
+        
+        uint64_t tmp = 0;
+        uint64_t digits = 0;
+        bool neg = false;
+        bool negExp = false;
+        int exp = 0;
+
+        if (*cc == '-') {
+            neg = true;
+            cc++;
+        }
+    
+        // Read integer part
+        while (*cc >= '0' && *cc <= '9') {
+            if (++digits < 17) { 
+                tmp = 10*tmp + (*cc - '0');
+            }
+            else {
+                exp++;
+            }
+            cc++;
+        }
+
+        // Read fraction
+        if (*cc == '.') {
+            cc++;
+            while (*cc >= '0' && *cc <= '9') {
+                if (++digits < 17) {
+                    tmp = 10*tmp + (*cc - '0');
+                    exp--;
+                }
+                cc++;
+            }
+            if (*(cc - 1) == '.') {
+                throw RuntimeError("Malformed number at %d,%d: Empty fraction", line(), column());
+            }
+        }
+
+        // Read exponent
+        if (*cc == 'E' || *cc == 'e') {
+            cc++;
+            if (*cc == '-' || *cc == '+') {
+                negExp = (*cc++ == '-');
+            }
+            int tempExp = 0;
+            while (*cc >= '0' && *cc <= '9') {
+                tempExp = 10*tempExp + (*cc++ - '0');
+            }
+            if (*(cc - 1) < '0' || *(cc - 1) > '9') {
+                throw RuntimeError("Malformed number at %d,%d: empty exponent", line(), column());
+            }
+            exp = negExp ? exp - tempExp : exp + tempExp;
+        } 
+            
         skipSpace();
-        return number;
+        return neg ? -(tmp*pow(10.0, exp)) : tmp*pow(10.0, exp);
     }
 
     bool JsonReader::currentCharIsWhiteSpace() {
