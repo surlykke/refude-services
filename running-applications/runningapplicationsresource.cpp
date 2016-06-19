@@ -64,7 +64,7 @@ namespace org_restfulipc
 
         Json commands;
         commands << commandsTemplate_json;
-        commands["_links"]["self"]["href"] = mappedTo();
+        commands["_links"]["self"]["href"] = "/runningapplications";
         commands["geometry"] = JsonConst::EmptyObject;
 
         WindowInfo rootWindow = WindowInfo::rootWindow(); 
@@ -84,9 +84,9 @@ namespace org_restfulipc
             runningApp["geometry"]["y"] = window.y;
             runningApp["geometry"]["w"] = window.width;
             runningApp["geometry"]["h"] = window.height;
-            runningApp["_links"]["self"]["href"] = std::string(mappedTo()) + "/" + std::to_string(window.window);
-            runningApp["_links"]["execute"]["href"] = std::string(mappedTo()) + "/" + std::to_string(window.window);
-            runningApp["_links"]["icon"]["href"] = std::string(iconsResource->mappedTo()) + "?name=" + window.iconName;
+            runningApp["_links"]["self"]["href"] = std::string("/runningapplications/") + std::to_string(window.window);
+            runningApp["_links"]["execute"]["href"] = std::string("/runningapplications/") + std::to_string(window.window);
+            runningApp["_links"]["icon"]["href"] = std::string("/runningappsicons?name=") + window.iconName;
             runningApp["lastActivated"] = (double) 0;
             commands["commands"].append(std::move(runningApp));
             iconsResource->addIcon(window.iconName, window.icon, window.iconLength);

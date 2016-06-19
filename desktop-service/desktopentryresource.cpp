@@ -100,7 +100,7 @@ namespace org_restfulipc
         else {
             if (desktopJsons.contains(request.remainingPath)) {
                 Json& desktopJson = desktopJsons[request.remainingPath];
-                desktopJson["_links"]["self"]["href"] = std::string(mappedTo()) + "/" + request.remainingPath;
+                desktopJson["_links"]["self"]["href"] = std::string("/desktopentries/") + request.remainingPath;
                 return LocalizingJsonWriter(desktopJsons[request.remainingPath],
                                             getAcceptedLocales(request)).buffer;
             }
@@ -164,7 +164,7 @@ namespace org_restfulipc
         Json result;
         result << handlerTemplate_json;
 
-        std::string selfRef = mappedTo();
+        std::string selfRef = "/desktopentries";
         char separator = '?';
         request.queryParameterMap.each([&selfRef, &separator](const char* key, std::vector<const char*>& values)
         {
@@ -176,7 +176,7 @@ namespace org_restfulipc
 
         result["_links"]["self"]["href"] = selfRef;
 
-        result["_links"]["application"]["href"] = std::string(mappedTo()) + "/{desktopEntryId}";
+        result["_links"]["application"]["href"] = "/desktopentries/{desktopEntryId}";
 
         result["desktopEntries"] = std::move(desktopEntryList);
         return JsonWriter(result).buffer;
@@ -186,7 +186,7 @@ namespace org_restfulipc
     Buffer DesktopEntryResource::handleCommandSearch(HttpMessage& request)
     {
         Json content;
-        std::string selfRef = std::string(mappedTo()) + "/commands";
+        std::string selfRef = "/desktopentries/commands";
         content << commandsTemplate_json;
         std::vector<const char*>* searchTerms = NULL;
         std::vector<std::string> locales = getAcceptedLocales(request);
@@ -216,8 +216,8 @@ namespace org_restfulipc
                 command["_ripc:localized:Comment"] = desktopJson["_ripc:localized:Comment"].copy();
                 command["Icon"] = (const char*) desktopJson["Icon"];
                 command["Exec"] = (const char*) desktopJson["Exec"];
-                command["_links"]["self"]["href"] = std::string(mappedTo()) + "/commands/" + desktopEntryId;
-                command["_links"]["execute"]["href"] = std::string(mappedTo()) + "/" + desktopEntryId;
+                command["_links"]["self"]["href"] = std::string("/desktopentries/") + desktopEntryId;
+                command["_links"]["execute"]["href"] = std::string("/desktopentries/") + desktopEntryId;
                 if (commandLastUsed.contains(desktopEntryId)) {
                     command["lastActivated"] = (double) commandLastUsed[desktopEntryId];
                 }

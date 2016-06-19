@@ -21,7 +21,6 @@ namespace org_restfulipc
             for (const std::string& filename : files(subdiretoryPath,{"png"})) {
                 std::string iconName = filename.substr(0, filename.size() - 4);
                 std::string relativeIconPath = subdirectory + "/" + filename;
-                std::cout << "Adding path: " << size << ", " << relativeIconPath << " to " << iconName << "\n";
                 iconPaths[iconName.data()].push_back({size, relativeIconPath});
             }
         }

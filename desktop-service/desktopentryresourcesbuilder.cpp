@@ -57,7 +57,8 @@ namespace org_restfulipc
                 std::string desktopFilePath = applicationsDir + "/" + desktopFile;
                 DesktopEntryReader reader(desktopFilePath);
             
-                std::string entryId = replaceAll(std::string(desktopFilePath.data() + applicationsDirs[0].size()), '/', '-');
+                std::string entryId = replaceAll(std::string(desktopFilePath.data() + applicationsDirs[0].size() + 1), '/', '-');
+                std::cout << "adding entryId: "  << entryId << "\n";
                 if (reader.json.contains("Hidden") && (bool)reader.json["Hidden"]) {
                     desktopJsons.take(entryId);
                 }

@@ -32,7 +32,7 @@ namespace org_restfulipc
     {
         Json displayJson;
         displayJson << displayResourceTemplate_json;
-        displayJson["_links"]["self"]["href"] = mappedTo();
+        displayJson["_links"]["self"]["href"] = "/display";
         Json& geometry = displayJson["geometry"];
         WindowInfo rootWindowInfo = WindowInfo::rootWindow();
         geometry["x"] = rootWindowInfo.x;
