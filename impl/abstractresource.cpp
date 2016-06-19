@@ -134,16 +134,6 @@ namespace org_restfulipc
         }
     }
 
-    const char* AbstractResource::mappedTo()
-    {
-        return _mappedTo;
-    }
-
-    void AbstractResource::setMappedTo(const char* mappedTo)
-    {
-        this->_mappedTo = mappedTo;
-    }
-
     void AbstractResource::buildResponse(Buffer& response, Buffer&& content,
                                          const std::map<std::string, std::string>& headers)
     {

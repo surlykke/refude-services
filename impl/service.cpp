@@ -133,8 +133,8 @@ namespace org_restfulipc
         else {
             resourceMappings.add(path, resource);
         }
-            
-        resource->setMappedTo(path);
+
+        
     }
 
     void Service::unMap(const char* path)

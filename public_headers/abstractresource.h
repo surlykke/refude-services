@@ -58,16 +58,12 @@ namespace org_restfulipc
          */
         std::vector<std::string> getAcceptedLocales(HttpMessage& request);
 
-        const char* mappedTo();
-        void setMappedTo(const char* mappedTo);
-
     protected:
         void buildResponse(Buffer& response, Buffer&& content, 
                            const std::map<std::string, std::string>& headers);
 
         void sendFully(int socket, const char* data, int nbytes);
 
-        const char* _mappedTo;
     };
 
 }
