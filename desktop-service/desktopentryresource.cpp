@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <ripc/json.h>
 #include <ripc/jsonwriter.h>
+#include <ripc/localizingjsonwriter.h>
 #include <ripc/buffer.h>
 #include "handlerTemplate.h"
 #include "commandTemplate.h"
@@ -39,7 +40,7 @@ namespace org_restfulipc
         const char* desktopEntryRemoved = "desktopentry-removed";
         Map<const char*> notifications;
         {
-            std::unique_lock<std::recursive_mutex> lock(m);
+            std::lock_guard<std::recursive_mutex> lock(m);
             clearCache();
             this->desktopJsons.each([&](const char* desktopEntryId, Json & desktopJson)
             {

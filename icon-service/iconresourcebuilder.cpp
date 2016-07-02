@@ -8,7 +8,7 @@
 #include <ripc/utils.h>
 #include <ripc/jsonwriter.h>
 #include <ripc/jsonresource.h>
-
+#include <ripc/localizedjsonresource.h>
 #include "xdg.h"
 #include "themereader.h"
 #include "iconcollector.h"
@@ -91,8 +91,7 @@ namespace org_restfulipc
 
         const char* themesSelfUri = "/icons/themes";
         themesJson["_links"]["self"]["href"] = themesSelfUri;
-        JsonResource::ptr themesResource = std::make_shared<JsonResource>();
-        themesResource->setJson(std::move(themesJson));
+        JsonResource::ptr themesResource = std::make_shared<JsonResource>(std::move(themesJson));
         service.map(themesSelfUri, themesResource);
     }
 

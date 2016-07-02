@@ -8,7 +8,7 @@
 
 
 #include <ripc/json.h>
-#include <ripc/jsonwriter.h>
+#include <ripc/localizingjsonwriter.h>
 #include <ripc/httpmessage.h>
 
 #include "rootTemplate.h"
@@ -36,7 +36,7 @@ namespace org_restfulipc
         const char* mimetypeRemoved = "mimetype-removed";
         Map<const char*> affectedMimetypes;
         {
-            std::unique_lock<std::recursive_mutex> lock(m);
+            std::lock_guard<std::recursive_mutex> lock(m);
             clearCache();
             this->mimetypeJsons.each([&](const char* mimetype, Json& mimetypeJson){
                 if (! mimetypeJsons.contains(mimetype)) {
@@ -173,7 +173,7 @@ namespace org_restfulipc
             throw HttpCode::Http422; // FIXME Some error message here
         }
         else {
-            std::unique_lock<std::recursive_mutex> lock(m);
+            std::lock_guard<std::recursive_mutex> lock(m);
 
             std::string thisMimetype = request.remainingPath;
             std::string defaultApplication = (std::string) mergeJson["defaultApplication"];
