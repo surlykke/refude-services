@@ -53,7 +53,7 @@ namespace org_restfulipc
 
     void NotifierResource::addClient(int socket)
     {
-        std::unique_lock<std::mutex> lock(mMutex);
+        std::lock_guard<std::mutex> lock(mMutex);
         mClientSockets.push_back(socket);
     }
 
@@ -81,7 +81,7 @@ namespace org_restfulipc
                                   data);
 
         {
-            std::unique_lock<std::mutex> lock(mMutex);
+            std::lock_guard<std::mutex> lock(mMutex);
 
             for (auto it = mClientSockets.begin(); it != mClientSockets.end(); it++) {
                 try {

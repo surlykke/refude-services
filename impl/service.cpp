@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <poll.h>
 #include <mutex>
-#include <condition_variable>
 
 #include "httpmessage.h"
 #include "abstractresource.h"

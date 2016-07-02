@@ -1,5 +1,3 @@
-#include <shared_mutex>
-
 #include "abstractcachingresource.h"
 
 namespace org_restfulipc
@@ -16,7 +14,7 @@ namespace org_restfulipc
 
     void AbstractCachingResource::doGET(int& socket, HttpMessage& request)
     {
-        std::unique_lock<std::recursive_mutex> lock(m);
+        std::lock_guard<std::recursive_mutex> lock(m);
     
         Buffer requestSignature = getSignature(request);
         if (!cache.contains(requestSignature.data())) {
@@ -67,7 +65,7 @@ namespace org_restfulipc
 
     void AbstractCachingResource::clearCache()
     {
-        std::unique_lock<std::recursive_mutex> lock(m);
+        std::lock_guard<std::recursive_mutex> lock(m);
         cache.clear();
     }
 

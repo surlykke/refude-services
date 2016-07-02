@@ -9,45 +9,30 @@
 #ifndef JSONRESOURCE_H
 #define JSONRESOURCE_H
 
-#include <shared_mutex>
+#include <mutex>
 #include "map.h"
 #include "abstractresource.h"
-#include "json.h"
 #include "abstractcachingresource.h"
+#include "json.h"
+#include "notifierresource.h"
 
 namespace org_restfulipc
 {
-    class JsonResource : public AbstractCachingResource
+
+    class JsonResource : public AbstractResource
     {
     public:
         typedef std::shared_ptr<JsonResource> ptr;
-        JsonResource();
+        JsonResource(Json&& json);
         virtual ~JsonResource();
-        const Json& getJson(); 
         void setJson(Json&& json);
-
-    protected:
-        Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers) override;
-        Json json;
-
-    };
-
-    class LocalizedJsonResource : public AbstractCachingResource
-    {
-    public:
-        typedef std::shared_ptr<LocalizedJsonResource> ptr; 
-        LocalizedJsonResource();
-        virtual ~LocalizedJsonResource();
-        const Json& getJson(); 
-        void setJson(Json&& json);
-
-    protected:
-        virtual Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers) override;
-        Json json;
+        virtual void doGET(int& socket, HttpMessage& request) override;
 
     private:
-        std::string getLocaleToServe(const char* acceptLanguageHeader);
-
+        Json json;
+        void buildResponse();
+        Buffer cannedResponse;
+        std::mutex mutex;
     };
 
      

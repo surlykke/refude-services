@@ -35,19 +35,6 @@ namespace org_restfulipc
         void writeChar(const char chr);
     };
 
-    struct LocalizingJsonWriter : public JsonWriter
-    {
-        LocalizingJsonWriter(Json& json, std::vector<std::string> acceptableLocales);
-        virtual ~LocalizingJsonWriter();
-    
-    protected:
-        virtual void writeKeyValue(int& written, const char* key, Json& value) override;
-    
-    private:
-        std::vector<std::string> acceptableLocales;
-        const char* lastResort;
-    };
-
 }
 
 #endif // JSONWRITER_H

@@ -10,6 +10,7 @@
 #define SERVICELISTENER_H
 
 #include <thread>
+#include <condition_variable>
 #include <vector>
 #include "map.h"
 #include "abstractresource.h"

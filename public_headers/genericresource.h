@@ -9,8 +9,6 @@
 #ifndef GENERICRESOURCE_H
 #define GENERICRESOURCE_H
 
-#include <shared_mutex>
-
 #include "abstractresource.h"
 #include "notifierresource.h"
 #include "abstractcachingresource.h"

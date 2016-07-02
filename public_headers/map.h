@@ -270,8 +270,8 @@ namespace org_restfulipc
                     std::inplace_merge(list.begin(), list.begin() + sorted, list.end(), LessThan<V, copyKey>());
                 }
                 list.erase(std::unique(list.begin(), list.end(), Equal<V, copyKey>()), list.end());
+                sorted = list.size();
             }
-            sorted = list.size();
         }
 
         std::vector<const char*> keys()
