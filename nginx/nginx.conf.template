@@ -1,0 +1,58 @@
+# NGINXDIR should be replaced with $XDG_RUNTIME_DIR/nginx and that directory must exist
+
+pid NGINXDIR/nginx.pid;
+ 
+worker_processes 1;
+ 
+events {
+  worker_connections 1024;
+}
+ 
+http {
+  client_body_temp_path NGINXDIR/client_body;
+  fastcgi_temp_path NGINXDIR/fastcgi_temp;
+  proxy_temp_path NGINXDIR/proxy_temp;
+  scgi_temp_path NGINXDIR/scgi_temp;
+  uwsgi_temp_path NGINXDIR/uwsgi_temp;
+ 
+  tcp_nopush on;
+  tcp_nodelay on;
+  keepalive_timeout 65;
+  types_hash_max_size 2048;
+ 
+  include /etc/nginx/mime.types;
+ 
+  log_format   main '$remote_addr - $remote_user [$time_local] $status '
+    '"$request" $body_bytes_sent "$http_referer" '
+    '"$http_user_agent" "$http_x_forwarded_for"';
+ 
+  default_type application/octet-stream;
+
+  proxy_set_header Connection '';
+  proxy_http_version 1.1;
+  chunked_transfer_encoding off;
+  proxy_buffering off;
+  proxy_cache off;    
+  proxy_read_timeout 600;
+ 
+  server {
+    listen 7938;
+    listen [::]:7938 default ipv6only=on;
+
+    access_log NGINXDIR/access.log;
+    error_log NGINXDIR/error.log;
+ 
+    location /desktop-service/ { 
+        proxy_pass http://unix:/run/user/1000/org.restfulipc.refude.desktop-service:/;        
+    }
+    location /icon-service/ { 
+        proxy_pass http://unix:/run/user/1000/org.restfulipc.refude.icon-service:/;        
+    }
+    location /windowmanager-service/ { 
+        proxy_pass http://unix:/run/user/1000/org.restfulipc.refude.windowmanager-service:/;        
+    }
+    location /power-service/ { 
+        proxy_pass http://unix:/run/user/1000/org.restfulipc.refude.power-service:/;        
+    }
+  }
+}
