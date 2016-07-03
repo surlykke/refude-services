@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Refude Desktop Services
+Name[da]=Refude Desktop Services
+Comment=Restful Services for the Desktop
+Comment[da]=Restbaserede services til din desktop
+Exec=RefudeService
+Terminal=false
+Type=Application
+Categories=

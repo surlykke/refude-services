@@ -21,6 +21,7 @@ namespace org_restfulipc
         const std::vector<std::string>& config_dirs();
         const std::string& data_home();
         const std::vector<std::string>& data_dirs();
+        const std::string& runtime_dir();
     }
 }
 #endif /* XDG_H */

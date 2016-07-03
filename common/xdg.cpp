@@ -65,5 +65,11 @@ namespace org_restfulipc
             static std::vector<std::string> res = getDataDirs();
             return res;
         }
+
+        const std::string& runtime_dir()
+        {
+            static std::string res = value("XDG_RUNTIME_DIR"); // FIXME: Add fallback
+            return res;
+        }
     }
 } 

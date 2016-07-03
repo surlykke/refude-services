@@ -10,31 +10,19 @@
 #include <ripc/service.h>
 #include <ripc/errorhandling.h>
 
-#include "refudemainresource.h"
-#include "desktop-service/desktopservice.h"
-#include "icon-service/iconresourcebuilder.h"
-#include "running-applications/runningapplicationsresource.h"
+#include "runningapplicationsresource.h"
+#include "displayresource.h"
 #include "xdg.h"
-#include "display/displayresource.h"
 
 int main(int argc, char *argv[])
 {
     using namespace org_restfulipc;
-    DesktopResources desktopResources;
     try {
         std::string configDir = xdg::config_home() + "/RefudeService";
         system((std::string("mkdir -p ") + configDir).data());
 
         Service service;
         service.dumpRequests = true;
-        service.map("/", std::make_shared<RefudeMainResource>());
-
-        desktopResources.setup(service);
-
-        IconResourceBuilder iconResourceBuilder;
-        iconResourceBuilder.buildResources();
-        iconResourceBuilder.mapResources(service);
-
         RunningAppsIcons::ptr runningAppsIcons = std::make_shared<RunningAppsIcons>();
         service.map("/runningappsicons", runningAppsIcons);
         RunningApplicationsResource::ptr runningApplicationsResource = 
@@ -44,8 +32,8 @@ int main(int argc, char *argv[])
         DisplayResource::ptr displayResource = std::make_shared<DisplayResource>();
         service.map("/display", displayResource);
 
-        std::cout << "Listening on 7938\n";
-        service.serve(7938);
+        std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.windowmanager-service";
+        service.serve(socketPath.data());
         service.wait();
     }
     catch (RuntimeError re) {

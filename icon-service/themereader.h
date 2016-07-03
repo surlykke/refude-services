@@ -8,7 +8,6 @@
 
 #ifndef THEMEREADER_H
 #define THEMEREADER_H
-#include <magic.h>
 #include <string>
 #include <ripc/json.h>
 #include "inireader.h"

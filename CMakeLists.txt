@@ -1,27 +1,23 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.5.0)
+set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}") 
+
 set(PROJECT "RefudeService")
 project(${PROJECT})
 
-set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}") 
-
 include(GNUInstallDirs)
 link_directories(/usr/local/lib64)
-include_directories(common)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-file(GLOB_RECURSE SOURCE_FILES *.cpp)
 
-file(GLOB_RECURSE JSON_TEMPLATES *.json)
-message(STATUS "JSON_TEMPLATES: ${JSON_TEMPLATES}")
-foreach (JSON_TEMPLATE ${JSON_TEMPLATES}) 
-    get_filename_component(BASENAME ${JSON_TEMPLATE} NAME_WE)
-    set(HFILE "${CMAKE_CURRENT_BINARY_DIR}/${BASENAME}.h")
-    set(CMD "${CMAKE_SOURCE_DIR}/toString.sh")
-    add_custom_command(OUTPUT ${HFILE} COMMAND ${CMD} ARGS ${JSON_TEMPLATE} ${HFILE} DEPENDS ${JSON_TEMPLATE}) 
-    list(APPEND HFILES ${HFILE})
-endforeach (JSON_TEMPLATE) 
 
-add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
-target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl X11 png)
 
-install(FILES refudeservice.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
-install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_BINDIR})
+include_directories(common)
+add_subdirectory(desktop-service)
+add_subdirectory(icon-service)
+add_subdirectory(running-applications)
+
+#add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
+#target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl X11 png)
+#
+#install(FILES refudeservice.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
+#install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_BINDIR})
+#
