@@ -14,7 +14,7 @@ include_directories(common)
 add_subdirectory(desktop-service)
 add_subdirectory(icon-service)
 add_subdirectory(running-applications)
-
+add_subdirectory(power-service)
 #add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
 #target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl X11 png)
 #
