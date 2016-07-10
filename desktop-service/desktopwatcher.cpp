@@ -2,6 +2,7 @@
 #include <poll.h>
 #include <limits.h>
 #include <unistd.h>
+#include <thread>
 #include <ripc/errorhandling.h>
 #include <ripc/utils.h>
 #include "xdg.h"
@@ -12,17 +13,24 @@
 namespace org_restfulipc
 {
 
-    desktopwatcher::desktopwatcher()
+    DesktopWatcher::DesktopWatcher(Controller& controller, bool emitEventOnStart) : 
+        controller(controller),
+        emitEventOnStart(emitEventOnStart),
+        watchingThread()
     {
     }
 
-    desktopwatcher::~desktopwatcher()
+    DesktopWatcher::~DesktopWatcher()
     {
     }
     
-    void desktopwatcher::watcher(int wd)
+    void DesktopWatcher::watcher(int wd)
     {
         try {
+            if (emitEventOnStart) {
+                controller.update();
+            }
+
             char buf[LEN];
             struct inotify_event* ev = (struct inotify_event*) buf;
             struct pollfd pollfd = {wd, POLLIN, 0};
@@ -58,7 +66,7 @@ namespace org_restfulipc
                 }
 
                 if (somethingChanged) {
-                    // Emit event...
+                    controller.update();
                 }
             }
         }
@@ -72,7 +80,7 @@ namespace org_restfulipc
         }
     }
 
-    int desktopwatcher::setupWatches()
+    void DesktopWatcher::start()
     {
         int wd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
         if (wd < 0) throw C_Error();
@@ -91,10 +99,12 @@ namespace org_restfulipc
                 addWatch(wd, applicationDir);
             }
         }
-        return wd;
+    
+        watchingThread = std::thread(&DesktopWatcher::watcher, this, wd);
+
     }
 
-    int desktopwatcher::addWatch(int wd, std::string dir)
+    int DesktopWatcher::addWatch(int wd, std::string dir)
     {
         static int flags = IN_CREATE | IN_DELETE | IN_MODIFY | IN_MOVED_FROM | IN_MOVED_TO;
         int watch = inotify_add_watch(wd, dir.data(), flags);

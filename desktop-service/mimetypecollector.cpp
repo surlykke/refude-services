@@ -1,34 +1,19 @@
-/*
- * Copyright (c) 2015, 2016 Christian Surlykke
- *
- * This file is part of the refude-services project. 
- * It is distributed under the GPL v2 license.
- * Please refer to the LICENSE file for a copy of the license.
- */
-
 #include <tinyxml2.h>
-#include <ripc/jsonresource.h>
 #include <ripc/utils.h>
-#include <ripc/jsonwriter.h>
 
-#include "rootTemplate.h"
 #include "subtypeTemplate.h"
-#include "mimeresourcebuilder.h"
-#include "mimetyperesource.h"
-
+#include "mimetypecollector.h"
 namespace org_restfulipc
 {
 
-    MimeResourceBuilder::MimeResourceBuilder() :
-        mimetypeJsons()
+    MimetypeCollector::MimetypeCollector() : mimetypesJson(JsonConst::EmptyObject)
     {
     }
 
-    MimeResourceBuilder::~MimeResourceBuilder()
+    MimetypeCollector::~MimetypeCollector()
     {
     }
 
-    // Caller must ensure that mimetypeElement->FirstChildElement exists...
 
     void handleLocalizedXmlElement(tinyxml2::XMLElement* mimetypeElement, 
                                    const char* elementName, 
@@ -49,7 +34,7 @@ namespace org_restfulipc
         }
     }
 
-    void MimeResourceBuilder::build()
+    void MimetypeCollector::collect()
     {
         tinyxml2::XMLDocument* doc = new tinyxml2::XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
@@ -69,7 +54,7 @@ namespace org_restfulipc
             }
             std::string& typeName = tmp[0];
             std::string& subtypeName = tmp[1];
-            Json& json = mimetypeJsons[mimetype];
+            Json& json = mimetypesJson[mimetype];
             json << subtypeTemplate_json;
             json["type"] = typeName;
             json["subtype"] = subtypeName;
@@ -122,26 +107,31 @@ namespace org_restfulipc
         }
     }
 
-    void MimeResourceBuilder::addAssociationsAndDefaults(Map<Json>& desktopJsons, 
-                                                         Map<std::vector<std::string>>&defaultApplications)
+    void MimetypeCollector::addAssociations(Json& applications)
     {
-        desktopJsons.each([this](const char* desktopId, Json& desktopJson) {
+        applications.each([this](const char* desktopId, Json& desktopJson) {
             Json& mimetypes = desktopJson["MimeType"];
             for (int i = 0; i < mimetypes.size(); i++) {
                 std::string mimetype = (const char*)mimetypes[i];
-                if (mimetypeJsons.contains(mimetype)) {
-                    mimetypeJsons[mimetype]["associatedApplications"].append(desktopId);
+                if (mimetypesJson.contains(mimetype)) {
+                    mimetypesJson[mimetype]["associatedApplications"].append(desktopId);
                 }
             }
         });
 
+    }
+
+    void MimetypeCollector::addDefaultApplications(Map<std::vector<std::string> >& defaultApplications)
+    {
         defaultApplications.each([this](const char* mimetype, 
                                         std::vector<std::string>& defaultApplicationIds) {
-            if (mimetypeJsons.contains(mimetype)) {
+            if (mimetypesJson.contains(mimetype)) {
                 for (std::string& defaultApplicationId : defaultApplicationIds) {
-                    mimetypeJsons[mimetype]["defaultApplications"].append(defaultApplicationId);
+                    mimetypesJson[mimetype]["defaultApplications"].append(defaultApplicationId);
                 }
             }
         });
+
     }
+
 }

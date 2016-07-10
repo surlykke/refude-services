@@ -5,15 +5,6 @@
     "aliases" : [],
     "subclassOf" : [],
     "defaultApplications" : [],
-    "associatedApplications" : [],
-    "_links" : {
-        "self" : {
-            "href": "REPLACEME"
-        },
-        "application" : {
-            "templated" : true,
-            "href": "/desktopentry/{application-id}"
-        }
-    }
+    "associatedApplications" : []
 } 
     

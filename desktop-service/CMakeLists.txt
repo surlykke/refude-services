@@ -2,9 +2,26 @@ set(PROJECT "RefudeDesktopService")
 project(${PROJECT})
 
 set(CMAKE_AUTOMOC ON)
-set(SOURCE_FILES desktopentryreader.cpp desktopentryresource.cpp desktopentryresourcesbuilder.cpp desktopservice.cpp desktopwatcher.cpp main.cpp mimeappslistreader.cpp mimeresourcebuilder.cpp mimetyperesource.cpp runapplication.cpp ../common/inireader.cpp ../common/xdg.cpp)
 
-set(JSON_TEMPLATES commandsTemplate.json desktopActionTemplate.json handlerTemplate.json subtypeTemplate.json commandTemplate.json desktopTemplate.json rootTemplate.json)
+#set(SOURCE_FILES desktopentryreader.cpp desktopentryresource.cpp desktopentryresourcesbuilder.cpp desktopservice.cpp desktopwatcher.cpp main.cpp mimeappslistreader.cpp mimeresourcebuilder.cpp mimetyperesource.cpp runapplication.cpp ../common/inireader.cpp ../common/xdg.cpp)
+
+set(SOURCE_FILES 
+    applicationcollector.cpp
+    applicationresource.cpp
+    controller.cpp 
+    desktopwatcher.cpp
+    desktopentryreader.cpp
+    main.cpp
+    mimeappslistreader.cpp 
+    mimetypecollector.cpp 
+    mimetyperesource.cpp 
+    runapplication.cpp 
+    typedefs.h
+    ../common/inireader.cpp 
+    ../common/xdg.cpp)
+
+
+set(JSON_TEMPLATES commandsTemplate.json desktopActionTemplate.json handlerTemplate.json subtypeTemplate.json commandTemplate.json desktopTemplate.json)
 
 #message(STATUS "JSON_TEMPLATES: ${JSON_TEMPLATES}")
 foreach (JSON_TEMPLATE ${JSON_TEMPLATES}) 

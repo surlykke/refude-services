@@ -11,23 +11,21 @@
 #include <ripc/errorhandling.h>
 
 #include "xdg.h"
-#include "desktopservice.h"
+#include "controller.h"
 
 int main(int argc, char *argv[])
 {
     using namespace org_restfulipc;
-    DesktopResources desktopResources;
+    Controller controller;
     try {
         std::string configDir = xdg::config_home() + "/RefudeService";
         system((std::string("mkdir -p ") + configDir).data());
         
-        Service service;
-        service.dumpRequests = true;
-        desktopResources.setup(service);
+        controller.setupAndRun();
 
         std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.desktop-service";
-        service.serve(socketPath.data());
-        service.wait();
+        controller.service.serve(socketPath.data());
+        controller.service.wait();
     }
     catch (RuntimeError re) {
         std::cerr << re.what() << "\n";

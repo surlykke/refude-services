@@ -2,18 +2,24 @@
 #define DESKTOPWATCHER_H
 #include <string>
 
+#include "controller.h"
+
 namespace org_restfulipc
 {
 
-    class desktopwatcher
+    class DesktopWatcher
     {
     public:
-        desktopwatcher();
-        virtual ~desktopwatcher();
+        DesktopWatcher(Controller& controller, bool emitEventOnStart);
+        virtual ~DesktopWatcher();
+        void start();
     private:
-        int setupWatches();
         int addWatch(int wd, std::string dir);
         void watcher(int wd);
+        
+        Controller& controller;
+        bool emitEventOnStart;
+        std::thread watchingThread; 
     };
 }
 #endif /* DESKTOPWATCHER_H */

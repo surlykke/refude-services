@@ -1,38 +1,25 @@
-/*
-* Copyright (c) 2015, 2016 Christian Surlykke
-*
-* This file is part of the refude-services project. 
-* It is distributed under the GPL v2 license.
-* Please refer to the LICENSE file for a copy of the license.
-*/
-#include <errno.h>
-#include <dirent.h>
-#include <algorithm>
-#include <experimental/filesystem>
 #include <ripc/utils.h>
-#include <ripc/notifierresource.h>
 #include <ripc/jsonwriter.h>
-
+#include "xdg.h"
 #include "desktopentryreader.h"
 #include "mimeappslistreader.h"
-#include "handlerTemplate.h"
-
-#include "desktopentryresourcesbuilder.h"
-#include "desktopentryresource.h"
+#include "applicationcollector.h"
 
 namespace org_restfulipc
 {
-    DesktopEntryResourceBuilder::DesktopEntryResourceBuilder() : 
+    ApplicationCollector::ApplicationCollector() : 
         defaultApplications(),
-        desktopJsons()
+        applicationJsons(JsonConst::EmptyObject),
+        filehandlerJsons(JsonConst::EmptyObject),
+        urlhandlerJsons(JsonConst::EmptyObject)
     {
     }
 
-    DesktopEntryResourceBuilder::~DesktopEntryResourceBuilder()
+    ApplicationCollector::~ApplicationCollector()
     {
     }
 
-    void DesktopEntryResourceBuilder::build()
+    void ApplicationCollector::collect()
     {
         for (const std::string& applicationsDir : append(xdg::data_dirs(), "/applications")) {
             readDesktopFiles(directoryTree(applicationsDir));
@@ -49,37 +36,41 @@ namespace org_restfulipc
     }
 
    
-    void DesktopEntryResourceBuilder::readDesktopFiles(std::vector<std::string> applicationsDirs)
+    void ApplicationCollector::readDesktopFiles(std::vector<std::string> applicationsDirs)
     {
         for (const std::string& applicationsDir : applicationsDirs) {
-            std::cout << "Look for desktopfiles in " << applicationsDir << "\n";
             for (const std::string& desktopFile : files(applicationsDir, {"desktop"})) {
-                std::string desktopFilePath = applicationsDir + "/" + desktopFile;
+                std::string desktopFilePath = applicationsDir + desktopFile; 
+                std::string key = desktopFile;
+                std::replace(key.begin(), key.end(), '/', '-');
+                std::string icon = key.substr(0, key.size() - 8); // strip ending '.desktop'
+                
                 DesktopEntryReader reader(desktopFilePath);
-            
-                std::string entryId = replaceAll(std::string(desktopFilePath.data() + applicationsDirs[0].size() + 1), '/', '-');
-                std::cout << "adding entryId: "  << entryId << "\n";
                 if (reader.json.contains("Hidden") && (bool)reader.json["Hidden"]) {
-                    desktopJsons.take(entryId);
+                    applicationJsons.erase(key.data());
+                    filehandlerJsons.erase(key.data());
+                    urlhandlerJsons.erase(key.data()); 
                 }
                 else {
                     if (!reader.json.contains("Icon")) {
-                        reader.json["Icon"] = entryId.substr(0, entryId.size() - 8); // Remove '.desktop'
+                        // Remove '/applications/' at start and  '.desktop' at end
+                        reader.json["Icon"] = key.substr(strlen("/applications/"), key.size() - 8); 
                     }
-                    desktopJsons[entryId] = std::move(reader.json);
+                     
+                    applicationJsons[key] = std::move(reader.json);
                 }
             }
         }
     }
 
-    void DesktopEntryResourceBuilder::readMimeappsListFile(std::string dir)
+    void ApplicationCollector::readMimeappsListFile(std::string dir)
     {
         MimeappsList mimeappsList(dir + "/mimeapps.list");
         mimeappsList.removedAssociations.each([this](const char* mimetype, 
                                                      std::set<std::string>& deAssociatedApplications) {
             for (const std::string& deAssociatedApplication : deAssociatedApplications) {
-                if (desktopJsons.contains(deAssociatedApplication)) {
-                    Json& associatedAppsArray = desktopJsons[deAssociatedApplication]["MimeType"];
+                if (applicationJsons.contains(deAssociatedApplication)) {
+                    Json& associatedAppsArray = applicationJsons[deAssociatedApplication]["MimeType"];
                     while (int index = associatedAppsArray.find(deAssociatedApplication) > -1) {
                         associatedAppsArray.take(index);
                     }
@@ -90,8 +81,8 @@ namespace org_restfulipc
         mimeappsList.addedAssociations.each([this](const char* mimetype, 
                                                    std::set<std::string>& associatedApplications) {
             for (const std::string& associatedApplication : associatedApplications) {
-                if (desktopJsons.contains(associatedApplication)) {
-                    desktopJsons[associatedApplication]["MimeType"].append(mimetype);
+                if (applicationJsons.contains(associatedApplication)) {
+                    applicationJsons[associatedApplication]["MimeType"].append(mimetype);
                 }
             }
         });

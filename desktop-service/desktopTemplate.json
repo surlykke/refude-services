@@ -1,9 +1,4 @@
 {
-    "_links" : {
-        "self" : {
-            "href" : "REPLACEME"
-        }
-    },
     "_ripc:localized:Name" : {
         "" : true
     },

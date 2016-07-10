@@ -9,30 +9,17 @@
 #ifndef MYMETYPERESOURCE_H
 #define MYMETYPERESOURCE_H
 
-#include <ripc/jsonresource.h>
-#include <ripc/notifierresource.h>
+#include <ripc/localizedjsonresource.h>
 
 namespace org_restfulipc
 {
-    class MimetypeResource : public AbstractCachingResource
+    class MimetypeResource : public LocalizedJsonResource
     {
     public:
         typedef std::shared_ptr<MimetypeResource> ptr;
-        MimetypeResource(Map<Json>&& mimetypeJsons);
+        MimetypeResource();
         virtual ~MimetypeResource();
-        void setMimetypeJsons(Map<Json>&& mimetypeJsons, NotifierResource::ptr notifier);
         void doPATCH(int& socket, HttpMessage& request) override;
-
-    protected:
-        Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers) override;
-
-    private:
-        void add(const char* type, const char* subtype, Json& mimetypes);
-        bool match(const std::vector<const char*>& searchTerms, 
-                   Json& mimetypeJson, 
-                   const std::vector<std::string>& acceptableLocales);
-        
-        Map<Json> mimetypeJsons;
     };
 
 }
