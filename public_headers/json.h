@@ -69,6 +69,7 @@ namespace org_restfulipc
 
         Json take(int index);
         Json take(const char* key);
+        void erase(const char* key);
         bool contains(const char* key) const;
         bool contains(std::string key) const;
         int find(const char* str) const;

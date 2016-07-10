@@ -18,7 +18,7 @@ namespace org_restfulipc
     {
     }
 
-    const Json& LocalizedJsonResource::getJson()
+    Json& LocalizedJsonResource::getJson()
     {
         return json;
     }

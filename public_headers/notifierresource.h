@@ -24,6 +24,9 @@ namespace org_restfulipc
         NotifierResource();
 
         virtual void doGET(int& socket, HttpMessage& request) override;
+        void resourceRemoved(const char* resourceIdentification);
+        void resourceAdded(const char* resourceIdentification);
+        void resourceUpdated(const char* resourceIdentification);
         void notifyClients(const char* event, const char* resourceIdentification);
 
     private:

@@ -57,6 +57,22 @@ namespace org_restfulipc
         mClientSockets.push_back(socket);
     }
 
+    void NotifierResource::resourceAdded(const char* resourceIdentification)
+    {
+        notifyClients("resource-added", resourceIdentification);
+    }
+
+    void NotifierResource::resourceRemoved(const char* resourceIdentification)
+    {
+        notifyClients("resource-removed", resourceIdentification);
+
+    }
+   
+    void NotifierResource::resourceUpdated(const char* resourceIdentification)
+    {
+        notifyClients("resource-updated", resourceIdentification);
+    }
+    
     void NotifierResource::notifyClients(const char* event, const char* data)
     {
         static const char* notificationTemplate =

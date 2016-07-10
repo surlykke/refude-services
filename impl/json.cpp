@@ -334,6 +334,12 @@ namespace org_restfulipc
         return entries->take(key);
     }
 
+    void Json::erase(const char* key)
+    {
+        typeAssert(JsonType::Object, "erase(\"%s\")", key);
+        entries->erase(key);
+    }
+
 
     org_restfulipc::Json::operator bool() const
     {

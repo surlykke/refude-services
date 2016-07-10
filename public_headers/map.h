@@ -235,6 +235,11 @@ namespace org_restfulipc
                 sorted--;
             }
         }
+        
+        void erase(const std::string key) 
+        {
+            erase(key.data()); 
+        }
 
         void clear()
         {
