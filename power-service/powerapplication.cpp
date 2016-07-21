@@ -35,12 +35,13 @@ namespace org_restfulipc
             PropertiesIF* propertiesIF = new PropertiesIF(UPOW_SERVICE, p.path(), sysBus);
             QVariantMap props =  propertiesIF->GetAll(DEV_IF).value();
             if ( props["Type"].toInt() == 2) {
-                QString mappingPath = p.path().mid(strlen(UPOW_PATH));
-                BatteryResource::ptr batRes = std::make_shared<BatteryResource>(notifierResource);
+                QString mappingPath = p.path().mid(strlen(UPOW_PATH) + 1);
+                auto batRes = std::make_shared<JsonResource>();
                 batRes->setJson(buildJson(props));
                 batteries[propertiesIF] = batRes;
                 connect(propertiesIF, &PropertiesIF::PropertiesChanged, this, &PowerApplication::onPropertiesChanged);
-                service.map(mappingPath.toUtf8().data(), batRes);
+                std::cout << "Mapping to " << mappingPath.toUtf8().data() << "\n";
+                service.map(batRes, mappingPath.toUtf8().data());
             } 
             else {
                 propertiesIF->deleteLater();
@@ -94,6 +95,7 @@ namespace org_restfulipc
         if (batteries.find(propsIF) != batteries.end()) {
             QVariantMap props = propsIF->GetAll(DEV_IF).value();
             batteries[propsIF]->setJson(buildJson(props));
+            notifierResource->resourceUpdated(propsIF->path().mid(strlen(UPOW_PATH) + 1).toUtf8().data());
         }
     }
 

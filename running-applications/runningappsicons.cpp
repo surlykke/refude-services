@@ -32,11 +32,7 @@ namespace org_restfulipc
 
     PathMimetypePair RunningAppsIcons::findFile(HttpMessage& request)
     {
-        const char* iconName = request.parameter("name");
-        std::cout << "RunningAppsIcons::findFile, name =" << iconName << "\n";
-        if (!iconName) {
-            throw HttpCode::Http406;
-        }
+        const char* iconName = request.remainingPath;
 
         if (! iconPaths.contains(iconName)) {
             std::cout << "name ikke fundet\n";
@@ -46,6 +42,7 @@ namespace org_restfulipc
         int size = 32;
         const char* sizeS = request.parameter("size");
         if (sizeS) {
+            std::cout << "Looking for size: " << sizeS << "\n";
             char* endptr;
             size = strtoul(request.queryParameterMap["size"][0], &endptr, 10);
             if (*endptr) {

@@ -3,7 +3,8 @@
 
 #include <ripc/service.h>
 #include <ripc/json.h>
-
+#include <ripc/collectionresource.h>
+#include <ripc/notifierresource.h>
 
 namespace org_restfulipc
 {
@@ -19,15 +20,13 @@ namespace org_restfulipc
         
     private:
         void update();
-        void updateApplicationHandersResources(Json& applicationJsons);
-        void updateResources(Json& applicationJsons, std::string prefix);
-        void updateMimetypesResources(Json& newMimetypes);
-
-        template<class C>
-        std::shared_ptr<C> ptr(const char* path) 
-        {
-            return std::dynamic_pointer_cast<C>(service.mapping(path));
-        }
+        /*void updateApplicationHandersResources(Json& applicationJsons);
+        void updateResources(Json& applicationJsons, std::string prefix, BuildResource resourceBuilder);
+        void updateMimetypesResources(Json& newMimetypes);*/
+        
+        CollectionResource::ptr applicationsResource;
+        CollectionResource::ptr mimetypesResource;
+        NotifierResource::ptr notifier; 
 
         DesktopWatcher* desktopWatcher;
         

@@ -19,8 +19,10 @@ namespace org_restfulipc
     public:
         static void init();
         static WindowInfo rootWindow();
+        static std::vector<Window> windowIds();
         static std::vector<WindowInfo> normalWindows();
 
+        WindowInfo(Window window);
         void raiseAndFocus();
         
         std::string title;
@@ -34,7 +36,6 @@ namespace org_restfulipc
         char iconName[20];
         Window window;
     private:
-        WindowInfo(Window window);
 
         void calculateIconName();
     };

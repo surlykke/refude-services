@@ -66,7 +66,7 @@ namespace org_restfulipc
 
                 unsigned long newsize = bufsize + nitems_return*bytesPrItem;
 
-                buf = realloc(buf, newsize + bytesPrItem);
+                buf = realloc(buf, newsize + bytesPrItem); // Always one extra so we can zero-terminate
                 memcpy((char*) buf + bufsize, prop_return, newsize - bufsize);
                 memset((char*) buf + newsize, 0, bytesPrItem);
                 bufsize = newsize;
@@ -109,6 +109,20 @@ namespace org_restfulipc
     WindowInfo WindowInfo::rootWindow()
     {
         return WindowInfo(XDefaultRootWindow(DefaultDisplay()));
+    }
+
+    std::vector<Window> WindowInfo::windowIds() 
+    {
+        std::vector<Window> result;
+        DefaultDisplay disp;
+        Window root = XDefaultRootWindow(disp);
+        unsigned long nitems;
+        Window* windowlist = (Window*) getProp(disp, root, "_NET_CLIENT_LIST_STACKING", nitems);
+        for (Window* w = windowlist; *w; w++) {
+            result.push_back(*w); 
+        }
+        free(windowlist);
+        return result;
     }
 
     std::vector<WindowInfo> WindowInfo::normalWindows()

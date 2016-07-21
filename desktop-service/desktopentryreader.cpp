@@ -14,17 +14,38 @@
 #include <ripc/jsonwriter.h>
 
 #include "desktopentryreader.h"
-#include "desktopTemplate.h"
-#include "desktopActionTemplate.h"
 
 namespace org_restfulipc 
 {
+
+    const char* desktopTemplate = R"json(
+        {
+            "_ripc:localized:Name" : {
+                "" : true
+            },
+            "_ripc:localized:GenericName" : { }, 
+            "_ripc:localized:Comment" : { }, 
+            "_ripc:localized:Keywords" : { },
+            "OnlyShowIn" : [],
+            "NotShowIn" : [],
+            "MimeType" : [],
+            "Categories" : [],
+            "Implements" : []
+        }
+    )json";
+
+    const char* desktopActionTemplate = R"json(
+        { 
+            "_ripc:localized:Name" : {}
+        }
+    )json";
+ 
 
     DesktopEntryReader::DesktopEntryReader(std::string desktopFilePath) : 
         IniReader(desktopFilePath),
         json(JsonConst::EmptyObject)
     {
-        json << desktopTemplate_json;
+        json << desktopTemplate;
         read();
      }
 
@@ -52,7 +73,7 @@ namespace org_restfulipc
                 if (json["Other_groups"].undefined()) {
                     json["Other_groups"] = JsonConst::EmptyObject;
                 }
-                json["Other_groups"][heading] << desktopActionTemplate_json;
+                json["Other_groups"][heading] << desktopActionTemplate;
                 readKeyValues(json["Other_groups"][heading]);
             }
             else {
@@ -109,7 +130,7 @@ namespace org_restfulipc
         else if (key == "Actions") {
             json["Actions"] = JsonConst::EmptyObject;
             for (std::string val : toList(value)) {
-                json["Actions"][val] << desktopActionTemplate_json;
+                json["Actions"][val] << desktopActionTemplate;
             }
         }
     }

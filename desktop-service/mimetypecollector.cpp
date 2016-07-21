@@ -1,12 +1,12 @@
 #include <tinyxml2.h>
 #include <ripc/utils.h>
 
-#include "subtypeTemplate.h"
 #include "mimetypecollector.h"
 namespace org_restfulipc
 {
 
-    MimetypeCollector::MimetypeCollector() : mimetypesJson(JsonConst::EmptyObject)
+    MimetypeCollector::MimetypeCollector() : 
+        jsonArray(JsonConst::EmptyArray)
     {
     }
 
@@ -36,6 +36,19 @@ namespace org_restfulipc
 
     void MimetypeCollector::collect()
     {
+        const char* mimetypeTemplate = R"json(
+        {
+            "mimetype" : "REPLACEME",
+            "globs" : [],
+            "aliases" : [],
+            "subclassOf" : [],
+            "defaultApplications" : [],
+            "associatedApplications" : []
+        }              
+        )json";
+
+        Map<Json> jsonMap;
+
         tinyxml2::XMLDocument* doc = new tinyxml2::XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
         tinyxml2::XMLElement* rootElement = doc->FirstChildElement("mime-info");
@@ -47,6 +60,9 @@ namespace org_restfulipc
             mimetypeElement = mimetypeElement->NextSiblingElement("mime-type")) {
 
             std::string mimetype = mimetypeElement->Attribute("type");
+            Json json;
+            json << mimetypeTemplate;
+            json["MimeType"] = mimetype;
             std::vector<std::string> tmp = split(mimetype, '/');
             if (tmp.size() != 2 || tmp[0].empty() || tmp[1].empty()) {
                 std::cerr << "Incomprehensible mimetype: " << mimetype;
@@ -54,12 +70,7 @@ namespace org_restfulipc
             }
             std::string& typeName = tmp[0];
             std::string& subtypeName = tmp[1];
-            Json& json = mimetypesJson[mimetype];
-            json << subtypeTemplate_json;
-            json["type"] = typeName;
-            json["subtype"] = subtypeName;
-
-            if (mimetypeElement->FirstChildElement("comment")) {
+                        if (mimetypeElement->FirstChildElement("comment")) {
                 handleLocalizedXmlElement(mimetypeElement, "comment", json);
             }
 
@@ -104,30 +115,46 @@ namespace org_restfulipc
             else {
                 json["genericIcon"] = typeName + "-x-generic";
             }
+            
+            jsonMap.add(mimetype.data(), std::move(json));
         }
+
+        jsonMap.each([this] (const char* key, Json& json) {
+            jsonArray.append(std::move(json));
+        });
     }
 
-    void MimetypeCollector::addAssociations(Json& applications)
+    void MimetypeCollector::addAssociations(Json& applicationArray)
     {
-        applications.each([this](const char* desktopId, Json& desktopJson) {
-            Json& mimetypes = desktopJson["MimeType"];
-            for (int i = 0; i < mimetypes.size(); i++) {
-                std::string mimetype = (const char*)mimetypes[i];
-                if (mimetypesJson.contains(mimetype)) {
-                    mimetypesJson[mimetype]["associatedApplications"].append(desktopId);
+        Map<uint> index;
+        for (uint i = 0; i < jsonArray.size(); i++) {
+            index.add(jsonArray[i]["MimeType"], i);
+        }
+
+
+        applicationArray.eachElement([this, &index](Json& appJson) {
+            const char* appId = appJson["applicationId"];
+            appJson["MimeType"].eachElement([this, &index, &appId](const char* mimetype) {
+                if (index.contains(mimetype)) {
+                    jsonArray[index[mimetype]]["associatedApplications"].append(appId);
                 }
-            }
+            });
         });
 
     }
 
     void MimetypeCollector::addDefaultApplications(Map<std::vector<std::string> >& defaultApplications)
     {
-        defaultApplications.each([this](const char* mimetype, 
+        Map<uint> index;
+        for (uint i = 0; i < jsonArray.size(); i++) {
+            index.add(jsonArray[i]["MimeType"], i);
+        }
+
+        defaultApplications.each([this, &index](const char* mimetype, 
                                         std::vector<std::string>& defaultApplicationIds) {
-            if (mimetypesJson.contains(mimetype)) {
+            if (index.contains(mimetype)) {
                 for (std::string& defaultApplicationId : defaultApplicationIds) {
-                    mimetypesJson[mimetype]["defaultApplications"].append(defaultApplicationId);
+                    jsonArray[index[mimetype]]["defaultApplications"].append(defaultApplicationId);
                 }
             }
         });

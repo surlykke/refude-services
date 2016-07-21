@@ -10,31 +10,21 @@
 #include <ripc/service.h>
 #include <ripc/errorhandling.h>
 
-#include "runningapplicationsresource.h"
-#include "displayresource.h"
 #include "xdg.h"
+#include "controller.h"
 
 int main(int argc, char *argv[])
 {
     using namespace org_restfulipc;
     try {
-        std::string configDir = xdg::config_home() + "/RefudeService";
-        system((std::string("mkdir -p ") + configDir).data());
-
-        Service service;
-        service.dumpRequests = true;
-        RunningAppsIcons::ptr runningAppsIcons = std::make_shared<RunningAppsIcons>();
-        service.map("/runningappsicons", runningAppsIcons);
-        RunningApplicationsResource::ptr runningApplicationsResource = 
-            std::make_shared<RunningApplicationsResource>(runningAppsIcons);
-        service.map("/runningapplications", runningApplicationsResource, true);
-
-        DisplayResource::ptr displayResource = std::make_shared<DisplayResource>();
-        service.map("/display", displayResource);
+        /*std::string configDir = xdg::config_home() + "/RefudeService";
+        system((std::string("mkdir -p ") + configDir).data());*/
 
         std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.windowmanager-service";
-        service.serve(socketPath.data());
-        service.wait();
+        Controller controller;
+        controller.run();
+        controller.dispatcher.serve(socketPath.data());
+        controller.dispatcher.wait();
     }
     catch (RuntimeError re) {
         std::cerr << re.what() << "\n";

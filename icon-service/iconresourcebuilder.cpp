@@ -8,7 +8,6 @@
 #include <ripc/utils.h>
 #include <ripc/jsonwriter.h>
 #include <ripc/jsonresource.h>
-#include <ripc/localizedjsonresource.h>
 #include "xdg.h"
 #include "themereader.h"
 #include "iconcollector.h"
@@ -48,7 +47,7 @@ namespace org_restfulipc
 
                 ThemeReader(themeJson, *dirIterator + '/' + themeDir);
                 IconMap& iconMap = themeIconMap[themeDir];
-                themeJson["IconDirectories"].each([&](const char* iconDirPath, Json& iconDirJson) {
+                themeJson["IconDirectories"].eachEntry([&](const char* iconDirPath, Json& iconDirJson) {
                     IconCollector(*dirIterator + "/" + themeDir + "/" + iconDirPath, iconDirJson).collectInto(iconMap);
                 });
 
@@ -78,21 +77,22 @@ namespace org_restfulipc
                                                                         std::move(usrSharePixmapsIcons), 
                                                                         std::move(inheritanceMap));
 
-        service.map("/icons/icon", iconResource);
+        service.map(iconResource, "/icons/icon");
 
         themeJsonMap.each([&service, this](const char* themeDirName, Json& themeJson){
             themesJson["themes"].append(themeDirName);
             std::string selfUri = std::string("/icons/themes/") + themeDirName;
             themeJson["_links"]["self"]["href"] = selfUri;
-            LocalizedJsonResource::ptr themeResource = std::make_shared<LocalizedJsonResource>();
+            JsonResource::ptr themeResource = std::make_shared<JsonResource>();
             themeResource->setJson(std::move(themeJson));
-            service.map(selfUri.data(), themeResource);
+            service.map(themeResource, selfUri.data());
         });
 
         const char* themesSelfUri = "/icons/themes";
         themesJson["_links"]["self"]["href"] = themesSelfUri;
-        JsonResource::ptr themesResource = std::make_shared<JsonResource>(std::move(themesJson));
-        service.map(themesSelfUri, themesResource);
+        JsonResource::ptr themesResource = std::make_shared<JsonResource>();
+        themesResource->setJson(std::move(themesJson));
+        service.map(themesResource, themesSelfUri);
     }
 
 }

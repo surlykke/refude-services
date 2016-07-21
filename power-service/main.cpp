@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     Service service;
 
     NotifierResource::ptr notifierResource = std::make_shared<org_restfulipc::NotifierResource>();
-    service.map("/notify", notifierResource);
+    service.map(notifierResource, "notify");
     
     PowerApplication powerApplication(service, notifierResource, argc, argv);
 

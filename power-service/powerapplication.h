@@ -7,7 +7,7 @@
 #include <ripc/json.h>
 #include <ripc/service.h>
 #include <ripc/notifierresource.h>
-#include "batteryresource.h"
+#include <ripc/jsonresource.h>
     
 class QDBusInterface;
     
@@ -25,8 +25,7 @@ namespace org_restfulipc
     private:
         Service& service;
         NotifierResource::ptr notifierResource;
-
-        std::map<PropertiesIF*, BatteryResource::ptr> batteries;
+        std::map<PropertiesIF*, JsonResource::ptr> batteries;
 
         Json buildJson(const QVariantMap& map);
 

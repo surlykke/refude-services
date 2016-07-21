@@ -13,13 +13,11 @@ namespace org_restfulipc
         virtual ~ApplicationCollector();
         void collect();
         Map<std::vector<std::string>> defaultApplications;
-        Json applicationJsons;
-        Json filehandlerJsons;
-        Json urlhandlerJsons;
+        Json jsonArray;
 
     private:
-        void readDesktopFiles(std::vector<std::string> applicationsDirs);
-        void readMimeappsListFile(std::string dir);
+        void readDesktopFiles(std::vector<std::string> applicationsDirs, Map<Json>& jsonMap);
+        void readMimeappsListFile(std::string dir, Map<Json>& jsonMap);
 
     };
 }

@@ -9,9 +9,7 @@ namespace org_restfulipc
 {
     ApplicationCollector::ApplicationCollector() : 
         defaultApplications(),
-        applicationJsons(JsonConst::EmptyObject),
-        filehandlerJsons(JsonConst::EmptyObject),
-        urlhandlerJsons(JsonConst::EmptyObject)
+        jsonArray(JsonConst::EmptyArray)
     {
     }
 
@@ -21,56 +19,59 @@ namespace org_restfulipc
 
     void ApplicationCollector::collect()
     {
+        Map<Json> jsonMap;
         for (const std::string& applicationsDir : append(xdg::data_dirs(), "/applications")) {
-            readDesktopFiles(directoryTree(applicationsDir));
-            readMimeappsListFile(applicationsDir);
+            readDesktopFiles(directoryTree(applicationsDir), jsonMap);
+            readMimeappsListFile(applicationsDir, jsonMap);
         }
 
-        readDesktopFiles(directoryTree(xdg::data_home() + "/applications"));
+        readDesktopFiles(directoryTree(xdg::data_home() + "/applications"), jsonMap);
 
         for (std::string configDir : xdg::config_dirs()) {
-            readMimeappsListFile(configDir);
+            readMimeappsListFile(configDir, jsonMap);
         }
 
-        readMimeappsListFile(xdg::config_home());
+        readMimeappsListFile(xdg::config_home(), jsonMap);
+
+        jsonMap.each([this](const char* key, Json& json) {
+            jsonArray.append(std::move(json));
+        });
     }
 
    
-    void ApplicationCollector::readDesktopFiles(std::vector<std::string> applicationsDirs)
+    void ApplicationCollector::readDesktopFiles(std::vector<std::string> applicationsDirs, Map<Json>& jsonMap)
     {
         for (const std::string& applicationsDir : applicationsDirs) {
             for (const std::string& desktopFile : files(applicationsDir, {"desktop"})) {
                 std::string desktopFilePath = applicationsDir + desktopFile; 
-                std::string key = desktopFile;
-                std::replace(key.begin(), key.end(), '/', '-');
-                std::string icon = key.substr(0, key.size() - 8); // strip ending '.desktop'
+                std::string appId = desktopFile;
+                std::replace(appId.begin(), appId.end(), '/', '-');
+                std::string icon = appId.substr(0, appId.size() - 8); // strip ending '.desktop'
                 
                 DesktopEntryReader reader(desktopFilePath);
                 if (reader.json.contains("Hidden") && (bool)reader.json["Hidden"]) {
-                    applicationJsons.erase(key.data());
-                    filehandlerJsons.erase(key.data());
-                    urlhandlerJsons.erase(key.data()); 
+                    jsonMap.erase(appId.data());
                 }
                 else {
                     if (!reader.json.contains("Icon")) {
                         // Remove '/applications/' at start and  '.desktop' at end
-                        reader.json["Icon"] = key.substr(strlen("/applications/"), key.size() - 8); 
+                        reader.json["Icon"] = appId.substr(strlen("/applications/"), appId.size() - 8); 
                     }
-                     
-                    applicationJsons[key] = std::move(reader.json);
+                    reader.json["applicationId"] = appId;
+                    jsonMap[appId] = std::move(reader.json);
                 }
             }
         }
     }
 
-    void ApplicationCollector::readMimeappsListFile(std::string dir)
+    void ApplicationCollector::readMimeappsListFile(std::string dir, Map<Json>& jsonMap)
     {
         MimeappsList mimeappsList(dir + "/mimeapps.list");
-        mimeappsList.removedAssociations.each([this](const char* mimetype, 
+        mimeappsList.removedAssociations.each([&jsonMap](const char* mimetype, 
                                                      std::set<std::string>& deAssociatedApplications) {
             for (const std::string& deAssociatedApplication : deAssociatedApplications) {
-                if (applicationJsons.contains(deAssociatedApplication)) {
-                    Json& associatedAppsArray = applicationJsons[deAssociatedApplication]["MimeType"];
+                if (jsonMap.contains(deAssociatedApplication)) {
+                    Json& associatedAppsArray = jsonMap[deAssociatedApplication]["MimeType"];
                     while (int index = associatedAppsArray.find(deAssociatedApplication) > -1) {
                         associatedAppsArray.take(index);
                     }
@@ -78,11 +79,11 @@ namespace org_restfulipc
             }
         });
         
-        mimeappsList.addedAssociations.each([this](const char* mimetype, 
+        mimeappsList.addedAssociations.each([&jsonMap](const char* mimetype, 
                                                    std::set<std::string>& associatedApplications) {
             for (const std::string& associatedApplication : associatedApplications) {
-                if (applicationJsons.contains(associatedApplication)) {
-                    applicationJsons[associatedApplication]["MimeType"].append(mimetype);
+                if (jsonMap.contains(associatedApplication)) {
+                    jsonMap[associatedApplication]["MimeType"].append(mimetype);
                 }
             }
         });

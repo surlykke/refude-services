@@ -3,28 +3,14 @@ project(${PROJECT})
 
 set(SOURCE_FILES 
         main.cpp
-        runningapplicationsresource.cpp  
+#        runningapplicationsresource.cpp  
         runningappsicons.cpp 
-        displayresource.cpp 
-        windowinfo.cpp 
+#        displayresource.cpp 
+        windowinfo.cpp
+		controller.cpp
         ../common/xdg.cpp
 )
 
-set(JSON_TEMPLATES 
-    runningAppCommandTemplate.json 
-    commandsTemplate.json
-    displayResourceTemplate.json
-)
-
-#message(STATUS "JSON_TEMPLATES: ${JSON_TEMPLATES}")
-foreach (JSON_TEMPLATE ${JSON_TEMPLATES}) 
-    get_filename_component(BASENAME ${JSON_TEMPLATE} NAME_WE)
-    set(HFILE "${CMAKE_CURRENT_BINARY_DIR}/${BASENAME}.h")
-    set(JSON_TEMPLATE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${JSON_TEMPLATE}")
-    set(CMD "${CMAKE_SOURCE_DIR}/toString.sh")
-    add_custom_command(OUTPUT ${HFILE} COMMAND ${CMD} ARGS ${JSON_TEMPLATE_PATH} ${HFILE} DEPENDS ${JSON_TEMPLATE}) 
-    list(APPEND HFILES ${HFILE})
-endforeach (JSON_TEMPLATE) 
 
 add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
 

@@ -11,10 +11,10 @@ namespace org_restfulipc
         MimetypeCollector();
         virtual ~MimetypeCollector();
         void collect(); 
-        void addAssociations(Json& applications);
+        void addAssociations(Json& applicationArray);
         void addDefaultApplications(Map<std::vector<std::string>>& defaultApplications);
         
-        Json mimetypesJson;
+        Json jsonArray;
     };
 }
 

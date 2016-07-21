@@ -1,33 +1,27 @@
 #include <set>
 #include <ripc/service.h>
-#include <ripc/localizedjsonresource.h>
+#include <ripc/jsonresource.h>
 #include <ripc/notifierresource.h>
 
 #include "applicationcollector.h"
 #include "mimetypecollector.h"
 
-#include "controller.h"
 #include "desktopwatcher.h"
+
+#include "controller.h"
 namespace org_restfulipc
 {
-
     Controller::Controller() : 
         service(),
+        applicationsResource(std::make_shared<CollectionResource>()),
+        mimetypesResource(std::make_shared<CollectionResource>()),
+        notifier(std::make_shared<NotifierResource>()),
         desktopWatcher(new DesktopWatcher(*this, true))        
     {
-        service.map("/notify", std::make_shared<NotifierResource>());
         
-        service.map("/applications", std::make_shared<LocalizedJsonResource>());
-        ptr<LocalizedJsonResource>("/applications")->setJson(JsonConst::EmptyObject);
-        
-        service.map("/applications/filehandlers", std::make_shared<LocalizedJsonResource>());
-        ptr<LocalizedJsonResource>("/applications/filehandlers")->setJson(JsonConst::EmptyObject);
-        
-        service.map("/applications/urlhandlers", std::make_shared<LocalizedJsonResource>());
-        ptr<LocalizedJsonResource>("/applications/urlhandlers")->setJson(JsonConst::EmptyObject);
-
-        service.map("/mimetypes", std::make_shared<LocalizedJsonResource>());
-        ptr<LocalizedJsonResource>("/mimetypes")->setJson(JsonConst::EmptyObject);
+        service.map(applicationsResource, true, "applications");
+        service.map(mimetypesResource, true, "mimetypes");
+        service.map(notifier, true, "notify");
     }
 
     Controller::~Controller()
@@ -47,74 +41,32 @@ namespace org_restfulipc
         MimetypeCollector mimetypeCollector;
         mimetypeCollector.collect();
        
-        mimetypeCollector.addAssociations(applicationCollector.applicationJsons);
+        mimetypeCollector.addAssociations(applicationCollector.jsonArray);
         mimetypeCollector.addDefaultApplications(applicationCollector.defaultApplications);
 
-        updateApplicationHandersResources(applicationCollector.applicationJsons);
-        updateResources(applicationCollector.applicationJsons , "/applications"); 
-        updateResources(mimetypeCollector.mimetypesJson, "/mimetypes");
+        CollectionResourceUpdater applicationsResourceUpdater(applicationsResource);
+        applicationsResourceUpdater.update(applicationCollector.jsonArray, "applicationId");
+        for (std::string appId : applicationsResourceUpdater.addedResources) {
+            notifier->resourceAdded("applications", appId.data());
+        }
+        for (std::string appId : applicationsResourceUpdater.removedResources) {
+            notifier->resourceRemoved("applications", appId.data());
+        }
+        for (std::string appId : applicationsResourceUpdater.updatedResources) {
+            notifier->resourceUpdated("applications", appId.data());
+        }
+
+        CollectionResourceUpdater mimetypesResourceUpdater(mimetypesResource);
+        mimetypesResourceUpdater.update(mimetypeCollector.jsonArray, "MimeType");
+        for (std::string appId : mimetypesResourceUpdater.addedResources) {
+            notifier->resourceAdded("mimetypes", appId.data());
+        }
+        for (std::string appId : mimetypesResourceUpdater.removedResources) {
+            notifier->resourceRemoved("mimetypes", appId.data());
+        }
+        for (std::string appId : mimetypesResourceUpdater.updatedResources) {
+            notifier->resourceUpdated("mimetypes", appId.data());
+        }
     }
-
-    void Controller::updateApplicationHandersResources(Json& applicationJsons)
-    {
-        Json filehandlerJsons = JsonConst::EmptyObject;
-        Json urlhandlerJsons = JsonConst::EmptyObject;
- 
-        applicationJsons.each([&](const char* applicationId, Json& applicationJson) {
-            if (applicationJson.contains("Exec")) {
-                if (strcasestr(applicationJson["Exec"], "%u")) {
-                    filehandlerJsons[applicationId] = applicationJson.copy();
-                    urlhandlerJsons[applicationId] = applicationJson.copy();
-                }
-                else if (strcasestr(applicationJson["Exec"], "%f")) {
-                    filehandlerJsons[applicationId] = applicationJson.copy();
-                }
-            }
-        });
-        
-        ptr<LocalizedJsonResource>("/applications/filehandlers")->setJson(std::move(filehandlerJsons));
-        ptr<NotifierResource>("/notify")->resourceUpdated("applications/filehandlers");
-        ptr<LocalizedJsonResource>("/applications/urlhandlers")->setJson(std::move(urlhandlerJsons));
-        ptr<NotifierResource>("/notify")->resourceUpdated("applications/urlhandlers");
-    }
-
-    void Controller::updateResources(Json& jsons, std::string prefix)
-    {
-        Json& oldJson = ptr<LocalizedJsonResource>(prefix.data())->getJson();
-       
-        oldJson.each([&](const char* key, Json& json) {
-            if (!jsons.contains(key)) {
-                std::string path = prefix + "/" + key;
-                service.unMap(path.data());
-                ptr<NotifierResource>("/notify")->resourceRemoved(path.data() + 1);
-            }
-        });
-        
-        jsons.each([&, this](const char* key, Json& json) {
-            if (oldJson.contains(key)) {
-                if (oldJson[key] != json) {
-                    std::string path = prefix + "/" + key;
-                    ptr<LocalizedJsonResource>(path.data())->setJson(json.copy());
-                    ptr<NotifierResource>("/notify")->resourceUpdated(path.data() + 1);
-                }
-            }
-            else {
-                auto resource = std::make_shared<LocalizedJsonResource>();
-                resource->setJson(json.copy());
-                std::string path = prefix + "/" + key;
-                service.map(path.data(), resource);
-                ptr<NotifierResource>("/notify")->resourceAdded(path.data() + 1);
-            }
-
-        });
-
-        ptr<LocalizedJsonResource>(prefix.data())->setJson(std::move(jsons));
-        ptr<NotifierResource>("/notify")->resourceUpdated(prefix.data() + 1);
-    }
-
-    void Controller::updateMimetypesResources(Json& newMimetypes)
-    {
-        
-    }
-
+    
 }
