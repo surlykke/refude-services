@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <poll.h>
 #include <mutex>
+#include <limits.h>
 
 #include "httpmessage.h"
 #include "abstractresource.h"
@@ -123,28 +124,71 @@ namespace org_restfulipc
             threads.at(i).join();
         }
     }
-    
-    void Service::map(const char* path, AbstractResource::ptr resource, bool wildcarded)
+
+    void Service::map(AbstractResource::ptr resource, const char* p1, const char* p2, const char* p3)
     {
+        map(resource, false, p1, p2, p3);
+    }
+
+    void Service::map(AbstractResource::ptr resource, bool wildcarded, const char* p1, const char* p2, const char* p3)
+    {
+        std::vector<const char*> pathElements;
+        for (const char*  p : {p1, p2, p3}) {
+            if (p) pathElements.push_back(p);
+        }
+        
+        map(resource, wildcarded, pathElements);
+    }
+
+    void Service::map(AbstractResource::ptr resource, bool wildcarded, std::vector<const char*> pathElements)
+    {
+        char path[PATH_MAX];
+        int pos = 0;
+        for (const char* p : pathElements) {
+            pos += snprintf(path + pos, PATH_MAX - pos, "/%s", p);
+            if (pos >= PATH_MAX - 1) {
+                throw RuntimeError("Path too long");
+            }
+        }
+    
+        std::cout << "Mapping " << path;
         if (wildcarded) {
+            std::cout << "\n";
             prefixMappings.add(path, resource);
         }
         else {
+            std::cout << "\n";
             resourceMappings.add(path, resource);
         }
 
-        
+    }
+ 
+
+   void Service::unMap(const char* p1, const char* p2, const char* p3)
+    {
+        std::vector<const char*> pathElements;
+        for (const char* p : {p1, p2, p3}) if (p) pathElements.push_back(p);
+        unMap(pathElements);
     }
 
-    void Service::unMap(const char* path)
+    void Service::unMap(std::vector<const char*> pathElements)
     {
-        if (resourceMappings.find(path)) {
+        char path[PATH_MAX];
+        int pos = 0;
+        for (const char* p: pathElements) {
+            pos += snprintf(path + pos, PATH_MAX - pos, "/%s", p);
+            if (pos >= PATH_MAX - 1) {
+                throw RuntimeError("Path too long");
+            }
+        }
+        if (resourceMappings.find(path) > -1) {
             resourceMappings.take(path);
         }
         
-        if (prefixMappings.find(path)) {
+        if (prefixMappings.find(path) > -1) {
             prefixMappings.take(path);
         }
+
     }
 
     AbstractResource::ptr Service::mapping(const char* path, bool prefix)

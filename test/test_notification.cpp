@@ -21,8 +21,8 @@ int main(int argc, char** argv)
     Service service;
     NotifierResource::ptr notifier = std::make_shared<NotifierResource>();
     GenericResource::ptr resource = std::make_shared<GenericResource>("", notifier);
-    service.map("/res", resource, true);
-    service.map("/notify", notifier);
+    service.map(resource, true, "res");
+    service.map(notifier, "/notify");
     service.serve(7938);
 
     char json[512];

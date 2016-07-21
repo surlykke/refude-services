@@ -57,22 +57,51 @@ namespace org_restfulipc
         mClientSockets.push_back(socket);
     }
 
-    void NotifierResource::resourceAdded(const char* resourceIdentification)
+    void NotifierResource::resourceAdded(const char* path)
     {
-        notifyClients("resource-added", resourceIdentification);
+        notifyClients("resource-added", path);
     }
 
-    void NotifierResource::resourceRemoved(const char* resourceIdentification)
+    void NotifierResource::resourceAdded(const char* p1, const char* p2)
     {
-        notifyClients("resource-removed", resourceIdentification);
+        resourceAdded((std::string(p1) + "/" + p2).data());
+    }
 
+    void NotifierResource::resourceAdded(const char* p1, const char* p2, const char* p3)
+    {
+        resourceAdded((std::string(p1) + "/" + p2 + "/" + p3).data());
+    }
+
+    void NotifierResource::resourceRemoved(const char* path)
+    {
+        notifyClients("resource-removed", path);
+    }
+
+    void NotifierResource::resourceRemoved(const char* p1, const char* p2)
+    {
+        resourceRemoved((std::string(p1) + "/" + p2).data());
+    }
+
+    void NotifierResource::resourceRemoved(const char* p1, const char* p2, const char* p3)
+    {
+        resourceRemoved((std::string(p1) + "/" + p2 + "/" + p3).data());
+    }
+ 
+    void NotifierResource::resourceUpdated(const char* path)
+    {
+        notifyClients("resource-updated", path);
+    }
+
+    void NotifierResource::resourceUpdated(const char* p1, const char* p2)
+    {
+        resourceUpdated((std::string(p1) + "/" + p2).data());
+    }
+
+    void NotifierResource::resourceUpdated(const char* p1, const char* p2, const char* p3)
+    {
+        resourceUpdated((std::string(p1) + "/" + p2 + "/" + p3).data());
     }
    
-    void NotifierResource::resourceUpdated(const char* resourceIdentification)
-    {
-        notifyClients("resource-updated", resourceIdentification);
-    }
-    
     void NotifierResource::notifyClients(const char* event, const char* data)
     {
         static const char* notificationTemplate =

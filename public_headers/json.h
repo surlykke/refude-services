@@ -87,10 +87,19 @@ namespace org_restfulipc
         JsonType type();
         
         template<typename Visitor>
-        void each(Visitor visitor)
+        void eachEntry(Visitor entryVisitor)
         {
-            typeAssert(JsonType::Object, "each(<lambda>)");
-            entries->each(visitor);
+            typeAssert(JsonType::Object, "eachEntry(<lambda>)");
+            entries->each(entryVisitor);
+        };
+
+        template<typename Visitor>
+        void eachElement(Visitor elementVisitor)
+        {
+            typeAssert(JsonType::Array, "eachElement(<lambda>)");
+            for (int i = 0; i < elements->size(); i++) {
+                elementVisitor((*elements)[i]);
+            }
         }
 
     private:

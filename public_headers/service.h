@@ -31,8 +31,13 @@ namespace org_restfulipc
         
         void wait();
 
-        void map(const char* path, AbstractResource::ptr resource, bool wildcarded = false);
-        void unMap(const char* path);
+        void map(AbstractResource::ptr resource, const char* p1, const char* p2 = 0, const char* p3 = 0);
+        void map(AbstractResource::ptr resource, bool wildcarded, const char* p1, const char* p2 = 0, const char* p3 = 0);
+        void map(AbstractResource::ptr resource, bool wildcarded, std::vector<const char*> pathElements);
+        void unMap(const char* p1, const char* p2 = 0, const char* p3 = 0);
+        void unMap(std::vector<const char*> pathElements);
+        
+
         AbstractResource::ptr mapping(const char* path, bool prefix = false);
         Map<AbstractResource::ptr> resourceMappings;
         Map<AbstractResource::ptr> prefixMappings;
