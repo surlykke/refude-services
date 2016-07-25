@@ -24,7 +24,24 @@ namespace org_restfulipc
             controller->updateWindowsResource();
             CollectionResource::doGET(socket, request);
         }
-        
+       
+        void doPOST(int& socket, HttpMessage& request) override
+        {
+            controller->updateWindowsResource();
+
+            std::cout << "POST against " << request.remainingPath << "\n";
+            if (! indexes.contains(request.remainingPath)) throw HttpCode::Http404;
+            errno = 0;
+            Window windowToRaise = strtoul(request.remainingPath, NULL, 0);
+            if (errno != 0) throw C_Error();
+
+            WindowInfo(windowToRaise).raiseAndFocus();
+
+            throw HttpCode::Http204;
+        }
+
+
+
         Controller* controller;
     };
 

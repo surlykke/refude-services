@@ -1,4 +1,5 @@
 #include <string.h>
+#include <iostream>
 #include "windowinfo.h"
 #include "xdg.h"
 
@@ -39,7 +40,7 @@ namespace org_restfulipc
             if (XGetWindowProperty(display, w, property, long_offset, long_length, _delete,
                                    req_type, &actual_type_return, &actual_format_return,
                                    &nitems_return, &bytes_after_return, &prop_return) != Success) {
-                printf("error in getProp...\n"); 
+                printf("error in getProp...\n");
                 if (buf) {
                     free(buf);
                 }
@@ -111,7 +112,7 @@ namespace org_restfulipc
         return WindowInfo(XDefaultRootWindow(DefaultDisplay()));
     }
 
-    std::vector<Window> WindowInfo::windowIds() 
+    std::vector<Window> WindowInfo::windowIds()
     {
         std::vector<Window> result;
         DefaultDisplay disp;
@@ -119,7 +120,7 @@ namespace org_restfulipc
         unsigned long nitems;
         Window* windowlist = (Window*) getProp(disp, root, "_NET_CLIENT_LIST_STACKING", nitems);
         for (Window* w = windowlist; *w; w++) {
-            result.push_back(*w); 
+            result.push_back(*w);
         }
         free(windowlist);
         return result;
@@ -215,8 +216,26 @@ namespace org_restfulipc
     {
         printf("Raising window %x\n", window);
         DefaultDisplay disp;
-        XRaiseWindow(disp, window);
-        XSetInputFocus(disp, window, RevertToNone, CurrentTime);
+        long mask = SubstructureRedirectMask | SubstructureNotifyMask;
+        Window rootWindow = DefaultRootWindow(disp._disp);
+        XEvent event;
+        memset(&event, 0, sizeof(XEvent));
+        Atom net_active_window = XInternAtom(disp, "_NET_ACTIVE_WINDOW", 0);
+        std::cout << "net_active_window: " << XGetAtomName(disp, net_active_window) << "\n";
+        event.xclient.type = ClientMessage;
+        event.xclient.serial = 0;
+        event.xclient.send_event = 1;
+        event.xclient.message_type = net_active_window;
+        event.xclient.window = window;
+        event.xclient.format = 32;
+        event.xclient.data.l[0] = 1;
+        event.xclient.data.l[1] = 0;
+        event.xclient.data.l[2] = 0;
+        event.xclient.data.l[3] = 0;
+        event.xclient.data.l[4] = 0;
+        std::cout << "SEnding event to " << event.xclient.window << "\n";
+        XSendEvent(disp._disp, rootWindow, 0, mask, &event);
+        std::cout << "Windowtoraise:" << window << "\n";
     }
 
     void WindowInfo::calculateIconName()
