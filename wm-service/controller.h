@@ -23,13 +23,15 @@ namespace org_restfulipc
         ~Controller();
         void run();
         Service dispatcher;
-    
+        void buildDisplayResource();
+        void updateWindowsResource();
+     
     private:
-        void updateResources();
         NotifierResource::ptr notifier;
         CollectionResource::ptr windowsResource;
         JsonResource::ptr displayResource;
         RunningAppsIcons::ptr iconsResource;
+        bool windowsResourceStale;
     };
 }
 #endif // CONTROLLER_H

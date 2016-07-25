@@ -22,9 +22,8 @@ int main(int argc, char *argv[])
 
         std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.windowmanager-service";
         Controller controller;
-        controller.run();
         controller.dispatcher.serve(socketPath.data());
-        controller.dispatcher.wait();
+        controller.run();
     }
     catch (RuntimeError re) {
         std::cerr << re.what() << "\n";

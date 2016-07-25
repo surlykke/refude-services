@@ -10,16 +10,37 @@
 #include "controller.h"
 namespace org_restfulipc 
 {
+
+    struct WindowsResource : public CollectionResource
+    {
+        WindowsResource(Controller* controller) : 
+            CollectionResource("Id"),
+            controller(controller)
+        {
+        }
+
+        void doGET(int& socket, HttpMessage& request) override 
+        {
+            controller->updateWindowsResource();
+            CollectionResource::doGET(socket, request);
+        }
+        
+        Controller* controller;
+    };
+
+
+
     Controller::Controller() :
         notifier(std::make_shared<NotifierResource>()),
-        windowsResource(std::make_shared<CollectionResource>("Id")),
+        windowsResource(std::make_shared<WindowsResource>(this)),
         displayResource(std::make_shared<JsonResource>()),
         iconsResource(std::make_shared<RunningAppsIcons>())
     {
         dispatcher.map(notifier, "notify");
         dispatcher.map(windowsResource, true, "windows");
         dispatcher.map(iconsResource, true, "icons");
-        updateResources();
+        buildDisplayResource(); 
+        windowsResourceStale = true;
     }
 
     Controller::~Controller()
@@ -28,9 +49,21 @@ namespace org_restfulipc
 
     void Controller::run()
     {
+        Display *disp = XOpenDisplay(NULL);
+        XSelectInput(disp, XDefaultRootWindow(disp), SubstructureNotifyMask);
+        XEvent event;
+        while (true) {
+           XNextEvent(disp, &event);
+           if (event.type ==  ConfigureNotify) {
+               if (windowsResourceStale == false) {
+                   windowsResourceStale = true;
+                   notifier->resourceUpdated("windows");
+               }
+           }
+        }
     }
 
-    void Controller::updateResources()
+    void Controller::buildDisplayResource()
     {
         Json displayJson = JsonConst::EmptyObject;
         displayJson["geometry"] = JsonConst::EmptyObject;
@@ -44,31 +77,34 @@ namespace org_restfulipc
             notifier->resourceUpdated("display");
             displayResource->setJson(std::move(displayJson));
         }
- 
-    
+    }
 
-        std::vector<Window> windowIds = WindowInfo::windowIds();
-        Json windowsJson = JsonConst::EmptyArray;
+    void Controller::updateWindowsResource()
+    {
+        if (windowsResourceStale) {
+            std::vector<Window> windowIds = WindowInfo::windowIds();
+            Json windowsJson = JsonConst::EmptyArray;
 
-        for (Window windowId : windowIds) {
-            WindowInfo window(windowId);
-            Json windowJson = JsonConst::EmptyObject;
-            windowJson["Id"] = std::to_string(windowId);
-            windowJson["Name"] = window.title;
-            windowJson["Comment"] = "";
-            windowJson["geometry"] = JsonConst::EmptyObject;
-            windowJson["geometry"]["x"] = window.x;
-            windowJson["geometry"]["y"] = window.y;
-            windowJson["geometry"]["w"] = window.width;
-            windowJson["geometry"]["h"] = window.height;
-            windowJson["iconName"] = window.iconName;
-            windowsJson.append(std::move(windowJson));
-            iconsResource->addIcon(window.iconName, window.icon, window.iconLength);
-        } 
+            for (Window windowId : windowIds) {
+                WindowInfo window(windowId);
+                Json windowJson = JsonConst::EmptyObject;
+                windowJson["Id"] = std::to_string(windowId);
+                windowJson["Name"] = window.title;
+                windowJson["Comment"] = "";
+                windowJson["geometry"] = JsonConst::EmptyObject;
+                windowJson["geometry"]["x"] = window.x;
+                windowJson["geometry"]["y"] = window.y;
+                windowJson["geometry"]["w"] = window.width;
+                windowJson["geometry"]["h"] = window.height;
+                windowJson["iconName"] = window.iconName;
+                windowsJson.append(std::move(windowJson));
+                iconsResource->addIcon(window.iconName, window.icon, window.iconLength);
+            } 
 
-        CollectionResourceUpdater updater(windowsResource);
-        updater.update(windowsJson);
- 
+            CollectionResourceUpdater updater(windowsResource);
+            updater.update(windowsJson);
+            windowsResourceStale = false; 
+        }
     }
 
 
