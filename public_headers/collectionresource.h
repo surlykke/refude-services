@@ -10,6 +10,7 @@
 #include "json.h"
 #include <set>
 #include "abstractcachingresource.h"
+#include "notifierresource.h"
 
 namespace org_restfulipc 
 {
@@ -17,24 +18,23 @@ namespace org_restfulipc
     {
     public:
         typedef std::shared_ptr<CollectionResource> ptr; 
-        CollectionResource();
+        CollectionResource(const char* resourceIdKey);
         virtual ~CollectionResource();
-        Json& getJsonArray() { return jsonArray; } 
-        const char* getId() { return id; }
-        void setJsonArray(Json&& json, const char* id = "Id");
-
+        Json jsonArray;
+        const char* resourceIdKey;
+        Map<uint> indexes;
+         
+    
     protected:
         virtual Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers);
-        Json jsonArray;
-        const char* id;
-        Map<uint> indexes;
     };
 
     class CollectionResourceUpdater
     {
     public:
         CollectionResourceUpdater(CollectionResource::ptr collectionResource);
-        void update(Json& newJsonArray, const char* idKey);
+        void update(Json& newJsonArray);
+        void notify(NotifierResource::ptr notifier, const char* prefix);
         std::set<std::string> addedResources;
         std::set<std::string> updatedResources;
         std::set<std::string> removedResources;

@@ -12,30 +12,15 @@
 namespace org_restfulipc
 {
 
-    CollectionResource::CollectionResource() :
+    CollectionResource::CollectionResource(const char* resourceIdKey) :
         AbstractCachingResource(),
         jsonArray(JsonConst::EmptyArray),
-        id("")
+        resourceIdKey(resourceIdKey)
     {
     }
 
     CollectionResource::~CollectionResource()
     {
-    }
-
-    void CollectionResource::setJsonArray(Json&& json, const char* id)
-    {
-        if (json.type() != JsonType::Array) {
-            throw RuntimeError("Json given to CollectionResource should be an array, was %s", json.typeAsString());
-        }
-        jsonArray = std::move(json);
-        this->id = id;
-        for (uint index = 0; index < jsonArray.size(); index++) {
-            Json& json = jsonArray[index];
-            if (json.type() == JsonType::Object && json.contains(id)) {
-                indexes.add(json[id], index);
-            }
-        }
     }
 
     Buffer CollectionResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
@@ -60,32 +45,52 @@ namespace org_restfulipc
     {
     }
 
-    void CollectionResourceUpdater::update(Json& newJsonArray, const char* idKey)
+    void CollectionResourceUpdater::update(Json& newJsonArray)
     {
         {
-            Map<int> newJsons;
-            Json& oldJsonArray = collectionResource->getJsonArray();
-            for (uint i = 0; i < newJsonArray.size(); i++) {
-                const char* id = newJsonArray[i][idKey];
-                newJsons[id] = i;
-                addedResources.insert((const char*) newJsonArray[i][idKey]);
-            }
+            std::unique_lock<std::recursive_mutex> lock(collectionResource->m);
+            {
+                const char* resourceIdKey = collectionResource->resourceIdKey;
+                Map<int> newJsons;
+                for (uint i = 0; i < newJsonArray.size(); i++) {
+                    const char* id = newJsonArray[i][resourceIdKey];
+                    newJsons[id] = i;
+                    addedResources.insert((const char*) newJsonArray[i][resourceIdKey]);
+                }
 
-            for (uint i = 0; i < oldJsonArray.size(); i++) {
-                const char* id = oldJsonArray[i][idKey];
-                if (newJsons.contains(id)) {
-                    addedResources.erase(id);
-                    if (oldJsonArray[i] != newJsonArray[newJsons[id]]) {
-                        updatedResources.insert(id);
+                for (uint i = 0; i < collectionResource->jsonArray.size(); i++) {
+                    const char* id = collectionResource->jsonArray[i][resourceIdKey];
+                    if (newJsons.contains(id)) {
+                        addedResources.erase(id);
+                        if (collectionResource->jsonArray[i] != newJsonArray[newJsons[id]]) {
+                            updatedResources.insert(id);
+                        }
                     }
-                }
-                else {
-                    removedResources.insert(id);
-                }
+                    else {
+                        removedResources.insert(id);
+                    }
 
+                }
+            }
+            collectionResource->jsonArray = std::move(newJsonArray);
+            collectionResource->indexes.clear();
+            for (uint i = 0; i < collectionResource->jsonArray.size(); i++) {
+                collectionResource->indexes[collectionResource->jsonArray[i][collectionResource->resourceIdKey]] = i;
             }
         }
-        collectionResource->setJsonArray(std::move(newJsonArray), idKey);
+
     }
 
+    void CollectionResourceUpdater::notify(NotifierResource::ptr notifier, const char* prefix)
+    {
+        for (std::string id : addedResources) {
+            notifier->resourceAdded(prefix, id.data());
+        }
+        for (std::string id : removedResources) {
+            notifier->resourceRemoved(prefix, id.data());
+        }
+        for (std::string id : updatedResources) {
+            notifier->resourceUpdated(prefix, id.data());
+        }
+    }
 }

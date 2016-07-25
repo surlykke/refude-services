@@ -12,7 +12,6 @@
 #include <map>
 #include <vector>
 #include <memory>
-
 #include "map.h"
 
 #include "httpprotocol.h"
@@ -21,18 +20,14 @@
 namespace org_restfulipc
 {
 
-    class AbstractResource
+
+    struct  AbstractResource
     {
-    public:
         typedef std::shared_ptr<AbstractResource> ptr;
 
-        AbstractResource()
-        {
-        }
+        AbstractResource() {}
 
-        virtual ~AbstractResource()
-        {
-        }
+        virtual ~AbstractResource() {}
 
         virtual void handleRequest(int &socket, HttpMessage& request);
 

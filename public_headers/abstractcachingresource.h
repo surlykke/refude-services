@@ -16,15 +16,13 @@ namespace org_restfulipc
         AbstractCachingResource();
         virtual ~AbstractCachingResource();
         virtual void doGET(int& socket, HttpMessage& request) override;
+        std::recursive_mutex m;
 
     protected:
         virtual Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers) = 0;
         
         Buffer getSignature(HttpMessage& request);
         void clearCache();
-
-    protected:
-        std::recursive_mutex m;
     
     private:
         Map<Buffer> cache;
