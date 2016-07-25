@@ -17,12 +17,9 @@ namespace org_restfulipc
         virtual ~Controller();
         void setupAndRun();
         Service service;
-        
+ 
     private:
         void update();
-        /*void updateApplicationHandersResources(Json& applicationJsons);
-        void updateResources(Json& applicationJsons, std::string prefix, BuildResource resourceBuilder);
-        void updateMimetypesResources(Json& newMimetypes);*/
         
         CollectionResource::ptr applicationsResource;
         CollectionResource::ptr mimetypesResource;

@@ -12,7 +12,7 @@ namespace org_restfulipc
 {
     Controller::Controller() :
         notifier(std::make_shared<NotifierResource>()),
-        windowsResource(std::make_shared<CollectionResource>()),
+        windowsResource(std::make_shared<CollectionResource>("Id")),
         displayResource(std::make_shared<JsonResource>()),
         iconsResource(std::make_shared<RunningAppsIcons>())
     {
@@ -67,7 +67,7 @@ namespace org_restfulipc
         } 
 
         CollectionResourceUpdater updater(windowsResource);
-        updater.update(windowsJson, "Id");
+        updater.update(windowsJson);
  
     }
 

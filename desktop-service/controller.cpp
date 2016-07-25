@@ -7,14 +7,40 @@
 #include "mimetypecollector.h"
 
 #include "desktopwatcher.h"
+#include "runapplication.h"
 
 #include "controller.h"
+
 namespace org_restfulipc
 {
+
+    struct ApplicationsResource : public CollectionResource
+    {
+        ApplicationsResource() : CollectionResource("applicationId") {}
+        void doPOST(int& socket, HttpMessage& request) override
+        {
+            if (! indexes.contains(request.remainingPath)) throw HttpCode::Http404;
+            runApplication(jsonArray[indexes[request.remainingPath]]["Exec"]);
+            throw HttpCode::Http204;
+        }
+
+    };
+   
+    struct MimetypesResource : public CollectionResource
+    {
+        MimetypesResource() : CollectionResource("MimeType") {}
+        void doPATCH(int& socket, HttpMessage& request) override
+        {
+            // FIXME
+        }
+
+    };
+
+
     Controller::Controller() : 
         service(),
-        applicationsResource(std::make_shared<CollectionResource>()),
-        mimetypesResource(std::make_shared<CollectionResource>()),
+        applicationsResource(std::make_shared<ApplicationsResource>()),
+        mimetypesResource(std::make_shared<CollectionResource>("MimeType")),
         notifier(std::make_shared<NotifierResource>()),
         desktopWatcher(new DesktopWatcher(*this, true))        
     {
@@ -45,28 +71,12 @@ namespace org_restfulipc
         mimetypeCollector.addDefaultApplications(applicationCollector.defaultApplications);
 
         CollectionResourceUpdater applicationsResourceUpdater(applicationsResource);
-        applicationsResourceUpdater.update(applicationCollector.jsonArray, "applicationId");
-        for (std::string appId : applicationsResourceUpdater.addedResources) {
-            notifier->resourceAdded("applications", appId.data());
-        }
-        for (std::string appId : applicationsResourceUpdater.removedResources) {
-            notifier->resourceRemoved("applications", appId.data());
-        }
-        for (std::string appId : applicationsResourceUpdater.updatedResources) {
-            notifier->resourceUpdated("applications", appId.data());
-        }
+        applicationsResourceUpdater.update(applicationCollector.jsonArray);
+        applicationsResourceUpdater.notify(notifier, "applications");
 
         CollectionResourceUpdater mimetypesResourceUpdater(mimetypesResource);
-        mimetypesResourceUpdater.update(mimetypeCollector.jsonArray, "MimeType");
-        for (std::string appId : mimetypesResourceUpdater.addedResources) {
-            notifier->resourceAdded("mimetypes", appId.data());
-        }
-        for (std::string appId : mimetypesResourceUpdater.removedResources) {
-            notifier->resourceRemoved("mimetypes", appId.data());
-        }
-        for (std::string appId : mimetypesResourceUpdater.updatedResources) {
-            notifier->resourceUpdated("mimetypes", appId.data());
-        }
+        mimetypesResourceUpdater.update(mimetypeCollector.jsonArray);
+        mimetypesResourceUpdater.notify(notifier, "mimetypes");
     }
-    
+
 }

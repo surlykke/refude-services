@@ -38,7 +38,7 @@ namespace org_restfulipc
     {
         const char* mimetypeTemplate = R"json(
         {
-            "mimetype" : "REPLACEME",
+            "MimeType" : "REPLACEME",
             "globs" : [],
             "aliases" : [],
             "subclassOf" : [],
