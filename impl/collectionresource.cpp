@@ -77,6 +77,7 @@ namespace org_restfulipc
             for (uint i = 0; i < collectionResource->jsonArray.size(); i++) {
                 collectionResource->indexes[collectionResource->jsonArray[i][collectionResource->resourceIdKey]] = i;
             }
+            collectionResource->clearCache();
         }
 
     }

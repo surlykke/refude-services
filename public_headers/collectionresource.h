@@ -14,6 +14,8 @@
 
 namespace org_restfulipc 
 {
+    class CollectionResourceUpdater;
+
     class CollectionResource : public AbstractCachingResource
     {
     public:
@@ -27,6 +29,8 @@ namespace org_restfulipc
     
     protected:
         virtual Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers);
+
+    friend CollectionResourceUpdater;
     };
 
     class CollectionResourceUpdater
