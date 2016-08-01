@@ -32,6 +32,38 @@ namespace org_restfulipc
         }
     };
 
+    std::map<Atom, const char*> buildWmStateMap() 
+    {
+        std::map<Atom, const char*> map;
+        Display *disp = XOpenDisplay(NULL);
+
+        map[XInternAtom(disp, "_NET_WM_STATE_MODAL", False)] = "Modal";
+        map[XInternAtom(disp, "_NET_WM_STATE_STICKY", False)] = "Sticky";
+        map[XInternAtom(disp, "_NET_WM_STATE_MAXIMIZED_VERT", False)] = "MaximizedVertical";
+        map[XInternAtom(disp, "_NET_WM_STATE_MAXIMIZED_HORZ", False)] = "MaximizedHorizontal";
+        map[XInternAtom(disp, "_NET_WM_STATE_SHADED", False)] = "Shaded";
+        map[XInternAtom(disp, "_NET_WM_STATE_SKIP_TASKBAR", False)] = "SkipTaskbar";
+        map[XInternAtom(disp, "_NET_WM_STATE_SKIP_PAGER", False)] = "SkipPager";
+        map[XInternAtom(disp, "_NET_WM_STATE_HIDDEN", False)] = "Hidden";
+        map[XInternAtom(disp, "_NET_WM_STATE_FULLSCREEN", False)] = "Fullscreen";
+        map[XInternAtom(disp, "_NET_WM_STATE_ABOVE", False)] = "Above";
+        map[XInternAtom(disp, "_NET_WM_STATE_BELOW", False)] = "Below";
+        map[XInternAtom(disp, "_NET_WM_STATE_DEMANDS_ATTENTION", False)] = "DemandsAttention";
+
+        return map;
+    }
+
+    const char* atomToString(Atom atom) 
+    {
+        static std::map<Atom, const char*> wmStateMap = buildWmStateMap();
+        if (wmStateMap.find(atom) != wmStateMap.end()) {
+            return wmStateMap[atom];
+        }
+        else {
+            return NULL;
+        }
+    }
+
     Controller::Controller() :
         notifier(std::make_shared<NotifierResource>()),
         windowsResource(std::make_shared<WindowsResource>(this)),
@@ -91,6 +123,14 @@ namespace org_restfulipc
             Json windowJson = JsonConst::EmptyObject;
             windowJson["Id"] = std::to_string(window.window);
             windowJson["Name"] = window.title;
+            windowJson["State"] = JsonConst::EmptyArray;
+            for (Atom atom : window.windowState) {
+                const char* state = atomToString(atom);
+                if (state) {
+                    windowJson["State"].append(state);
+                }
+            }
+            
             windowJson["Comment"] = "";
             windowJson["geometry"] = JsonConst::EmptyObject;
             windowJson["geometry"]["x"] = window.x;

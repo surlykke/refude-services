@@ -168,6 +168,15 @@ namespace org_restfulipc
             windowType = _NET_WM_WINDOW_TYPE_NORMAL;
         }
 
+        tmpAtomPtr = (Atom*) getProp(disp, window, "_NET_WM_STATE", nitems);
+        for (unsigned long i = 0; i < nitems; i++) {
+            windowState.push_back(tmpAtomPtr[i]);
+        }
+        if (nitems) {
+            XFree(tmpAtomPtr);
+        }
+
+
         long frameExtents[4] = {0, 0, 0, 0};
         long* frameExtentsTmp = (long*) getProp(disp, window, "_NET_FRAME_EXTENTS", nitems);
         if (frameExtentsTmp) {

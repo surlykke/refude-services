@@ -27,6 +27,7 @@ namespace org_restfulipc
         
         std::string title;
         Atom windowType;
+        std::vector<Atom> windowState;
         int x;
         int y;
         unsigned int width;
