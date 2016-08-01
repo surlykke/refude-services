@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
         /*std::string configDir = xdg::config_home() + "/RefudeService";
         system((std::string("mkdir -p ") + configDir).data());*/
 
-        std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.windowmanager-service";
+        std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.wm-service";
         Controller controller;
         controller.dispatcher.serve(socketPath.data());
         controller.run();

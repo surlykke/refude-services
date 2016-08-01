@@ -6,6 +6,8 @@
  * Please refer to the LICENSE file for a copy of the license.
  */
 #include <vector>
+#include <unistd.h>
+#include <ripc/jsonwriter.h>
 #include "windowinfo.h"
 #include "controller.h"
 namespace org_restfulipc 
@@ -13,22 +15,11 @@ namespace org_restfulipc
 
     struct WindowsResource : public CollectionResource
     {
-        WindowsResource(Controller* controller) : 
-            CollectionResource("Id"),
-            controller(controller)
-        {
-        }
+        WindowsResource(Controller* controller) : CollectionResource("Id") { }
 
-        void doGET(int& socket, HttpMessage& request) override 
-        {
-            controller->updateWindowsResource();
-            CollectionResource::doGET(socket, request);
-        }
-       
+      
         void doPOST(int& socket, HttpMessage& request) override
         {
-            controller->updateWindowsResource();
-
             std::cout << "POST against " << request.remainingPath << "\n";
             if (! indexes.contains(request.remainingPath)) throw HttpCode::Http404;
             errno = 0;
@@ -39,13 +30,7 @@ namespace org_restfulipc
 
             throw HttpCode::Http204;
         }
-
-
-
-        Controller* controller;
     };
-
-
 
     Controller::Controller() :
         notifier(std::make_shared<NotifierResource>()),
@@ -56,8 +41,8 @@ namespace org_restfulipc
         dispatcher.map(notifier, "notify");
         dispatcher.map(windowsResource, true, "windows");
         dispatcher.map(iconsResource, true, "icons");
+        dispatcher.map(displayResource, "display");
         buildDisplayResource(); 
-        windowsResourceStale = true;
     }
 
     Controller::~Controller()
@@ -66,16 +51,18 @@ namespace org_restfulipc
 
     void Controller::run()
     {
+        updateWindowsResource();
         Display *disp = XOpenDisplay(NULL);
         XSelectInput(disp, XDefaultRootWindow(disp), SubstructureNotifyMask);
         XEvent event;
         while (true) {
            XNextEvent(disp, &event);
            if (event.type ==  ConfigureNotify) {
-               if (windowsResourceStale == false) {
-                   windowsResourceStale = true;
-                   notifier->resourceUpdated("windows");
-               }
+               // To not float unsuspecting clients with server-sent events,
+               // we send at most one event pr. 1/10 seconds. (TODO: Right value?)
+               usleep(100000);
+               XSync(disp, True);
+               updateWindowsResource();
            }
         }
     }
@@ -98,34 +85,25 @@ namespace org_restfulipc
 
     void Controller::updateWindowsResource()
     {
-        if (windowsResourceStale) {
-            std::vector<Window> windowIds = WindowInfo::windowIds();
-            Json windowsJson = JsonConst::EmptyArray;
+        Json windowsJson = JsonConst::EmptyArray;
 
-            for (Window windowId : windowIds) {
-                WindowInfo window(windowId);
-                Json windowJson = JsonConst::EmptyObject;
-                windowJson["Id"] = std::to_string(windowId);
-                windowJson["Name"] = window.title;
-                windowJson["Comment"] = "";
-                windowJson["geometry"] = JsonConst::EmptyObject;
-                windowJson["geometry"]["x"] = window.x;
-                windowJson["geometry"]["y"] = window.y;
-                windowJson["geometry"]["w"] = window.width;
-                windowJson["geometry"]["h"] = window.height;
-                windowJson["iconName"] = window.iconName;
-                windowsJson.append(std::move(windowJson));
-                iconsResource->addIcon(window.iconName, window.icon, window.iconLength);
-            } 
-
-            CollectionResourceUpdater updater(windowsResource);
-            updater.update(windowsJson);
-            windowsResourceStale = false; 
-        }
+        for (WindowInfo window : WindowInfo::normalWindows()) {
+            Json windowJson = JsonConst::EmptyObject;
+            windowJson["Id"] = std::to_string(window.window);
+            windowJson["Name"] = window.title;
+            windowJson["Comment"] = "";
+            windowJson["geometry"] = JsonConst::EmptyObject;
+            windowJson["geometry"]["x"] = window.x;
+            windowJson["geometry"]["y"] = window.y;
+            windowJson["geometry"]["w"] = window.width;
+            windowJson["geometry"]["h"] = window.height;
+            windowJson["windowIcon"] = window.iconName;
+            windowsJson.append(std::move(windowJson));
+            iconsResource->addIcon(window.iconName, window.icon, window.iconLength);
+        } 
+        CollectionResourceUpdater updater(windowsResource);
+        updater.update(windowsJson);
+        updater.notify(notifier, "windows");
     }
 
-
-    /*
-
-    */
 }
