@@ -15,9 +15,10 @@ add_subdirectory(desktop-service)
 add_subdirectory(icon-service)
 add_subdirectory(wm-service)
 add_subdirectory(power-service)
-#add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
-#target_link_libraries(${PROJECT} pthread restfulipc tinyxml2 magic dl X11 png)
-#
-#install(FILES refudeservice.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
-#install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_BINDIR})
-#
+
+install(FILES haproxy/haproxy.cfg DESTINATION /etc/refude)
+install(FILES runRefude.sh 
+	    DESTINATION ${CMAKE_INSTALL_BINDIR} 
+		PERMISSIONS OWNER_READ GROUP_READ WORLD_READ 
+		            OWNER_WRITE 
+					OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
