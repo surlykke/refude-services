@@ -1,4 +1,4 @@
-set(PROJECT "RefudePower")
+set(PROJECT "RefudePowerService")
 project(${PROJECT})
 
 set(CMAKE_AUTOMOC ON)
@@ -14,8 +14,5 @@ set(SOURCE_FILES
 ) 
 
 add_executable(${PROJECT} ${SOURCE_FILES})
-
 target_link_libraries(${PROJECT} pthread restfulipc dl magic Qt5::DBus)
-
-#TODO install(FILES refudepower.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
-#install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${PROJECT} DESTINATION ${CMAKE_INSTALL_BINDIR})
