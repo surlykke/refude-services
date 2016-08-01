@@ -18,12 +18,9 @@ int main(int argc, char *argv[])
     using namespace org_restfulipc;
     Controller controller;
     try {
-        std::string configDir = xdg::config_home() + "/RefudeService";
-        system((std::string("mkdir -p ") + configDir).data());
-        
         controller.setupAndRun();
-
         std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.desktop-service";
+        controller.service.dumpRequests = true;
         controller.service.serve(socketPath.data());
         controller.service.wait();
     }
