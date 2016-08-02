@@ -19,18 +19,17 @@ namespace org_restfulipc
     class PowerApplication : public QCoreApplication
     {
     public:
-        PowerApplication(Service& service, NotifierResource::ptr notifierResource, int& argc, char** argv);
+        PowerApplication(CollectionResource::ptr devicesResource, NotifierResource::ptr notifierResource, 
+                         int& argc, char** argv);
         virtual ~PowerApplication();
 
+    public slots:
+        void collectJsons();
+
     private:
-        Service& service;
+        CollectionResource::ptr devicesResource;
         NotifierResource::ptr notifierResource;
-        std::map<PropertiesIF*, JsonResource::ptr> batteries;
-
-        Json buildJson(const QVariantMap& map);
-
-    private slots:
-        void onPropertiesChanged();
+        std::vector<PropertiesIF*> deviceInterfaces;
 
     };
 }

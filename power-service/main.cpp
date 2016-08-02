@@ -7,6 +7,7 @@
  */
 #include <ripc/service.h>
 #include <ripc/notifierresource.h>
+#include <ripc/collectionresource.h>
 #include "xdg.h"
 #include "powerapplication.h"
 
@@ -15,14 +16,18 @@ int main(int argc, char *argv[])
     using namespace org_restfulipc;
     
     Service service;
-
-    NotifierResource::ptr notifierResource = std::make_shared<org_restfulipc::NotifierResource>();
+   
+    CollectionResource::ptr devicesResource = std::make_shared<CollectionResource>("deviceId");
+    service.map(devicesResource, true, "devices");
+   
+    NotifierResource::ptr notifierResource = std::make_shared<NotifierResource>();
     service.map(notifierResource, "notify");
-    
-    PowerApplication powerApplication(service, notifierResource, argc, argv);
 
     std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.power-service";
     service.serve(socketPath.data());
+     
+    PowerApplication powerApplication(devicesResource, notifierResource, argc, argv);
+    powerApplication.collectJsons();
     powerApplication.exec();
 }
 

@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QDBusObjectPath>
 #include <sys/socket.h>
+#include <ripc/collectionresource.h>
 #include "properties_if.h"
 
 #include "powerapplication.h"
@@ -24,28 +25,22 @@ namespace org_restfulipc
     }
 
    
-    PowerApplication::PowerApplication(Service& service, NotifierResource::ptr notifierResource, int& argc, char** argv) : 
+    PowerApplication::PowerApplication(CollectionResource::ptr devicesResource, NotifierResource::ptr notifierResource, 
+                                       int& argc, char** argv) : 
         QCoreApplication(argc, argv),
-        service(service),
+        devicesResource(devicesResource),
         notifierResource(notifierResource)
     {
         QDBusInterface* uPower = new QDBusInterface(UPOW_SERVICE, UPOW_PATH, UPOW_IF, sysBus);
+        PropertiesIF* displayDeviceIF = 
+            new PropertiesIF(UPOW_SERVICE, "/org/freedesktop/UPower/devices/DisplayDevice", sysBus);
+        // Assuming that whenever anything changes, the displaydevice will change... (?)
+        connect(displayDeviceIF, &PropertiesIF::PropertiesChanged, this, &PowerApplication::collectJsons);
+        deviceInterfaces.push_back(displayDeviceIF);
+        
         QDBusReply<QList<QDBusObjectPath>> reply = uPower->call("EnumerateDevices");
         foreach(QDBusObjectPath p, reply.value()) { 
-            PropertiesIF* propertiesIF = new PropertiesIF(UPOW_SERVICE, p.path(), sysBus);
-            QVariantMap props =  propertiesIF->GetAll(DEV_IF).value();
-            if ( props["Type"].toInt() == 2) {
-                QString mappingPath = p.path().mid(strlen(UPOW_PATH) + 1);
-                auto batRes = std::make_shared<JsonResource>();
-                batRes->setJson(buildJson(props));
-                batteries[propertiesIF] = batRes;
-                connect(propertiesIF, &PropertiesIF::PropertiesChanged, this, &PowerApplication::onPropertiesChanged);
-                std::cout << "Mapping to " << mappingPath.toUtf8().data() << "\n";
-                service.map(batRes, mappingPath.toUtf8().data());
-            } 
-            else {
-                propertiesIF->deleteLater();
-            }
+            deviceInterfaces.push_back(new PropertiesIF(UPOW_SERVICE, p.path(), sysBus));
         }
     }
 
@@ -53,51 +48,49 @@ namespace org_restfulipc
     {
     }
 
-    Json PowerApplication::buildJson(const QVariantMap& map)
+    void PowerApplication::collectJsons()
     {
-        Json json = JsonConst::EmptyObject;
-        if (map["Type"].toInt() == 2) {
-            json.append("NativePath", map["NativePath"].toString().toUtf8().constData());
-            json.append("Vendor", map["Vendor"].toString().toUtf8().constData());
-            json.append("Model", map["Model"].toString().toUtf8().constData());
-            json.append("Serial", map["Serial"].toString().toUtf8().constData());
-            json.append("UpdateTime", map["UpdateTime"].toDouble());
-            json.append("Type", map["Type"].toDouble());
-            json.append("PowerSupply", map["PowerSupply"].toBool());
-            json.append("HasHistory", map["HasHistory"].toBool());
-            json.append("HasStatistics", map["HasStatistics"].toBool());
-            json.append("Online", map["Online"].toBool());
-            json.append("Energy", map["Energy"].toDouble());
-            json.append("EnergyEmpty", map["EnergyEmpty"].toDouble());
-            json.append("EnergyFull", map["EnergyFull"].toDouble());
-            json.append("EnergyFullDesign", map["EnergyFullDesign"].toDouble());
-            json.append("EnergyRate", map["EnergyRate"].toDouble());
-            json.append("Voltage", map["Voltage"].toDouble());
-            json.append("TimeToEmpty", map["TimeToEmpty"].toDouble());
-            json.append("TimeToFull", map["TimeToFull"].toDouble());
-            json.append("Percentage", map["Percentage"].toDouble());
-            json.append("Temperature", map["Temperature"].toDouble());
-            json.append("IsPresent", map["IsPresent"].toBool());
-            json.append("State", map["State"].toDouble());
-            json.append("IsRechargeable", map["IsRechargeable"].toBool());
-            json.append("Capacity", map["Capacity"].toDouble());
-            json.append("Technology", map["Technology"].toDouble());
-            json.append("WarningLevel", map["WarningLevel"].toDouble());
-            json.append("IconName", map["IconName"].toString().toUtf8().constData());
+        Json deviceJsons = JsonConst::EmptyArray;
+        for (PropertiesIF* device : deviceInterfaces) 
+        {
+            QVariantMap map =  device->GetAll(DEV_IF).value();
+            Json jsonDevice = JsonConst::EmptyObject; 
+            QString deviceId = device->path().mid(QString("/org/freedesktop/UPower/devices/").size());
+            jsonDevice.append("deviceId", deviceId.toUtf8().constData());
+            jsonDevice.append("NativePath", map["NativePath"].toString().toUtf8().constData());
+            jsonDevice.append("Vendor", map["Vendor"].toString().toUtf8().constData());
+            jsonDevice.append("Model", map["Model"].toString().toUtf8().constData());
+            jsonDevice.append("Serial", map["Serial"].toString().toUtf8().constData());
+            jsonDevice.append("UpdateTime", map["UpdateTime"].toDouble());
+            jsonDevice.append("Type", map["Type"].toDouble());
+            jsonDevice.append("PowerSupply", map["PowerSupply"].toBool());
+            jsonDevice.append("HasHistory", map["HasHistory"].toBool());
+            jsonDevice.append("HasStatistics", map["HasStatistics"].toBool());
+            jsonDevice.append("Online", map["Online"].toBool());
+            jsonDevice.append("Energy", map["Energy"].toDouble());
+            jsonDevice.append("EnergyEmpty", map["EnergyEmpty"].toDouble());
+            jsonDevice.append("EnergyFull", map["EnergyFull"].toDouble());
+            jsonDevice.append("EnergyFullDesign", map["EnergyFullDesign"].toDouble());
+            jsonDevice.append("EnergyRate", map["EnergyRate"].toDouble());
+            jsonDevice.append("Voltage", map["Voltage"].toDouble());
+            jsonDevice.append("TimeToEmpty", map["TimeToEmpty"].toDouble());
+            jsonDevice.append("TimeToFull", map["TimeToFull"].toDouble());
+            jsonDevice.append("Percentage", map["Percentage"].toDouble());
+            jsonDevice.append("Temperature", map["Temperature"].toDouble());
+            jsonDevice.append("IsPresent", map["IsPresent"].toBool());
+            jsonDevice.append("State", map["State"].toDouble());
+            jsonDevice.append("IsRechargeable", map["IsRechargeable"].toBool());
+            jsonDevice.append("Capacity", map["Capacity"].toDouble());
+            jsonDevice.append("Technology", map["Technology"].toDouble());
+            jsonDevice.append("WarningLevel", map["WarningLevel"].toDouble());
+            jsonDevice.append("IconName", map["IconName"].toString().toUtf8().constData());
+
+            deviceJsons.append(std::move(jsonDevice));
         }
-
-        return json;
+        
+        CollectionResourceUpdater updater(devicesResource);
+        updater.update(deviceJsons);
+        updater.notify(notifierResource, "devices");
     }
-
-    void PowerApplication::onPropertiesChanged()
-    {
-        PropertiesIF* propsIF = (PropertiesIF*) sender();
-        if (batteries.find(propsIF) != batteries.end()) {
-            QVariantMap props = propsIF->GetAll(DEV_IF).value();
-            batteries[propsIF]->setJson(buildJson(props));
-            notifierResource->resourceUpdated(propsIF->path().mid(strlen(UPOW_PATH) + 1).toUtf8().data());
-        }
-    }
-
 
 }
