@@ -62,14 +62,20 @@ namespace org_restfulipc
             Json json;
             json << mimetypeTemplate;
             json["mimetype"] = mimetype;
+            
             std::vector<std::string> tmp = split(mimetype, '/');
             if (tmp.size() != 2 || tmp[0].empty() || tmp[1].empty()) {
                 std::cerr << "Incomprehensible mimetype: " << mimetype;
                 continue;
             }
-            std::string& typeName = tmp[0];
-            std::string& subtypeName = tmp[1];
-                        if (mimetypeElement->FirstChildElement("comment")) {
+            
+            std::string& type = tmp[0];
+            json["type"] = type;
+            
+            std::string& subtype = tmp[1];
+            json["subtype"] = subtype;
+
+            if (mimetypeElement->FirstChildElement("comment")) {
                 handleLocalizedXmlElement(mimetypeElement, "comment", json);
             }
 
@@ -104,7 +110,7 @@ namespace org_restfulipc
                 json["icon"] = iconElement->Attribute("name");
             }
             else {
-                json["icon"] = typeName + '-' + subtypeName;
+                json["icon"] = type + '-' + subtype;
             }
 
             tinyxml2::XMLElement* genericIconElement = mimetypeElement->FirstChildElement("generic-icon");
@@ -112,7 +118,7 @@ namespace org_restfulipc
                 json["genericIcon"] = genericIconElement->Attribute("name");
             }
             else {
-                json["genericIcon"] = typeName + "-x-generic";
+                json["genericIcon"] = type + "-x-generic";
             }
             
             jsonMap.add(mimetype.data(), std::move(json));
