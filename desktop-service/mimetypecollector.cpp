@@ -38,7 +38,6 @@ namespace org_restfulipc
     {
         const char* mimetypeTemplate = R"json(
         {
-            "MimeType" : "REPLACEME",
             "globs" : [],
             "aliases" : [],
             "subclassOf" : [],
@@ -62,7 +61,7 @@ namespace org_restfulipc
             std::string mimetype = mimetypeElement->Attribute("type");
             Json json;
             json << mimetypeTemplate;
-            json["MimeType"] = mimetype;
+            json["mimetype"] = mimetype;
             std::vector<std::string> tmp = split(mimetype, '/');
             if (tmp.size() != 2 || tmp[0].empty() || tmp[1].empty()) {
                 std::cerr << "Incomprehensible mimetype: " << mimetype;
@@ -128,13 +127,13 @@ namespace org_restfulipc
     {
         Map<uint> index;
         for (uint i = 0; i < jsonArray.size(); i++) {
-            index.add(jsonArray[i]["MimeType"], i);
+            index.add(jsonArray[i]["mimetype"], i);
         }
 
 
         applicationArray.eachElement([this, &index](Json& appJson) {
             const char* appId = appJson["applicationId"];
-            appJson["MimeType"].eachElement([this, &index, &appId](const char* mimetype) {
+            appJson["mimetype"].eachElement([this, &index, &appId](const char* mimetype) {
                 if (index.contains(mimetype)) {
                     jsonArray[index[mimetype]]["associatedApplications"].append(appId);
                 }
@@ -147,7 +146,7 @@ namespace org_restfulipc
     {
         Map<uint> index;
         for (uint i = 0; i < jsonArray.size(); i++) {
-            index.add(jsonArray[i]["MimeType"], i);
+            index.add(jsonArray[i]["mimetype"], i);
         }
 
         defaultApplications.each([this, &index](const char* mimetype, 

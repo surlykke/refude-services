@@ -28,7 +28,7 @@ namespace org_restfulipc
    
     struct MimetypesResource : public CollectionResource
     {
-        MimetypesResource() : CollectionResource("MimeType") {}
+        MimetypesResource() : CollectionResource("mimetype") {}
         void doPATCH(int& socket, HttpMessage& request) override
         {
             // FIXME
@@ -40,7 +40,7 @@ namespace org_restfulipc
     Controller::Controller() : 
         service(),
         applicationsResource(std::make_shared<ApplicationsResource>()),
-        mimetypesResource(std::make_shared<CollectionResource>("MimeType")),
+        mimetypesResource(std::make_shared<CollectionResource>("mimetype")),
         notifier(std::make_shared<NotifierResource>()),
         desktopWatcher(new DesktopWatcher(*this, true))        
     {

@@ -28,7 +28,7 @@ namespace org_restfulipc
             "_ripc:localized:Keywords" : { },
             "OnlyShowIn" : [],
             "NotShowIn" : [],
-            "MimeType" : [],
+            "mimetype" : [],
             "Categories" : [],
             "Implements" : []
         }
@@ -40,6 +40,16 @@ namespace org_restfulipc
         }
     )json";
  
+    std::string camelize(std::string str) 
+    {
+        if (str == "MimeType") {
+            return "mimetype";
+        }
+        else {
+            return str; // FIXME
+        }
+    }
+
 
     DesktopEntryReader::DesktopEntryReader(std::string desktopFilePath) : 
         IniReader(desktopFilePath),
@@ -115,7 +125,7 @@ namespace org_restfulipc
         }
         else if (keyOneOf({"OnlyShowIn","NotShowIn","MimeType","Categories","Implements"})) {
             for (std::string val : toList(value)) {
-                json[key].append(val);
+                json[camelize(key)].append(val);
             }
         }    
         else if (key == "Keywords") { 

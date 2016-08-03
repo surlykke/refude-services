@@ -71,7 +71,7 @@ namespace org_restfulipc
                                                      std::set<std::string>& deAssociatedApplications) {
             for (const std::string& deAssociatedApplication : deAssociatedApplications) {
                 if (jsonMap.contains(deAssociatedApplication)) {
-                    Json& associatedAppsArray = jsonMap[deAssociatedApplication]["MimeType"];
+                    Json& associatedAppsArray = jsonMap[deAssociatedApplication]["mimetype"];
                     while (int index = associatedAppsArray.find(deAssociatedApplication) > -1) {
                         associatedAppsArray.take(index);
                     }
@@ -83,7 +83,7 @@ namespace org_restfulipc
                                                    std::set<std::string>& associatedApplications) {
             for (const std::string& associatedApplication : associatedApplications) {
                 if (jsonMap.contains(associatedApplication)) {
-                    jsonMap[associatedApplication]["MimeType"].append(mimetype);
+                    jsonMap[associatedApplication]["mimetype"].append(mimetype);
                 }
             }
         });
