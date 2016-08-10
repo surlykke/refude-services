@@ -156,7 +156,13 @@ namespace org_restfulipc
             XFree(tmpTitle);
         }
         else {
-            title = "";
+            tmpTitle = (char*) getProp(disp, window, "_NET_WM_NAME", nitems);
+            if (tmpTitle) {
+                title = tmpTitle;
+            }
+            else {
+                title = "";
+            } 
         }
 
         Atom* tmpAtomPtr = (Atom*) getProp(disp, window, "_NET_WM_WINDOW_TYPE", nitems);
@@ -230,7 +236,6 @@ namespace org_restfulipc
         XEvent event;
         memset(&event, 0, sizeof(XEvent));
         Atom net_active_window = XInternAtom(disp, "_NET_ACTIVE_WINDOW", 0);
-        std::cout << "net_active_window: " << XGetAtomName(disp, net_active_window) << "\n";
         event.xclient.type = ClientMessage;
         event.xclient.serial = 0;
         event.xclient.send_event = 1;
@@ -242,9 +247,7 @@ namespace org_restfulipc
         event.xclient.data.l[2] = 0;
         event.xclient.data.l[3] = 0;
         event.xclient.data.l[4] = 0;
-        std::cout << "SEnding event to " << event.xclient.window << "\n";
         XSendEvent(disp._disp, rootWindow, 0, mask, &event);
-        std::cout << "Windowtoraise:" << window << "\n";
     }
 
     void WindowInfo::calculateIconName()
