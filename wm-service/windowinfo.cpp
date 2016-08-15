@@ -225,6 +225,9 @@ namespace org_restfulipc
         if (icon) {
             calculateIconName();
         }
+        else {
+            iconName[0] = '\0';
+        }
     }
 
     void WindowInfo::raiseAndFocus()
