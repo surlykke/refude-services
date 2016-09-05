@@ -19,18 +19,20 @@ namespace org_restfulipc
     class PowerApplication : public QCoreApplication
     {
     public:
-        PowerApplication(CollectionResource::ptr devicesResource, NotifierResource::ptr notifierResource, 
-                         int& argc, char** argv);
+        PowerApplication(int& argc, char** argv);
         virtual ~PowerApplication();
 
+        CollectionResource::ptr devicesResource;
+        CollectionResource::ptr actionsResource;
+        NotifierResource::ptr notifierResource;   
+    
     public slots:
-        void collectJsons();
+        void collectDeviceJsons();
+        void collectActionJsons();
 
     private:
-        CollectionResource::ptr devicesResource;
-        NotifierResource::ptr notifierResource;
         std::vector<PropertiesIF*> deviceInterfaces;
-
+        QDBusInterface* managerInterface;
     };
 }
 #endif /* POWER_APPLICATION_H */

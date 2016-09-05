@@ -8,34 +8,61 @@
 #include <QDBusObjectPath>
 #include <sys/socket.h>
 #include <ripc/collectionresource.h>
+#include <ripc/jsonwriter.h>
+#include <ripc/jsonreader.h>
 #include "properties_if.h"
 
 #include "powerapplication.h"
 
 namespace org_restfulipc
 {
+
+    struct ActionsResource : public CollectionResource 
+    {
+        ActionsResource(QDBusInterface* managerIf) : 
+            CollectionResource("actionId"),
+            managerIf(managerIf)
+        {
+        }
+
+        void doPOST(int& socket, HttpMessage& request) override
+        {
+            std::cout << "POST against " << request.path << ", remaining path: " << request.remainingPath << "\n";
+            if (!indexes.contains(request.remainingPath)) throw HttpCode::Http404;
+            managerIf->call(request.remainingPath, false);
+            throw HttpCode::Http204;
+        }
+
+        QDBusInterface* managerIf;
+    };
+
     static const QDBusConnection sysBus = QDBusConnection::systemBus();
     static const char* const UPOW_SERVICE = "org.freedesktop.UPower";
     static const char* const UPOW_PATH = "/org/freedesktop/UPower";
     static const char* const UPOW_IF = "org.freedesktop.UPower";
     static const char* const DEV_IF = "org.freedesktop.UPower.Device";
-
+    static const char* const DISPLAY_DEVICE_PATH = "/org/freedesktop/UPower/devices/DisplayDevice";
+    static const char* const LOGIN1_SERVICE = "org.freedesktop.login1";
+    static const char* const LOGIN1_PATH = "/org/freedesktop/login1";
+    static const char* const LOGIN1_MANAGER_IF = "org.freedesktop.login1.Manager";
+    
     QDBusInterface* makeIF(QString path, QString interface) {
         return new QDBusInterface(UPOW_SERVICE, path, interface, sysBus);
     }
 
    
-    PowerApplication::PowerApplication(CollectionResource::ptr devicesResource, NotifierResource::ptr notifierResource, 
-                                       int& argc, char** argv) : 
-        QCoreApplication(argc, argv),
-        devicesResource(devicesResource),
-        notifierResource(notifierResource)
+    PowerApplication::PowerApplication(int& argc, char** argv) : 
+        QCoreApplication(argc, argv)
+ 
     {
+        managerInterface = new QDBusInterface(LOGIN1_SERVICE, LOGIN1_PATH, LOGIN1_MANAGER_IF, sysBus, this);
+        actionsResource = std::make_shared<ActionsResource>(managerInterface);
+        devicesResource = std::make_shared<CollectionResource>("deviceId");
+        notifierResource = std::make_shared<NotifierResource>();
+        
         QDBusInterface* uPower = new QDBusInterface(UPOW_SERVICE, UPOW_PATH, UPOW_IF, sysBus);
-        PropertiesIF* displayDeviceIF = 
-            new PropertiesIF(UPOW_SERVICE, "/org/freedesktop/UPower/devices/DisplayDevice", sysBus);
-        // Assuming that whenever anything changes, the displaydevice will change... (?)
-        connect(displayDeviceIF, &PropertiesIF::PropertiesChanged, this, &PowerApplication::collectJsons);
+        PropertiesIF* displayDeviceIF = new PropertiesIF(UPOW_SERVICE, DISPLAY_DEVICE_PATH, sysBus);
+        connect(displayDeviceIF, &PropertiesIF::PropertiesChanged, this, &PowerApplication::collectDeviceJsons);
         deviceInterfaces.push_back(displayDeviceIF);
         
         QDBusReply<QList<QDBusObjectPath>> reply = uPower->call("EnumerateDevices");
@@ -48,8 +75,9 @@ namespace org_restfulipc
     {
     }
 
-    void PowerApplication::collectJsons()
+    void PowerApplication::collectDeviceJsons()
     {
+
         Json deviceJsons = JsonConst::EmptyArray;
         for (PropertiesIF* device : deviceInterfaces) 
         {
@@ -91,6 +119,57 @@ namespace org_restfulipc
         CollectionResourceUpdater updater(devicesResource);
         updater.update(deviceJsons);
         updater.notify(notifierResource, "devices");
+    }
+
+    void PowerApplication::collectActionJsons()
+    {
+        const char* allActionsTemplate = R"json(
+        [
+            {
+                "actionId": "PowerOff",
+                "description": "Power off the machine",
+                "icon": "system-shutdown"
+            },
+            {
+                "actionId": "Reboot",
+                "description": "Reboot the machine",
+                "icon": "system-reboot"
+            },
+            {
+                "actionId": "Suspend",
+                "description": "Suspend the machine",
+                "icon": "system-suspend"
+            },
+            {
+                "actionId": "Hibernate",
+                "description": "Put the machine into hibernation",
+                "icon": "system-suspend-hibernate"
+            },
+            {
+                "actionId": "HybridSleep",
+                "description": "Put the machine into hybrid sleep",
+                "icon": "system-suspend-hibernate"
+            }
+        ] 
+        )json";
+
+        Json allActions;
+        allActions << allActionsTemplate;
+        Json availableActions = JsonConst::EmptyArray;
+
+
+        for (int i = 0; i < allActions.size(); i++) {
+            QDBusReply<QString> canAction = 
+                managerInterface->call(QString("Can") + (const char*)allActions[i]["actionId"]);
+
+            if (canAction.value() == "yes") {
+                availableActions.append(std::move(allActions[i]));
+            }
+        }
+
+        CollectionResourceUpdater updater(actionsResource);
+        updater.update(availableActions);
+        updater.notify(notifierResource, "actions");
     }
 
 }

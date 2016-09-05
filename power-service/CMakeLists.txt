@@ -7,7 +7,6 @@ find_package(Qt5DBus REQUIRED)
 set(SOURCE_FILES 
     main.cpp
     powerapplication.cpp
-    batteryresource.cpp
     properties_if.cpp
     upower_if.cpp
     ../common/xdg.cpp

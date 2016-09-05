@@ -15,19 +15,19 @@ int main(int argc, char *argv[])
 {
     using namespace org_restfulipc;
     
+    PowerApplication powerApplication(argc, argv);
+    powerApplication.collectActionJsons();
+    powerApplication.collectDeviceJsons();
+
     Service service;
-   
-    CollectionResource::ptr devicesResource = std::make_shared<CollectionResource>("deviceId");
-    service.map(devicesResource, true, "devices");
-   
-    NotifierResource::ptr notifierResource = std::make_shared<NotifierResource>();
-    service.map(notifierResource, "notify");
+	service.dumpRequests = true;   
+    service.map(powerApplication.actionsResource, true, "actions");
+    service.map(powerApplication.devicesResource, true, "devices");
+    service.map(powerApplication.notifierResource, "notify");
 
     std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.power-service";
     service.serve(socketPath.data());
-     
-    PowerApplication powerApplication(devicesResource, notifierResource, argc, argv);
-    powerApplication.collectJsons();
+
     powerApplication.exec();
 }
 
