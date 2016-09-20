@@ -75,9 +75,30 @@ namespace org_restfulipc
     {
     }
 
+
+    const char* deviceType(int index) {
+        static const char* data[9] = {"Unknown", "Line Power", "Battery", "Ups", "Monitor", 
+                                      "Mouse", "Keyboard", "Pda", "Phone"};
+        if (index < 0 || index > 8) index = 0;
+        return data[index];
+    }
+    
+    const char* deviceState(int index) {
+        static const char* data[7] = {"Unknown", "Charging", "Discharging", "Empty", 
+                                      "Fully charged", "Pending charge", "Pending discharge"};
+        if (index < 0 || index > 6) index = 0;
+        return data[index];
+    }
+
+    const char* deviceTechnology(int index) {
+        static const char* data[7] = {"Unknown", "Lithium ion", "Lithium polymer", "Lithium iron phosphate", 
+                                      "Lead acid", "Nickel cadmium", "Nickel metal hydride"};
+        if (index < 0 || index > 6) index = 0;
+        return data[index];
+    }
+
     void PowerApplication::collectDeviceJsons()
     {
-
         Json deviceJsons = JsonConst::EmptyArray;
         for (PropertiesIF* device : deviceInterfaces) 
         {
@@ -90,11 +111,11 @@ namespace org_restfulipc
             jsonDevice.append("Model", map["Model"].toString().toUtf8().constData());
             jsonDevice.append("Serial", map["Serial"].toString().toUtf8().constData());
             jsonDevice.append("UpdateTime", map["UpdateTime"].toDouble());
-            jsonDevice.append("Type", map["Type"].toDouble());
-            jsonDevice.append("PowerSupply", map["PowerSupply"].toBool());
-            jsonDevice.append("HasHistory", map["HasHistory"].toBool());
-            jsonDevice.append("HasStatistics", map["HasStatistics"].toBool());
-            jsonDevice.append("Online", map["Online"].toBool());
+            jsonDevice.append("Type", deviceType(map["Type"].toInt()));
+            jsonDevice.append("PowerSupply", map["PowerSupply"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
+            jsonDevice.append("HasHistory", map["HasHistory"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
+            jsonDevice.append("HasStatistics", map["HasStatistics"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
+            jsonDevice.append("Online", map["Online"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
             jsonDevice.append("Energy", map["Energy"].toDouble());
             jsonDevice.append("EnergyEmpty", map["EnergyEmpty"].toDouble());
             jsonDevice.append("EnergyFull", map["EnergyFull"].toDouble());
@@ -105,11 +126,11 @@ namespace org_restfulipc
             jsonDevice.append("TimeToFull", map["TimeToFull"].toDouble());
             jsonDevice.append("Percentage", map["Percentage"].toDouble());
             jsonDevice.append("Temperature", map["Temperature"].toDouble());
-            jsonDevice.append("IsPresent", map["IsPresent"].toBool());
-            jsonDevice.append("State", map["State"].toDouble());
-            jsonDevice.append("IsRechargeable", map["IsRechargeable"].toBool());
+            jsonDevice.append("IsPresent", map["IsPresent"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
+            jsonDevice.append("State", deviceState(map["State"].toDouble()));
+            jsonDevice.append("IsRechargeable", map["IsRechargeable"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
             jsonDevice.append("Capacity", map["Capacity"].toDouble());
-            jsonDevice.append("Technology", map["Technology"].toDouble());
+            jsonDevice.append("Technology", deviceTechnology(map["Technology"].toDouble()));
             jsonDevice.append("WarningLevel", map["WarningLevel"].toDouble());
             jsonDevice.append("IconName", map["IconName"].toString().toUtf8().constData());
 
