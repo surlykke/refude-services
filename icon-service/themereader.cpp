@@ -119,9 +119,14 @@ namespace org_restfulipc
         }
     }
 
-    bool ThemeReader::oneOf(std::string str, std::list<std::string> list)
+    bool ThemeReader::oneOf(std::string str, std::list<std::string> list, bool caseSensitive)
     {
-        for (std::string val : list) if (str == val) return true;
+        if (caseSensitive) {
+            for (std::string val : list) if (str == val) return true;
+        }
+        else {
+            for (std::string val :list) if (strcasecmp(str.data(), val.data()) == 0) return true;
+        }
         return false;
     }
 }

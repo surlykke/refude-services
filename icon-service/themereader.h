@@ -23,7 +23,7 @@ namespace org_restfulipc
 
     private:
         void read();
-        bool oneOf(std::string str, std::list<std::string> list);
+        bool oneOf(std::string str, std::list<std::string> list, bool caseSensitive = false);
         const std::string& dirPath; 
     };
     
