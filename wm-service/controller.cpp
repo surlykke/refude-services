@@ -49,7 +49,7 @@ namespace org_restfulipc
         map[XInternAtom(disp, "_NET_WM_STATE_ABOVE", False)] = "Above";
         map[XInternAtom(disp, "_NET_WM_STATE_BELOW", False)] = "Below";
         map[XInternAtom(disp, "_NET_WM_STATE_DEMANDS_ATTENTION", False)] = "DemandsAttention";
-
+        XCloseDisplay(disp);
         return map;
     }
 

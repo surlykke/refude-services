@@ -139,7 +139,9 @@ namespace org_restfulipc
                 result.push_back(windowInfo);
             }
         }
-
+        if (windows) {
+            free(windows);
+        }
         return result;
 
     }
@@ -159,6 +161,7 @@ namespace org_restfulipc
             tmpTitle = (char*) getProp(disp, window, "_NET_WM_NAME", nitems);
             if (tmpTitle) {
                 title = tmpTitle;
+                XFree(tmpTitle);
             }
             else {
                 title = "";
@@ -227,6 +230,12 @@ namespace org_restfulipc
         }
         else {
             iconName[0] = '\0';
+        }
+    }
+
+    WindowInfo::~WindowInfo() {
+        if (icon) {
+           free((void*)icon);
         }
     }
 

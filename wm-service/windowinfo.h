@@ -23,6 +23,7 @@ namespace org_restfulipc
         static std::vector<WindowInfo> normalWindows();
 
         WindowInfo(Window window);
+        ~WindowInfo();
         void raiseAndFocus();
         
         std::string title;
