@@ -136,7 +136,7 @@ namespace org_restfulipc
         for (Window* w = windows; *w; w++) {
             WindowInfo windowInfo(*w);
             if (windowInfo.title.size() > 0 && windowInfo.windowType == _NET_WM_WINDOW_TYPE_NORMAL) {
-                result.push_back(windowInfo);
+                result.push_back(std::move(windowInfo));
             }
         }
         if (windows) {
@@ -146,8 +146,20 @@ namespace org_restfulipc
 
     }
 
-    WindowInfo::WindowInfo(Window window)
+    WindowInfo::WindowInfo(Window window): 
+        title(),
+        windowType(0),
+        windowState(0),
+        x(0),
+        y(0),
+        width(0),
+        height(0),
+        icon(0),
+        iconLength(0),
+        iconName(),
+        window()
     {
+        std::cout << "Constructor of: " << (long)this << "\n";
         this->window = window;
         DefaultDisplay disp;
         unsigned long nitems;
@@ -225,16 +237,53 @@ namespace org_restfulipc
         }
 
         icon = (long*) getProp(disp, window, "_NET_WM_ICON", iconLength, true);
+        std::cout << "Got icon:" << (long) icon << "\n";
         if (icon) {
-            calculateIconName();
+            iconName = calculateIconName(icon);
         }
         else {
             iconName[0] = '\0';
         }
     }
 
+
+    WindowInfo::WindowInfo(WindowInfo&& other) 
+    {
+        this->title = std::move(other.title);
+        this->windowType = other.windowType;
+        this->windowState = other.windowState;
+        this->x = other.x;
+        this->y = other.y;
+        this->width = other.width;
+        this->height = other.height;
+        this->icon = other.icon;
+        this->iconLength = other.iconLength;
+        this->iconName = std::move(other.iconName);
+        this->window = other.window;
+        other.icon = 0;
+    }
+
+    WindowInfo& WindowInfo::operator=(WindowInfo&& other) 
+    {
+        this->title = std::move(other.title);
+        this->windowType = other.windowType;
+        this->windowState = other.windowState;
+        this->x = other.x;
+        this->y = other.y;
+        this->width = other.width;
+        this->height = other.height;
+        this->icon = other.icon;
+        this->iconLength = other.iconLength;
+        this->iconName = std::move(other.iconName);
+        this->window = other.window;
+        other.icon = 0;
+         
+    }
+
     WindowInfo::~WindowInfo() {
+        std::cout << "Destructor of: " << (long)this << "\n";
         if (icon) {
+            std::cout << "freeing:" << (long)icon << "\n";
            free((void*)icon);
         }
     }
@@ -262,11 +311,12 @@ namespace org_restfulipc
         XSendEvent(disp._disp, rootWindow, 0, mask, &event);
     }
 
-    void WindowInfo::calculateIconName()
+    std::string WindowInfo::calculateIconName(long* icon)
     {
         static const char hexDigit[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
         char hash[8];
+        char tmpName[20];
         memset(hash, 0, 8);
         for (unsigned long i = 0; i < iconLength; i++) {
             hash[4 * i % 8] ^= ((icon[i] & 0xFF000000) >> 24);
@@ -275,11 +325,12 @@ namespace org_restfulipc
             hash[(4 * i + 3) % 8] ^= (icon[i] & 0xFF);
         }
         for (int i = 0; i < 8; i++) {
-            iconName[2 * i + 2 * i / 4] = hexDigit[(hash[i] & 0xF0) >> 4];
-            iconName[2 * i + 1 + (2 * i + 1) / 4] = hexDigit[hash[i] & 0xF];
+            tmpName[2 * i + 2 * i / 4] = hexDigit[(hash[i] & 0xF0) >> 4];
+            tmpName[2 * i + 1 + (2 * i + 1) / 4] = hexDigit[hash[i] & 0xF];
         }
-        iconName[4] = iconName[9] = iconName[14] = '-';
-        iconName[19] = '\0';
+        tmpName[4] = tmpName[9] = tmpName[14] = '-';
+        tmpName[19] = '\0';
+        return tmpName;
     }
 
 }

@@ -119,7 +119,7 @@ namespace org_restfulipc
     {
         Json windowsJson = JsonConst::EmptyArray;
 
-        for (WindowInfo window : WindowInfo::normalWindows()) {
+        for (const WindowInfo& window : WindowInfo::normalWindows()) {
             Json windowJson = JsonConst::EmptyObject;
             windowJson["Id"] = std::to_string(window.window);
             windowJson["Name"] = window.title;
@@ -139,7 +139,7 @@ namespace org_restfulipc
             windowJson["geometry"]["h"] = window.height;
             windowJson["windowIcon"] = window.iconName;
             windowsJson.append(std::move(windowJson));
-            iconsResource->addIcon(window.iconName, window.icon, window.iconLength);
+            iconsResource->addIcon(window.iconName.data(), window.icon, window.iconLength);
         } 
         CollectionResourceUpdater updater(windowsResource);
         updater.update(windowsJson);

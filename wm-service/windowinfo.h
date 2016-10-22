@@ -23,6 +23,11 @@ namespace org_restfulipc
         static std::vector<WindowInfo> normalWindows();
 
         WindowInfo(Window window);
+        WindowInfo(WindowInfo& other) = delete;
+        WindowInfo(WindowInfo&& other);
+        WindowInfo& operator=(WindowInfo& other) = delete;
+        WindowInfo& operator=(WindowInfo&& other);
+
         ~WindowInfo();
         void raiseAndFocus();
         
@@ -35,11 +40,11 @@ namespace org_restfulipc
         unsigned int height;
         long* icon;
         unsigned long iconLength;
-        char iconName[20];
+        std::string iconName;
         Window window;
     private:
 
-        void calculateIconName();
+        std::string calculateIconName(long* icon);
     };
         
 }
