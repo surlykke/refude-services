@@ -29,7 +29,7 @@ namespace org_restfulipc
 
     void IconCollector::collectInto(IconMap& iconMap)
     {
-        for (const std::string& fileName : files(directoryPath, {"png", "xpm", "svg"})) {
+        for (const std::string& fileName : files(directoryPath, {".png", ".xpm", ".svg"})) {
             std::string filePath = directoryPath + '/' + fileName;
             if (!realpath(filePath.data(), buffer)) {
                 std::cerr << "Unable to resolve " << filePath << " - " << strerror(errno) << "\n";

@@ -18,7 +18,7 @@ namespace org_restfulipc
                 continue;
             }
             std::string subdiretoryPath = icondirRoot + "/" + subdirectory;
-            for (const std::string& filename : files(subdiretoryPath,{"png"})) {
+            for (const std::string& filename : files(subdiretoryPath,{".png"})) {
                 std::string iconName = filename.substr(0, filename.size() - 4);
                 std::string relativeIconPath = subdirectory + "/" + filename;
                 iconPaths[iconName.data()].push_back({size, relativeIconPath});

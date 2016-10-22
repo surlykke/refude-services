@@ -42,7 +42,7 @@ namespace org_restfulipc
     void ApplicationCollector::readDesktopFiles(std::vector<std::string> applicationsDirs, Map<Json>& jsonMap)
     {
         for (const std::string& applicationsDir : applicationsDirs) {
-            for (const std::string& desktopFile : files(applicationsDir, {"desktop"})) {
+            for (const std::string& desktopFile : files(applicationsDir, {".desktop"})) {
                 std::string desktopFilePath = applicationsDir + desktopFile; 
                 std::string appId = desktopFile;
                 std::replace(appId.begin(), appId.end(), '/', '-');

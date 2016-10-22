@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 
 #include <ripc/map.h>
+#include <ripc/utils.h>
 #include <ripc/jsonwriter.h>
 
 #include "iconresource.h"
@@ -81,7 +82,12 @@ namespace org_restfulipc
 
         // So no icons in theme or it's ancestors. We look for an icon in
         // /usr/share/pixmaps, where some application icons can be found
-        for (const std::string& name : request.queryParameterMap["name"]) {
+        for (std::string name : request.queryParameterMap["name"]) {
+            // Sometimes references from destopfiles to icons in 
+            // pixmap has endings.. (minestein: We're looking at you..) 
+            if (endsWithOneOf(name.data(), {".png", ".xpm", ".svg"})) {
+                name = name.substr(0, name.length() - 4);
+            };
             if (usrSharePixmapsIcons.contains(name)) {
                 Json* icon = findPathOfClosest(usrSharePixmapsIcons[name], size);
                 if (icon) {
