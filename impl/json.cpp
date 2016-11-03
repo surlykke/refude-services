@@ -51,7 +51,7 @@ namespace org_restfulipc
             delete elements;
         }
         else if (mType == JsonType::String) {
-            delete str;
+            free((void*)str);
         }
     }
 
@@ -386,6 +386,5 @@ namespace org_restfulipc
                                typeAsString(otherType));
         }
     }
-
 
 }

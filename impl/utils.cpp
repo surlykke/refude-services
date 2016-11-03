@@ -111,13 +111,12 @@ namespace org_restfulipc
         return result;
     }
 
-    bool hasOneOfEndings(const char* fileName, const std::vector<std::string>& endings)
+    bool endsWithOneOf(const char* fileName, const std::vector<std::string>& endings)
     {
         for (const std::string& ending : endings) {
             int fileNameLength = strlen(fileName);
             int endingLength = strlen(ending.data());
-            if (fileNameLength > endingLength + 1 &&
-                fileName[fileNameLength - endingLength - 1] == '.' &&
+            if (fileNameLength >= endingLength &&
                 !strcmp(fileName + fileNameLength - endingLength, ending.data())) {
                 return true;
             }
@@ -143,7 +142,7 @@ namespace org_restfulipc
                     break;
                 }
                 else if ((dirent->d_type == DT_REG || dirent->d_type == DT_LNK) &&
-                         hasOneOfEndings(dirent->d_name, fileEndings)) {
+                         endsWithOneOf(dirent->d_name, fileEndings)) {
                     files.push_back(dirent->d_name);
                 }
             }
