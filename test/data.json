@@ -1,0 +1,11 @@
+{
+    "name" : "Ejnar Gammelgod",
+    "vægt" : 87.5,
+    "gift" : false,
+    "adresse" : {
+        "vej:" : "platanvej",
+        "husnr": 45,
+        "postnr": 3210
+    },
+    "arr" : ["hej", 2, "med", true]
+}
