@@ -1,7 +1,7 @@
 #include <string.h>
 #include <iostream>
 #include "windowinfo.h"
-#include "xdg.h"
+#include <refude/xdg.h>
 
 namespace refude
 {

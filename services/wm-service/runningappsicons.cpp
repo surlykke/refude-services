@@ -4,7 +4,7 @@
 #include <refude/utils.h>
 
 #include "runningappsicons.h"
-#include "xdg.h"
+#include <refude/xdg.h>
 
 namespace refude
 {

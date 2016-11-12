@@ -1,6 +1,6 @@
 #include <refude/utils.h>
 #include <refude/jsonwriter.h>
-#include "xdg.h"
+#include <refude/xdg.h>
 #include "desktopentryreader.h"
 #include "mimeappslistreader.h"
 #include "applicationcollector.h"

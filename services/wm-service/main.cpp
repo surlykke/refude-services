@@ -10,7 +10,7 @@
 #include <refude/service.h>
 #include <refude/errorhandling.h>
 
-#include "xdg.h"
+#include <refude/xdg.h>
 #include "controller.h"
 
 int main(int argc, char *argv[])

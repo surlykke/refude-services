@@ -8,7 +8,7 @@
 #include "applicationcollector.h"
 #include "mimetypecollector.h"
 #include "mimeappslistreader.h"
-#include "xdg.h"
+#include <refude/xdg.h>
 #include "desktopwatcher.h"
 #include "runapplication.h"
 

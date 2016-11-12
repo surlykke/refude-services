@@ -8,7 +8,7 @@
 #include <refude/utils.h>
 #include <refude/jsonwriter.h>
 #include <refude/jsonresource.h>
-#include "xdg.h"
+#include <refude/xdg.h>
 #include "themereader.h"
 #include "iconcollector.h"
 

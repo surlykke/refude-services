@@ -8,7 +8,7 @@
 #include <refude/service.h>
 #include <refude/notifierresource.h>
 #include <refude/collectionresource.h>
-#include "xdg.h"
+#include <refude/xdg.h>
 #include "powerapplication.h"
 
 int main(int argc, char *argv[])

@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <refude/errorhandling.h>
 #include "mimeappslistreader.h"
-#include "inireader.h"
+#include <refude/inireader.h>
 #include <refude/utils.h>
 
 namespace refude

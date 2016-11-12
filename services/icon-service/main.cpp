@@ -11,7 +11,7 @@
 #include <refude/errorhandling.h>
 
 #include "iconresourcebuilder.h"
-#include "xdg.h"
+#include <refude/xdg.h>
 
 int main(int argc, char *argv[])
 {
