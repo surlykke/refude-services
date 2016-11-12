@@ -8,10 +8,10 @@
 #include <sys/stat.h>
 
 #include <iostream>
-#include <ripc/errorhandling.h>
-#include <ripc/utils.h>
+#include <refude/errorhandling.h>
+#include <refude/utils.h>
 #include <unistd.h>
-#include <ripc/json.h>
+#include <refude/json.h>
 #include "iconcollector.h"
 
 namespace org_restfulipc

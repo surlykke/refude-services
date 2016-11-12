@@ -5,8 +5,8 @@
  * It is distributed under the GPL v2 license.
  * Please refer to the LICENSE file for a copy of the license.
  */
-#include <ripc/errorhandling.h>
-#include <ripc/utils.h>
+#include <refude/errorhandling.h>
+#include <refude/utils.h>
 
 #include "xdg.h"
 

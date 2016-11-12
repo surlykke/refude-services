@@ -9,7 +9,7 @@
 #ifndef THEMEREADER_H
 #define THEMEREADER_H
 #include <string>
-#include <ripc/json.h>
+#include <refude/json.h>
 #include "inireader.h"
 
 namespace org_restfulipc

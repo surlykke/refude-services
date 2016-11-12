@@ -7,10 +7,10 @@
  */
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
-#include <ripc/notifierresource.h>
-#include <ripc/jsonresource.h>
-#include <ripc/collectionresource.h>
-#include <ripc/service.h>
+#include <refude/notifierresource.h>
+#include <refude/jsonresource.h>
+#include <refude/collectionresource.h>
+#include <refude/service.h>
 
 #include "runningappsicons.h"
 

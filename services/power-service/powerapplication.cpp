@@ -7,9 +7,9 @@
 #include <QDebug>
 #include <QDBusObjectPath>
 #include <sys/socket.h>
-#include <ripc/collectionresource.h>
-#include <ripc/jsonwriter.h>
-#include <ripc/jsonreader.h>
+#include <refude/collectionresource.h>
+#include <refude/jsonwriter.h>
+#include <refude/jsonreader.h>
 #include "properties_if.h"
 
 #include "powerapplication.h"

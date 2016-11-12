@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <climits>
 #include <png++/png.hpp>
-#include <ripc/utils.h>
+#include <refude/utils.h>
 
 #include "runningappsicons.h"
 #include "xdg.h"

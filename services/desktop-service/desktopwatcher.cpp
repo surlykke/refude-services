@@ -3,8 +3,8 @@
 #include <limits.h>
 #include <unistd.h>
 #include <thread>
-#include <ripc/errorhandling.h>
-#include <ripc/utils.h>
+#include <refude/errorhandling.h>
+#include <refude/utils.h>
 #include "xdg.h"
 #include "desktopwatcher.h"
 

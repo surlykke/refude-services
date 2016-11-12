@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <string.h>
 #include "inireader.h"
-#include <ripc/errorhandling.h>
+#include <refude/errorhandling.h>
 
 namespace org_restfulipc 
 {

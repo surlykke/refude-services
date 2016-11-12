@@ -9,9 +9,9 @@
 #include <iostream>
 #include <regex>
 #include <ctype.h>
-#include <ripc/errorhandling.h>
-#include <ripc/json.h>
-#include <ripc/jsonwriter.h>
+#include <refude/errorhandling.h>
+#include <refude/json.h>
+#include <refude/jsonwriter.h>
 
 #include "desktopentryreader.h"
 

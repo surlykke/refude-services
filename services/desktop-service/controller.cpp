@@ -1,8 +1,8 @@
 #include <set>
-#include <ripc/service.h>
-#include <ripc/jsonresource.h>
-#include <ripc/jsonwriter.h>
-#include <ripc/notifierresource.h>
+#include <refude/service.h>
+#include <refude/jsonresource.h>
+#include <refude/jsonwriter.h>
+#include <refude/notifierresource.h>
 
 
 #include "applicationcollector.h"

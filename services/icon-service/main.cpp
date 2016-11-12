@@ -7,8 +7,8 @@
  */
 #include <stdlib.h>
 #include <iostream>
-#include <ripc/service.h>
-#include <ripc/errorhandling.h>
+#include <refude/service.h>
+#include <refude/errorhandling.h>
 
 #include "iconresourcebuilder.h"
 #include "xdg.h"

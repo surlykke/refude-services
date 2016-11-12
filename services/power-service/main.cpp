@@ -5,9 +5,9 @@
  * It is distributed under the GPL v2 license.
  * Please refer to the LICENSE file for a copy of the license.
  */
-#include <ripc/service.h>
-#include <ripc/notifierresource.h>
-#include <ripc/collectionresource.h>
+#include <refude/service.h>
+#include <refude/notifierresource.h>
+#include <refude/collectionresource.h>
 #include "xdg.h"
 #include "powerapplication.h"
 

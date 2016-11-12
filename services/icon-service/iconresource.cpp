@@ -10,9 +10,9 @@
 #include <limits.h>
 #include <sys/stat.h>
 
-#include <ripc/map.h>
-#include <ripc/utils.h>
-#include <ripc/jsonwriter.h>
+#include <refude/map.h>
+#include <refude/utils.h>
+#include <refude/jsonwriter.h>
 
 #include "iconresource.h"
 namespace org_restfulipc

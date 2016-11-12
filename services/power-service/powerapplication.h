@@ -4,10 +4,10 @@
 #include <vector>
 #include <map>
 #include <QCoreApplication>
-#include <ripc/json.h>
-#include <ripc/service.h>
-#include <ripc/notifierresource.h>
-#include <ripc/jsonresource.h>
+#include <refude/json.h>
+#include <refude/service.h>
+#include <refude/notifierresource.h>
+#include <refude/jsonresource.h>
     
 class QDBusInterface;
     

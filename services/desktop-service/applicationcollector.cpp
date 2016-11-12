@@ -1,5 +1,5 @@
-#include <ripc/utils.h>
-#include <ripc/jsonwriter.h>
+#include <refude/utils.h>
+#include <refude/jsonwriter.h>
 #include "xdg.h"
 #include "desktopentryreader.h"
 #include "mimeappslistreader.h"

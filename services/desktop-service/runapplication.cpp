@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include <ripc/errorhandling.h>
+#include <refude/errorhandling.h>
 #include "runapplication.h"
 
 extern char** environ;

@@ -5,9 +5,9 @@
  * It is distributed under the GPL v2 license.
  * Please refer to the LICENSE file for a copy of the license.
  */
-#include <ripc/utils.h>
-#include <ripc/jsonwriter.h>
-#include <ripc/jsonresource.h>
+#include <refude/utils.h>
+#include <refude/jsonwriter.h>
+#include <refude/jsonresource.h>
 #include "xdg.h"
 #include "themereader.h"
 #include "iconcollector.h"

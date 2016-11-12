@@ -1,10 +1,10 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include <ripc/service.h>
-#include <ripc/json.h>
-#include <ripc/collectionresource.h>
-#include <ripc/notifierresource.h>
+#include <refude/service.h>
+#include <refude/json.h>
+#include <refude/collectionresource.h>
+#include <refude/notifierresource.h>
 
 namespace org_restfulipc
 {

@@ -7,7 +7,7 @@
  */
 #include <vector>
 #include <unistd.h>
-#include <ripc/jsonwriter.h>
+#include <refude/jsonwriter.h>
 #include "windowinfo.h"
 #include "controller.h"
 namespace org_restfulipc 

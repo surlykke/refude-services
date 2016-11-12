@@ -7,10 +7,10 @@
 */
 
 #include <algorithm>
-#include <ripc/errorhandling.h>
+#include <refude/errorhandling.h>
 #include "mimeappslistreader.h"
 #include "inireader.h"
-#include <ripc/utils.h>
+#include <refude/utils.h>
 
 namespace org_restfulipc
 {

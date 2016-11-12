@@ -1,8 +1,8 @@
 #ifndef APPLICATIONCOLLECTOR_H
 #define APPLICATIONCOLLECTOR_H
 #include <set>
-#include <ripc/map.h>
-#include <ripc/json.h>
+#include <refude/map.h>
+#include <refude/json.h>
 
 namespace org_restfulipc
 {
