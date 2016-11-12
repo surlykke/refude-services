@@ -1,7 +1,7 @@
 set(PROJECT "RefudeDesktopService")
 project(${PROJECT})
 
-file(GLOB SOURCE_FILES *.cpp typedefs.h ../common/inireader.cpp ../common/xdg.cpp)
+file(GLOB SOURCE_FILES *.cpp typedefs.h)
 
 add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
 target_link_libraries(${PROJECT} pthread refude tinyxml2 dl magic)

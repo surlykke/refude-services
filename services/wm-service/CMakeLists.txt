@@ -1,7 +1,7 @@
 set(PROJECT "RefudeWmService")
 project(${PROJECT})
 
-file(GLOB SOURCE_FILES *.cpp ../common/*.cpp)
+file(GLOB SOURCE_FILES *.cpp)
 
 add_executable(${PROJECT} ${SOURCE_FILES} ${HFILES})
 target_link_libraries(${PROJECT} pthread refude dl magic X11 png)
