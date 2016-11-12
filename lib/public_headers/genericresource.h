@@ -13,7 +13,7 @@
 #include "notifierresource.h"
 #include "abstractcachingresource.h"
 
-namespace org_restfulipc
+namespace refude
 {
     class GenericResource : public AbstractCachingResource
     {

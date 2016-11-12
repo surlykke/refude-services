@@ -10,7 +10,7 @@
 #include <refude/jsonwriter.h>
 #include "windowinfo.h"
 #include "controller.h"
-namespace org_restfulipc 
+namespace refude 
 {
 
     struct WindowsResource : public CollectionResource

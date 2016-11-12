@@ -12,7 +12,7 @@
 #include <set>
 #include <string>
 
-namespace org_restfulipc
+namespace refude
 {
     std::vector<std::string> splitByWhitespace(std::string str);
     std::vector<std::string> split(std::string str, char c);

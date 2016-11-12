@@ -11,7 +11,7 @@
 #include "jsonreader.h"
 #include "json.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     const char* Json::typeAsString() const {
@@ -341,25 +341,25 @@ namespace org_restfulipc
     }
 
 
-    org_restfulipc::Json::operator bool() const
+    refude::Json::operator bool() const
     {
         typeAssert(JsonType::Boolean, "operator bool()");
         return boolean;
     }
 
-    org_restfulipc::Json::operator long() const
+    refude::Json::operator long() const
     {
         typeAssert(JsonType::Number, "operator long()");
         return (long)number;
     }
 
-    org_restfulipc::Json::operator double() const
+    refude::Json::operator double() const
     {
         typeAssert(JsonType::Number, "operator double()");
         return number;
     }
 
-    org_restfulipc::Json::operator const char *() const
+    refude::Json::operator const char *() const
     {
         typeAssert(JsonType::String, "operator const char*()");
         return str;

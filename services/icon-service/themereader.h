@@ -12,7 +12,7 @@
 #include <refude/json.h>
 #include "inireader.h"
 
-namespace org_restfulipc
+namespace refude
 {
     class ThemeReader : private IniReader
     {

@@ -15,7 +15,7 @@
 #include <refude/jsonwriter.h>
 
 #include "iconresource.h"
-namespace org_restfulipc
+namespace refude
 {
 
     IconResource::IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap) :

@@ -14,7 +14,7 @@
 
 #include "abstractresource.h"
 
-namespace org_restfulipc 
+namespace refude 
 {
 
     class NotifierResource : public AbstractResource

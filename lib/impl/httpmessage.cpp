@@ -13,7 +13,7 @@
 #include "httpmessage.h"
 #include "errorhandling.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     HttpMessage::HttpMessage()

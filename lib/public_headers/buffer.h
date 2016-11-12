@@ -9,7 +9,7 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-namespace org_restfulipc
+namespace refude
 {
     /**
      * Basically a wrapper for char* string. Grows the string as needed

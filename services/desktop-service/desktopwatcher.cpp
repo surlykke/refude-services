@@ -10,7 +10,7 @@
 
 #define LEN (sizeof(struct inotify_event) + NAME_MAX + 1)
 
-namespace org_restfulipc
+namespace refude
 {
 
     DesktopWatcher::DesktopWatcher(Controller& controller, bool emitEventOnStart) : 

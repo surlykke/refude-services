@@ -36,7 +36,7 @@
  *    RuntimeError
  *      We use this for pretty much everything else.
  */
-namespace org_restfulipc
+namespace refude
 {
     struct RuntimeError : public std::exception
     {

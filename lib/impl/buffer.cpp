@@ -13,7 +13,7 @@
 #include "errorhandling.h"
 #include "buffer.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     struct FileDescriptor 

@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace org_restfulipc 
+namespace refude 
 {
     struct geometry {
         int left,top;

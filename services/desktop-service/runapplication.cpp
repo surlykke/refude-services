@@ -10,7 +10,7 @@
 
 extern char** environ;
 
-namespace org_restfulipc
+namespace refude
 {
     void runApplication(const char* appAndArguments) 
     {

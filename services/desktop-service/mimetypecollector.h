@@ -4,7 +4,7 @@
 #include <refude/map.h>
 #include <refude/json.h>
 
-namespace org_restfulipc 
+namespace refude 
 {
     struct MimetypeCollector
     {

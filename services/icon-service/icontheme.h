@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include <map>
-namespace org_restfulipc
+namespace refude
 {
     /*
     struct IconInstance

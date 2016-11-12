@@ -19,7 +19,7 @@
 #include <curl/curl.h>
 #include "httpmessage.h"
 
-namespace org_restfulipc
+namespace refude
 {
     struct HttpUrl
     {

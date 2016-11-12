@@ -13,7 +13,7 @@ class QDBusInterface;
     
 class PropertiesIF;
     
-namespace org_restfulipc 
+namespace refude 
 {
 
     class PowerApplication : public QCoreApplication

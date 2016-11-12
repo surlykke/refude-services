@@ -12,7 +12,7 @@
 #include "abstractcachingresource.h"
 #include "notifierresource.h"
 
-namespace org_restfulipc 
+namespace refude 
 {
     class CollectionResourceUpdater;
 

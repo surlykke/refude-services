@@ -14,7 +14,7 @@
 
 #include "iconresourcebuilder.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     IconResourceBuilder::IconResourceBuilder()

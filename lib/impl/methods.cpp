@@ -15,7 +15,7 @@
 #include "errorhandling.h"
 #include "methods.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     HttpUrl::HttpUrl(const char* url)

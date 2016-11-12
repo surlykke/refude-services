@@ -9,7 +9,7 @@
 
 #include "httpprotocol.h"
 #include <string.h>
-namespace org_restfulipc
+namespace refude
 {
     Method string2Method(const char* str)
     {

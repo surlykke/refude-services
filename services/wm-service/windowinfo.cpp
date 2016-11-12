@@ -3,7 +3,7 @@
 #include "windowinfo.h"
 #include "xdg.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     int forgiving_X_error_handler(Display *d, XErrorEvent *e)

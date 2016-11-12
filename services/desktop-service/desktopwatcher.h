@@ -4,7 +4,7 @@
 
 #include "controller.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     class DesktopWatcher

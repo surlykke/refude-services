@@ -18,7 +18,7 @@
  * In terms of lines of code, this could have been done much simpler with regular expressions, 
  * but I found that both compilation time and execution time took a major hit using std::regex.
  */
-namespace org_restfulipc 
+namespace refude 
 {
    
     class IniReader 

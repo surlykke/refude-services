@@ -7,7 +7,7 @@
 
 #include "abstractresource.h"
 
-namespace org_restfulipc
+namespace refude
 {
     class AbstractCachingResource : public AbstractResource
     {

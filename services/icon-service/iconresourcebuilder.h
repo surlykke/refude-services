@@ -13,7 +13,7 @@
 #include "icontheme.h"
 #include "iconresource.h"
 
-namespace org_restfulipc 
+namespace refude 
 {
 
     class IconResourceBuilder

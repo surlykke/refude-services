@@ -15,7 +15,7 @@
 #include <refude/json.h>
 #include "inireader.h"
 
-namespace org_restfulipc 
+namespace refude 
 {
     class DesktopEntryReader : private IniReader
     {

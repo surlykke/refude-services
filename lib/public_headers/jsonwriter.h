@@ -15,7 +15,7 @@
 
 #include "buffer.h"
 
-namespace org_restfulipc
+namespace refude
 {
     class Json;
 

@@ -5,7 +5,7 @@
 #include "mimeappslistreader.h"
 #include "applicationcollector.h"
 
-namespace org_restfulipc
+namespace refude
 {
     ApplicationCollector::ApplicationCollector() : 
         defaultApplications(),

@@ -17,7 +17,7 @@
 #include "errorhandling.h"
 #include "webserver.h"
 
-namespace org_restfulipc
+namespace refude
 {
     struct FileWriter
     {

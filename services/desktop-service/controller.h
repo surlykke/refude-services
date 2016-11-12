@@ -6,7 +6,7 @@
 #include <refude/collectionresource.h>
 #include <refude/notifierresource.h>
 
-namespace org_restfulipc
+namespace refude
 {
     class DesktopWatcher;
 

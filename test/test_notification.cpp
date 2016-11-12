@@ -14,7 +14,7 @@
 #include "genericresource.h"
 #include "notifierresource.h"
 
-using namespace org_restfulipc;
+using namespace refude;
 int main(int argc, char** argv)
 {
     

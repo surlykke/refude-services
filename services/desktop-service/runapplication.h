@@ -1,7 +1,7 @@
 #ifndef RUNDESKTOPAPPLICATION_H
 #define RUNDESKTOPAPPLICATION_H
 
-namespace org_restfulipc
+namespace refude
 {
     void runApplication(const char* appAndArguments);
 }

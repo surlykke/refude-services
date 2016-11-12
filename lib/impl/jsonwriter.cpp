@@ -19,7 +19,7 @@ const char* escapeStrings[32] =
         "\u0018", "\u0019", "\u001a", "\u001b", "\u001c", "\u001d", "\u001e", "\u001f" 
     };
 
-namespace org_restfulipc
+namespace refude
 {
 
     JsonWriter::JsonWriter(Json& json) :

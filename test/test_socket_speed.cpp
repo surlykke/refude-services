@@ -22,7 +22,7 @@
 
 #define SOCK_PATH "test_speed"
 
-using namespace org_restfulipc;
+using namespace refude;
 void runAsClient() 
 {
     int sock = socket(AF_UNIX, SOCK_STREAM, 0);

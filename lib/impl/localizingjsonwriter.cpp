@@ -1,6 +1,6 @@
 #include "localizingjsonwriter.h"
 
-namespace org_restfulipc 
+namespace refude 
 {
     LocalizingJsonWriter::LocalizingJsonWriter(Json& json, std::vector<std::string> acceptableLocales):
         JsonWriter(),

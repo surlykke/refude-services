@@ -18,7 +18,7 @@
 struct __dirstream;
 typedef struct __dirstream DIR;
 
-namespace org_restfulipc
+namespace refude
 {
     struct IconCollector
     {

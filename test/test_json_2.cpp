@@ -14,7 +14,7 @@
 #include "jsonwriter.h"
 #include "json.h"
 
-using namespace org_restfulipc;
+using namespace refude;
 int main()
 {
 

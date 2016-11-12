@@ -8,7 +8,7 @@
 #include "httpmessage.h"
 #include "abstractcachingresource.h"
 
-namespace org_restfulipc
+namespace refude
 {
     class JsonResource : public AbstractCachingResource
     {

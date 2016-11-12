@@ -5,7 +5,7 @@
 #include <utility>
 #include <refude/map.h>
 #include <refude/webserver.h>
-namespace org_restfulipc
+namespace refude
 {
     struct SizePath
     {

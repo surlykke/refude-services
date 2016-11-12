@@ -9,7 +9,7 @@
 
 #include "localizingjsonwriter.h"
 #include "collectionresource.h"
-namespace org_restfulipc
+namespace refude
 {
 
     CollectionResource::CollectionResource(const char* resourceIdKey) :

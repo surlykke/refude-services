@@ -5,7 +5,7 @@
 
 #include "jsonresource.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     JsonResource::JsonResource() :

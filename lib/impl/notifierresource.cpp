@@ -14,7 +14,7 @@
 #include "notifierresource.h"
 #include "errorhandling.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     static const char* eventLine[] ={

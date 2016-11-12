@@ -12,7 +12,7 @@
 
 #include "themereader.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     ThemeReader::ThemeReader(Json& theme, const std::string& dirPath) :

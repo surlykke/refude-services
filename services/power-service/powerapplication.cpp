@@ -14,7 +14,7 @@
 
 #include "powerapplication.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     struct ActionsResource : public CollectionResource 

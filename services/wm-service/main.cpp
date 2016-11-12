@@ -15,7 +15,7 @@
 
 int main(int argc, char *argv[])
 {
-    using namespace org_restfulipc;
+    using namespace refude;
     try {
         /*std::string configDir = xdg::config_home() + "/RefudeService";
         system((std::string("mkdir -p ") + configDir).data());*/

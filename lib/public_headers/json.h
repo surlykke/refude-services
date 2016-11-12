@@ -15,7 +15,7 @@
 #include "map.h"
 #include "errorhandling.h"
 
-namespace org_restfulipc
+namespace refude
 {
     enum JsonType
     {

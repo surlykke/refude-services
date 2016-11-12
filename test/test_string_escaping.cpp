@@ -16,7 +16,7 @@
 #include "json.h"
 #include "jsonreader.h"
 
-using namespace org_restfulipc;
+using namespace refude;
 int main()
 {
     try {

@@ -1,6 +1,6 @@
 #include "abstractcachingresource.h"
 
-namespace org_restfulipc
+namespace refude
 {
     AbstractCachingResource::AbstractCachingResource() :
         AbstractResource(),

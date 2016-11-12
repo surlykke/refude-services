@@ -9,7 +9,7 @@
 #ifndef HTTPPROTOCOL_H
 #define    HTTPPROTOCOL_H
 
-namespace org_restfulipc
+namespace refude
 {
     enum class Method {
         GET,

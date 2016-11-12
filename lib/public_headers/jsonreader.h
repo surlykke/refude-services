@@ -13,7 +13,7 @@
 #include "errorhandling.h"
 #include "json.h"
 
-namespace org_restfulipc
+namespace refude
 {
     class JsonReader
     {

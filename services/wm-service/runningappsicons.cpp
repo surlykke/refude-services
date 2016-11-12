@@ -6,7 +6,7 @@
 #include "runningappsicons.h"
 #include "xdg.h"
 
-namespace org_restfulipc
+namespace refude
 {
     static const std::string icondirRoot = xdg::cache_home() + "/RefudeService/icons";
 

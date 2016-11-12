@@ -13,7 +13,7 @@
 #include "errorhandling.h"
 #include "abstractresource.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     void AbstractResource::handleRequest(int& socket, HttpMessage& request)

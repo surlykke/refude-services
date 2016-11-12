@@ -15,7 +15,7 @@
 
 #include "desktopentryreader.h"
 
-namespace org_restfulipc 
+namespace refude 
 {
 
     const char* desktopTemplate = R"json(

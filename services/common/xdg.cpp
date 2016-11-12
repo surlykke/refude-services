@@ -10,7 +10,7 @@
 
 #include "xdg.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     namespace xdg

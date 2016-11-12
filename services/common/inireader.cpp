@@ -11,7 +11,7 @@
 #include "inireader.h"
 #include <refude/errorhandling.h>
 
-namespace org_restfulipc 
+namespace refude 
 {
         
     IniReader::IniReader(std::string filePath) : 

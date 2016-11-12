@@ -19,7 +19,7 @@
 #include "abstractresource.h"
 #include "service.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     struct ThreadSafeQueue

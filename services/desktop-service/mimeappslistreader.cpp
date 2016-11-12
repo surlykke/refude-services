@@ -12,7 +12,7 @@
 #include "inireader.h"
 #include <refude/utils.h>
 
-namespace org_restfulipc
+namespace refude
 {
     MimeappsList::MimeappsList(std::string path):
     filePath(path)

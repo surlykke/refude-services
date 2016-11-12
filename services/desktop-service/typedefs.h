@@ -14,7 +14,7 @@
 #include <vector>
 #include <refude/map.h>
 
-namespace org_restfulipc
+namespace refude
 {
     typedef Map<std::vector<std::string>> AppLists;
     typedef Map<std::set<std::string>> AppSets;

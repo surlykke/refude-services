@@ -6,7 +6,7 @@
 #include "json.h"
 #include "jsonwriter.h"
 
-namespace org_restfulipc 
+namespace refude 
 {
     struct LocalizingJsonWriter : public JsonWriter
     {

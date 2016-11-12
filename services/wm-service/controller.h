@@ -14,7 +14,7 @@
 
 #include "runningappsicons.h"
 
-namespace org_restfulipc 
+namespace refude 
 {
     class Controller
     {

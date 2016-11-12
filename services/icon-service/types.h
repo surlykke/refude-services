@@ -9,7 +9,7 @@
 #define TYPES_H
 #include <string>
 #include <map>
-namespace org_restfulipc
+namespace refude
 {
     /**
      * Maps from an icon name to a Json. The Json should be an array of Json objects, each describing an

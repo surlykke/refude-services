@@ -15,7 +15,7 @@
 
 #include "errorhandling.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     RuntimeError::RuntimeError(const char* fmt, ...)

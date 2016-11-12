@@ -16,7 +16,7 @@
 
 #include "types.h"
 
-namespace org_restfulipc
+namespace refude
 {
     class IconResource : public WebServer
     {

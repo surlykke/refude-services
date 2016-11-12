@@ -11,7 +11,7 @@
 #include <string>
 #include "abstractresource.h"
 #include "magic.h"
-namespace org_restfulipc 
+namespace refude 
 {
     struct PathMimetypePair
     {

@@ -11,7 +11,7 @@
 #include <bitset>
 #include "jsonreader.h"
 
-namespace org_restfulipc
+namespace refude
 {
     bool* initializeSpaceTable() {
         bool* table = new bool[256] { false };

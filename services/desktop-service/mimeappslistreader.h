@@ -14,7 +14,7 @@
  * Based on the algorithm outlined in <FIXME>. 
  * Users of this class should feed it mimeapps.list files in descending order of precedence
  */
-namespace org_restfulipc
+namespace refude
 {
     struct MimeappsList 
     {

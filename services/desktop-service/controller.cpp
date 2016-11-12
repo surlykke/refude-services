@@ -15,7 +15,7 @@
 #include "controller.h"
 #include "typedefs.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     struct ApplicationsResource : public CollectionResource

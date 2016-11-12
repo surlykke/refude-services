@@ -12,7 +12,7 @@
 #include "errorhandling.h"
 #include "utils.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     std::vector<std::string> splitByWhitespace(std::string str)

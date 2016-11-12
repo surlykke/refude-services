@@ -13,7 +13,7 @@
 
 int main(int argc, char *argv[])
 {
-    using namespace org_restfulipc;
+    using namespace refude;
     
     PowerApplication powerApplication(argc, argv);
     powerApplication.collectActionJsons();

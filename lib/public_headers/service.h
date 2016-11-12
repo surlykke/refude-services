@@ -15,7 +15,7 @@
 #include "map.h"
 #include "abstractresource.h"
 
-namespace org_restfulipc
+namespace refude
 {
     class AbstractResource;
     class ThreadSafeQueue;

@@ -14,7 +14,7 @@
 #include <algorithm>
 #include "errorhandling.h"
 
-namespace org_restfulipc
+namespace refude
 {
     template<class V, bool copyKey>
     struct Pair;

@@ -15,7 +15,7 @@
 
 int main(int argc, char *argv[])
 {
-    using namespace org_restfulipc;
+    using namespace refude;
     try {
         Service service;
         IconResourceBuilder iconResourceBuilder;

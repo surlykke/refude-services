@@ -17,7 +17,7 @@
 #include "httpprotocol.h"
 #include "httpmessage.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
 

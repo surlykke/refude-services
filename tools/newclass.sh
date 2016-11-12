@@ -16,7 +16,7 @@ cat << HEADER > ${DN}.h
  */
 #ifndef ${UP}_H
 #define ${UP}_H
-namespace org_restfulipc 
+namespace refude 
 {
     class $CN
     {
@@ -36,7 +36,7 @@ cat << IMPL > ${DN}.cpp
  * Please refer to the LICENSE file for a copy of the license.
  */
 #include "${DN}.h"
-namespace org_restfulipc 
+namespace refude 
 {
     $CN::$CN()
     {

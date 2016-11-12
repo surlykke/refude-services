@@ -2,7 +2,7 @@
 #include <refude/utils.h>
 
 #include "mimetypecollector.h"
-namespace org_restfulipc
+namespace refude
 {
 
     MimetypeCollector::MimetypeCollector() : 

@@ -14,7 +14,7 @@
 #include <refude/json.h>
 #include "iconcollector.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     IconCollector::IconCollector(std::string directoryPath, Json& iconDirJson) :

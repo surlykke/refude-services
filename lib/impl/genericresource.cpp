@@ -11,7 +11,7 @@
 #include "errorhandling.h"
 #include "genericresource.h"
 
-namespace org_restfulipc
+namespace refude
 {
 
     GenericResource::GenericResource(const char* data, NotifierResource::ptr notifierResource) :

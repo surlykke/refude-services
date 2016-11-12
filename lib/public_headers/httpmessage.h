@@ -14,7 +14,7 @@
 #include "buffer.h"
 #include "httpprotocol.h"
 
-namespace org_restfulipc
+namespace refude
 {
     struct HttpMessage
     {
@@ -77,7 +77,7 @@ namespace org_restfulipc
     };
 }
 
-std::ostream& operator<<(std::ostream& out, const org_restfulipc::HttpMessage& message);
+std::ostream& operator<<(std::ostream& out, const refude::HttpMessage& message);
 
 #endif    /* HTTPMESSAGE_H */
 
