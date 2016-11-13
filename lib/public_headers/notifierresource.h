@@ -3,7 +3,7 @@
 *
 * This file is part of the Restful Inter Process Communication (Ripc) project. 
 * It is distributed under the LGPL 2.1 license.
-* Please refer to the LICENSE file for a copy of the license.
+* Please refer to the LGPL21 file for a copy of the license.
 */
 
 #ifndef NOTIFIERRESOURCE_H
