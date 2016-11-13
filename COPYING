@@ -1,0 +1,5 @@
+This is the refude services project.
+The project is comprised of a library (under ./lib), and a number of services, each in it's own *-service directory.
+The libray code is licensed under the LGPL 2.1 license. See the file ./LGPL21.
+The code of the services is licensed under the GPL v2 license. See the file ./GPL2
+

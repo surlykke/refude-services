@@ -5,6 +5,7 @@
  * It is distributed under the GPL v2 license.
  * Please refer to the GPL2 file for a copy of the license.
  */
+
 #include <refude/service.h>
 #include <refude/notifierresource.h>
 #include <refude/collectionresource.h>
