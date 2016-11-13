@@ -28,7 +28,6 @@ namespace refude
         WindowInfo& operator=(WindowInfo& other) = delete;
         WindowInfo& operator=(WindowInfo&& other);
 
-        ~WindowInfo();
         void raiseAndFocus();
         
         std::string title;
@@ -38,13 +37,12 @@ namespace refude
         int y;
         unsigned int width;
         unsigned int height;
-        long* icon;
-        unsigned long iconLength;
+        std::vector<unsigned long> icon;
         std::string iconName;
         Window window;
-    private:
 
-        std::string calculateIconName(long* icon);
+	private:
+        void calculateIconName();
     };
         
 }

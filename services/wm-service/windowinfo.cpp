@@ -1,7 +1,8 @@
 #include <string.h>
 #include <iostream>
-#include "windowinfo.h"
 #include <refude/xdg.h>
+#include "getprop.h"
+#include "windowinfo.h"
 
 namespace refude
 {
@@ -12,71 +13,6 @@ namespace refude
         XGetErrorText(d, e->error_code, errorMsg, 80);
         printf("Got error: %s\n", errorMsg);
         return 0;
-    }
-
-    void* getProp(Display *display,
-                  Window w,
-                  const char* propName,
-                  unsigned long& nitems_return,
-                  bool show = false)
-    {
-        // Naming of these variables (and parameters above) should match whats used 
-        // in XGetWindowPropterty man page  (except for '_delete' -> 'delete'). 
-        // So have a look at that.
-        Atom property = XInternAtom(display, propName, False);
-        long long_offset = 0;
-        long long_length = 32;
-        Bool _delete = False;
-        Atom req_type = AnyPropertyType;
-        Atom actual_type_return;
-        int actual_format_return;
-        unsigned long bytes_after_return;
-        unsigned char* prop_return;
-
-        void* buf = NULL;
-        unsigned long bufsize = 0;
-
-        do {
-            if (XGetWindowProperty(display, w, property, long_offset, long_length, _delete,
-                                   req_type, &actual_type_return, &actual_format_return,
-                                   &nitems_return, &bytes_after_return, &prop_return) != Success) {
-                printf("error in getProp...\n");
-                if (buf) {
-                    free(buf);
-                }
-                return NULL;
-
-            }
-            else {
-                int bytesPrItem;
-                switch (actual_format_return) {
-                case 32:
-                    bytesPrItem = sizeof (long);
-                    long_offset += nitems_return;
-                    break;
-                case 16: bytesPrItem = sizeof (short int);
-                    long_offset += nitems_return / 2;
-                    break;
-                case 8: bytesPrItem = sizeof (char);
-                    long_offset += nitems_return / 4;
-                    break;
-                default:
-                    return NULL;
-                }
-                long_length = bytes_after_return / 4;
-
-                unsigned long newsize = bufsize + nitems_return*bytesPrItem;
-
-                buf = realloc(buf, newsize + bytesPrItem); // Always one extra so we can zero-terminate
-                memcpy((char*) buf + bufsize, prop_return, newsize - bufsize);
-                memset((char*) buf + newsize, 0, bytesPrItem);
-                bufsize = newsize;
-                XFree(prop_return);
-            }
-        }
-        while (long_length > 0);
-
-        return buf;
     }
 
     struct DefaultDisplay
@@ -117,33 +53,23 @@ namespace refude
         std::vector<Window> result;
         DefaultDisplay disp;
         Window root = XDefaultRootWindow(disp);
-        unsigned long nitems;
-        Window* windowlist = (Window*) getProp(disp, root, "_NET_CLIENT_LIST_STACKING", nitems);
-        for (Window* w = windowlist; *w; w++) {
-            result.push_back(*w);
-        }
-        free(windowlist);
-        return result;
+        return getProp<Window>(disp, root, "_NET_CLIENT_LIST_STACKING");
     }
 
     std::vector<WindowInfo> WindowInfo::normalWindows()
     {
-        std::vector<WindowInfo> result;
         DefaultDisplay disp;
         Window root = XDefaultRootWindow(disp);
-        unsigned long nitems;
-        Window* windows = (Window*) getProp(disp, root, "_NET_CLIENT_LIST_STACKING", nitems);
-        for (Window* w = windows; *w; w++) {
-            WindowInfo windowInfo(*w);
+        std::vector<Window> windows = getProp<Window>(disp, root, "_NET_CLIENT_LIST_STACKING");
+        std::vector<WindowInfo> result;
+        for (Window w : windows) {
+            WindowInfo windowInfo(w);
             if (windowInfo.title.size() > 0 && windowInfo.windowType == _NET_WM_WINDOW_TYPE_NORMAL) {
                 result.push_back(std::move(windowInfo));
             }
         }
-        if (windows) {
-            free(windows);
-        }
-        return result;
 
+        return result;
     }
 
     WindowInfo::WindowInfo(Window window): 
@@ -155,59 +81,32 @@ namespace refude
         width(0),
         height(0),
         icon(0),
-        iconLength(0),
         iconName(),
         window()
     {
-        std::cout << "Constructor of: " << (long)this << "\n";
         this->window = window;
         DefaultDisplay disp;
         unsigned long nitems;
 
-        char* tmpTitle = (char*) getProp(disp, window, "_NET_WM_VISIBLE_NAME", nitems);
-        if (tmpTitle) {
-            title = tmpTitle;
-            XFree(tmpTitle);
+		std::vector<char> tmpTitle = getProp<char>(disp, window, "_NET_WM_VISIBLE_NAME");
+        if (tmpTitle.size() == 0) {
+            tmpTitle = getProp<char>(disp, window, "_NET_WM_NAME");
         }
-        else {
-            tmpTitle = (char*) getProp(disp, window, "_NET_WM_NAME", nitems);
-            if (tmpTitle) {
-                title = tmpTitle;
-                XFree(tmpTitle);
-            }
-            else {
-                title = "";
-            } 
-        }
+		title = std::string(tmpTitle.begin(), tmpTitle.end());
 
-        Atom* tmpAtomPtr = (Atom*) getProp(disp, window, "_NET_WM_WINDOW_TYPE", nitems);
-        if (tmpAtomPtr) {
-            windowType = *tmpAtomPtr;
-            XFree(tmpAtomPtr);
+		std::vector<Atom> tmpWindowType = getProp<Atom>(disp, window, "_NET_WM_WINDOW_TYPE");
+        if (tmpWindowType.size() > 0) {
+            windowType = tmpWindowType[0];
         }
         else {
             windowType = _NET_WM_WINDOW_TYPE_NORMAL;
         }
 
-        tmpAtomPtr = (Atom*) getProp(disp, window, "_NET_WM_STATE", nitems);
-        for (unsigned long i = 0; i < nitems; i++) {
-            windowState.push_back(tmpAtomPtr[i]);
-        }
-        if (nitems) {
-            XFree(tmpAtomPtr);
-        }
+		windowState = getProp<Atom>(disp, window, "_NET_WM_STATE");
 
-
-        long frameExtents[4] = {0, 0, 0, 0};
-        long* frameExtentsTmp = (long*) getProp(disp, window, "_NET_FRAME_EXTENTS", nitems);
-        if (frameExtentsTmp) {
-            if (nitems >= 4) {
-                frameExtents[0] = frameExtentsTmp[0];
-                frameExtents[1] = frameExtentsTmp[1];
-                frameExtents[2] = frameExtentsTmp[2];
-                frameExtents[3] = frameExtentsTmp[3];
-            }
-            XFree(frameExtentsTmp);
+		std::vector<long> frameExtents = getProp<long>(disp, window, "_NET_FRAME_EXTENTS");
+        if (frameExtents.size() < 4) {
+			frameExtents = {0, 0, 0, 0};
         }
 
         XWindowAttributes attr;
@@ -236,14 +135,8 @@ namespace refude
             height = attr.height;
         }
 
-        icon = (long*) getProp(disp, window, "_NET_WM_ICON", iconLength, true);
-        std::cout << "Got icon:" << (long) icon << "\n";
-        if (icon) {
-            iconName = calculateIconName(icon);
-        }
-        else {
-            iconName[0] = '\0';
-        }
+        icon = getProp<unsigned long>(disp, window, "_NET_WM_ICON");
+        calculateIconName();
     }
 
 
@@ -256,11 +149,9 @@ namespace refude
         this->y = other.y;
         this->width = other.width;
         this->height = other.height;
-        this->icon = other.icon;
-        this->iconLength = other.iconLength;
+        this->icon = std::move(other.icon);
         this->iconName = std::move(other.iconName);
         this->window = other.window;
-        other.icon = 0;
     }
 
     WindowInfo& WindowInfo::operator=(WindowInfo&& other) 
@@ -272,21 +163,11 @@ namespace refude
         this->y = other.y;
         this->width = other.width;
         this->height = other.height;
-        this->icon = other.icon;
-        this->iconLength = other.iconLength;
+        this->icon = std::move(other.icon);
         this->iconName = std::move(other.iconName);
         this->window = other.window;
-        other.icon = 0;
-         
     }
 
-    WindowInfo::~WindowInfo() {
-        std::cout << "Destructor of: " << (long)this << "\n";
-        if (icon) {
-            std::cout << "freeing:" << (long)icon << "\n";
-           free((void*)icon);
-        }
-    }
 
     void WindowInfo::raiseAndFocus()
     {
@@ -311,14 +192,19 @@ namespace refude
         XSendEvent(disp._disp, rootWindow, 0, mask, &event);
     }
 
-    std::string WindowInfo::calculateIconName(long* icon)
+    /**
+     * @brief WindowInfo::calculateIconName Just a very naive hashing algorithm.
+     * Should be replaced with something better, e.g. FNV-1a
+     */
+    void WindowInfo::calculateIconName()
     {
         static const char hexDigit[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
         char hash[8];
-        char tmpName[20];
+   		iconName.clear();
+		char tmpName[20];
         memset(hash, 0, 8);
-        for (unsigned long i = 0; i < iconLength; i++) {
+        for (unsigned long i = 0; i < icon.size(); i++) {
             hash[4 * i % 8] ^= ((icon[i] & 0xFF000000) >> 24);
             hash[(4 * i + 1) % 8] ^= ((icon[i] & 0xFF0000) >> 16);
             hash[(4 * i + 2) % 8] ^= ((icon[i] & 0xFF00) >> 8);
@@ -330,7 +216,7 @@ namespace refude
         }
         tmpName[4] = tmpName[9] = tmpName[14] = '-';
         tmpName[19] = '\0';
-        return tmpName;
+		iconName = tmpName;
     }
 
 }

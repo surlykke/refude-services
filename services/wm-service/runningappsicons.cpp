@@ -64,9 +64,9 @@ namespace refude
     }
 
 
-    void RunningAppsIcons::addIcon(const char* iconName, const long* icon, int nitems)
+    void RunningAppsIcons::addIcon(const char* iconName, const std::vector<unsigned long>& icon)
     {
-        for (int pos = 0; pos < nitems; pos = pos + 2 + icon[pos] * icon[pos + 1]) {
+        for (unsigned long pos = 0; pos < icon.size(); pos = pos + 2 + icon[pos] * icon[pos + 1]) {
             if (icon[pos] != icon[pos + 1]) {
                 std::cerr << "Icon not square..\n";
                 continue;
@@ -80,23 +80,23 @@ namespace refude
                     std::string mkdirCmd = std::string("mkdir -p ") + icondirRoot + "/" + dirName;
                     system(mkdirCmd.data());
                 }
-                writePng((icondirRoot + "/" + dirName + "/" + iconName + ".png").data(), icon, pos, nitems);
+                writePng((icondirRoot + "/" + dirName + "/" + iconName + ".png").data(), icon, pos);
                 iconPaths[iconName].push_back({size, dirName + "/" + iconName + ".png"});
             }
         }
 
     }
 
-    void RunningAppsIcons::writePng(const char* filePath, const long* data, unsigned long pos, unsigned long bound)
+    void RunningAppsIcons::writePng(const char* filePath, const std::vector<unsigned long>& data, unsigned long pos)
     {
-        unsigned long width = data[pos++];
-        unsigned long height = data[pos++];
+        unsigned int width = static_cast<unsigned int>(data[pos++]);
+        unsigned int height = static_cast<unsigned int>(data[pos++]);
         
         std::cout << "Create png of size " << height << ", " << width << "\n";
         png::image<png::rgba_pixel> img(height, width);
         for (unsigned long row = 0; row < height; row++) {
             for (unsigned long column = 0; column < width; column++) {
-                if (pos + row*width + column > bound - 1) {
+                if (pos + row*width + column > data.size() - 1) {
                     break;
                 }
                 unsigned long pxl = data[pos + row*width + column];
@@ -110,7 +110,5 @@ namespace refude
         std::cout << "Writing: " << filePath << "\n";
         img.write(filePath);
     }
-
-
 
 }

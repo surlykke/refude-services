@@ -139,7 +139,7 @@ namespace refude
             windowJson["geometry"]["h"] = window.height;
             windowJson["windowIcon"] = window.iconName;
             windowsJson.append(std::move(windowJson));
-            iconsResource->addIcon(window.iconName.data(), window.icon, window.iconLength);
+            iconsResource->addIcon(window.iconName.data(), window.icon);
         } 
         CollectionResourceUpdater updater(windowsResource);
         updater.update(windowsJson);

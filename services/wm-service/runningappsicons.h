@@ -23,12 +23,12 @@ namespace refude
         virtual ~RunningAppsIcons();
         virtual PathMimetypePair findFile(HttpMessage& request);
     
-        void addIcon(const char* iconName, const long* icon, int elements);
+        void addIcon(const char* iconName, const std::vector<unsigned long>& icon);
     private:
         std::string rootDir; 
         Map<SizePathList> iconPaths;
 
-        void writePng(const char* filePath, const long* data, unsigned long pos, unsigned long bound);
+        void writePng(const char* filePath, const std::vector<unsigned long>& data, unsigned long pos);
         
     };
 }
