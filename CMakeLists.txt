@@ -14,10 +14,13 @@ link_directories(/usr/local/lib64)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 add_subdirectory(lib)
-add_subdirectory(services)
+add_subdirectory(desktop-service)
+add_subdirectory(icon-service)
+add_subdirectory(wm-service)
+add_subdirectory(power-service)
 
 install(FILES haproxy/haproxy.cfg DESTINATION /etc/refude)
-install(FILES runRefude.sh 
+install(FILES bin/runRefude.sh 
 	    DESTINATION ${CMAKE_INSTALL_BINDIR} 
 		PERMISSIONS OWNER_READ GROUP_READ WORLD_READ 
 		            OWNER_WRITE 
