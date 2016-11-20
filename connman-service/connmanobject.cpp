@@ -69,7 +69,7 @@ namespace refude
         QDBusAbstractInterface("net.connman", path, interface, QDBusConnection::systemBus(), 0),
         properties(qVariant2Json(properties))
     {
-        this->properties["path"] = path.toUtf8().data();
+        this->properties["path"] = path.toUtf8().data() + 1; // Skip leading '/'
         connect(this, &ConnmanObject::PropertyChanged, this, &ConnmanObject::onPropertyChanged);
     }
 
