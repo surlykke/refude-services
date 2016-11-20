@@ -112,7 +112,7 @@ namespace refude
         deleteChildren();
     }
 
-    Json Json::copy()
+    Json Json::copy() const
     {
         if (mType == JsonType::Undefined) {
             return Json();

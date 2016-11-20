@@ -25,7 +25,7 @@ namespace refude
         virtual ~CollectionResource();
         Json jsonArray;
         const char* resourceIdKey;
-        Map<uint> indexes;
+        Map<int> indexes;
          
     
     protected:
@@ -39,6 +39,7 @@ namespace refude
     public:
         CollectionResourceUpdater(CollectionResource::ptr collectionResource);
         void update(Json& newJsonArray);
+        void updateSingle(Json& json);
         void notify(NotifierResource::ptr notifier, const char* prefix);
         std::set<std::string> addedResources;
         std::set<std::string> updatedResources;

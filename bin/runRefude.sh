@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Very simple script to run refude services
 # Call from inside a DE-session, as (at least) PATH and DISPLAY variables
 # are needed by the services.

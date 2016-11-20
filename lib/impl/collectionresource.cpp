@@ -83,6 +83,16 @@ namespace refude
 
     }
 
+    void CollectionResourceUpdater::updateSingle(Json& json)
+    {
+        std::unique_lock<std::recursive_mutex> lock(collectionResource->m);
+        const char* resourceId = json[collectionResource->resourceIdKey];
+        if (collectionResource->indexes.contains(resourceId)) {
+            collectionResource->jsonArray[collectionResource->indexes[resourceId]] = json.copy();
+            updatedResources.insert(resourceId);
+        }
+    }
+
     void CollectionResourceUpdater::notify(NotifierResource::ptr notifier, const char* prefix)
     {
         for (std::string id : addedResources) {

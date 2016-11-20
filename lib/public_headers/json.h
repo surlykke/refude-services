@@ -51,7 +51,7 @@ namespace refude
         Json(double number);
         ~Json();
 
-        Json copy();
+        Json copy() const;
         Json& operator=(Json&& other);
         Json& operator=(Json& other) = delete;
         Json& operator=(JsonConst jsonConst);

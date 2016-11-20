@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.5.0)
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}") 
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1) # For the benefit of YouCompleteMe
 
 set(PROJECT "RefudeService")
 project(${PROJECT})
@@ -18,6 +17,7 @@ add_subdirectory(desktop-service)
 add_subdirectory(icon-service)
 add_subdirectory(wm-service)
 add_subdirectory(power-service)
+add_subdirectory(connman-service)
 
 install(FILES haproxy/haproxy.cfg DESTINATION /etc/refude)
 install(FILES bin/runRefude.sh 
