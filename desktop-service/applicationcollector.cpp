@@ -63,7 +63,7 @@ namespace refude
                 else {
                     if (!reader.json.contains("Icon")) {
                         // Remove '/applications/' at start and  '.desktop' at end
-                        reader.json["Icon"] = appId.substr(strlen("/applications/"), appId.size() - 8); 
+                        reader.json["Icon"] = appId.substr(appId.size() - 8); 
                     }
                     reader.json["applicationId"] = appId;
                     jsonMap[appId] = std::move(reader.json);
