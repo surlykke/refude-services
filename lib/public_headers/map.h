@@ -42,7 +42,8 @@ namespace refude
 
         Pair(Pair&& other)
         {
-            key = std::move(other.key);
+            key = other.key;
+            other.key = 0;
             value = std::move(other.value);
         }
 
@@ -53,7 +54,8 @@ namespace refude
             if (key) {
                 free(key);
             }
-            key = std::move(other.key);
+            key = other.key;
+            other.key = 0;
             value = std::move(other.value);
             return *this;
         }
