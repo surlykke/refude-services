@@ -37,21 +37,23 @@ namespace refude
                 free(key);
             }
         }
+        
+        Pair(Pair& other) = delete;
 
         Pair(Pair&& other)
         {
-            key = other.key;
-            other.key = 0;
+            key = std::move(other.key);
             value = std::move(other.value);
         }
 
+        Pair& operator=(Pair& other) = delete;
+        
         Pair& operator=(Pair&& other)
         {
             if (key) {
                 free(key);
             }
-            key = other.key;
-            other.key = 0;
+            key = std::move(other.key);
             value = std::move(other.value);
             return *this;
         }
@@ -76,12 +78,16 @@ namespace refude
         {
         }
 
+        Pair(Pair& other) = delete;
+        
         Pair(Pair&& other)
         {
             key = other.key;
             value = std::move(other.value);
         }
 
+        Pair& operator=(Pair& other) = delete;
+        
         Pair& operator=(Pair&& other)
         {
             key = other.key;

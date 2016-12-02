@@ -159,7 +159,7 @@ namespace refude
     {
         if (serviceObjects.contains(path)) {
             CollectionResourceUpdater servicesResourceUpdater(servicesResource);
-            servicesResourceUpdater.update(serviceObjects[path]->properties);
+            servicesResourceUpdater.updateSingle(serviceObjects[path]->properties);
             servicesResourceUpdater.notify(notifier, "services");
         }
     }
