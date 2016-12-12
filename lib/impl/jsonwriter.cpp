@@ -57,10 +57,10 @@ namespace refude
     {
         if (json.mType == JsonType::Object) {
             buffer.write('{');
-            int written = 0; 
-            for (int i = 0; i < json.entries->size(); i++) {
-                writeKeyValue(written, json.entries->keyAt(i), json.entries->valueAt(i));
-            }
+            int written = 0;
+            json.eachEntry([&written, this](const char* key, Json& value) {
+                writeKeyValue(written, key, value);
+            });
             buffer.write('}');
         }
         else if (json.mType == JsonType::Array) {

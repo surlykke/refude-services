@@ -62,10 +62,9 @@ namespace refude
         Json& operator[](std::string index);
         Json& operator[](int index) const;
         std::vector<const char*> keys() const; // TODO  Use some imutable array here
-        operator const char*() const;
-        operator double() const;
-        operator long() const;
-        operator bool() const;
+        const char* toString() const;
+        double toDouble() const;
+        bool toBool() const;
 
         Json take(int index);
         Json take(const char* key);
@@ -78,20 +77,20 @@ namespace refude
         uint size() const;
 
         Json& append(Json&& json);
-        Json& append(const char* key, Json&& json);
         Json& insertAt(int index, Json&& json);
+        void append(std::vector<Pair<Json>>&& pairs);
 
         const char* typeAsString() const;
         const char* typeAsString(const JsonType type) const;
-        bool undefined();
-        JsonType type();
+        bool undefined() const;
+        JsonType type() const;
         
         template<typename Visitor>
         void eachEntry(Visitor entryVisitor)
         {
             typeAssert(JsonType::Object, "eachEntry(<lambda>)");
             entries->each(entryVisitor);
-        };
+        }
 
         template<typename Visitor>
         void eachElement(Visitor elementVisitor)

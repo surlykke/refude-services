@@ -10,9 +10,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "service.h"
-#include "genericresource.h"
-#include "notifierresource.h"
+#include <refude/service.h>
+#include <refude/genericresource.h>
+#include <refude/notifierresource.h>
 
 using namespace refude;
 int main(int argc, char** argv)

@@ -53,7 +53,7 @@ namespace refude
             themeName = "oxygen"; // FIXME
         }
 
-        if (!themeIconMap.contains(themeName)) {
+        if (themeIconMap.find(themeName) < 0) {
             std::cerr << "No theme '" << themeName << "'\n";
             throw HttpCode::Http404;
         }
@@ -68,13 +68,11 @@ namespace refude
         for (std::string& name = themeName; !name.empty(); name = inheritanceMap[name]) {
             IconMap& iconMap = themeIconMap[name];
             for (const std::string& name : request.queryParameterMap["name"]) {
-                if (iconMap.contains(name)) {
-                    Json* icon = findPathOfClosest(iconMap[name], size);
+                int pos = iconMap.find(name);
+                if (pos >= 0) {
+                    Json* icon = findPathOfClosest(iconMap.pairAt(pos).value, size);
                     if (icon) {
-                        return
-                        {
-                            (*icon)["path"], (*icon)["mimetype"]
-                        };
+                        return { (*icon)["path"].toString(), (*icon)["mimetype"].toString() };
                     }
                 }
             }
@@ -88,13 +86,11 @@ namespace refude
             if (endsWithOneOf(name.data(), {".png", ".xpm", ".svg"})) {
                 name = name.substr(0, name.length() - 4);
             };
-            if (usrSharePixmapsIcons.contains(name)) {
-                Json* icon = findPathOfClosest(usrSharePixmapsIcons[name], size);
-                if (icon) {
-                    return
-                    {
-                        (*icon)["path"], (*icon)["mimetype"]
-                    };
+            int pos = usrSharePixmapsIcons.find(name);
+            if (pos >= 0) {
+                Json* icon = findPathOfClosest(usrSharePixmapsIcons.pairAt(pos).value, size);
+                if (icon) { 
+                    return { (*icon)["path"].toString(), (*icon)["mimetype"].toString() };
                 }
             }
         }
@@ -153,8 +149,8 @@ namespace refude
         for (int i = 0; i < iconList.size(); i++) {
             Json* instance = &iconList[i];
             double distance;
-            double minSize = (*instance)["MinSize"];
-            double maxSize = (*instance)["MaxSize"];
+            double minSize = (*instance)["MinSize"].toDouble();
+            double maxSize = (*instance)["MaxSize"].toDouble();
             if (size < minSize) {
                 distance = minSize - size;
             }

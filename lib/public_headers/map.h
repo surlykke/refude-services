@@ -16,13 +16,9 @@
 
 namespace refude
 {
-    template<class V, bool copyKey>
-    struct Pair;
-
     template<class V>
-    struct Pair<V, true>
+    struct Pair
     {
-
         Pair(const char *key, V& value) : key(strdup(key)), value(value)
         {
         }
@@ -65,102 +61,31 @@ namespace refude
     };
 
     template<class V>
-    struct Pair<V, false>
-    {
-
-        Pair(const char *key, V& value) : key(key), value(value)
-        {
-        }
-
-        Pair(const char *key, V&& value) : key(key), value(std::move(value))
-        {
-        }
-
-        ~Pair()
-        {
-        }
-
-        Pair(Pair& other) = delete;
-        
-        Pair(Pair&& other)
-        {
-            key = other.key;
-            value = std::move(other.value);
-        }
-
-        Pair& operator=(Pair& other) = delete;
-        
-        Pair& operator=(Pair&& other)
-        {
-            key = other.key;
-            value = std::move(other.value);
-            return *this;
-        }
-
-        const char* key;
-        V value;
-    };
-
-    template<typename V, bool copyKey>
-    struct LessThan
-    {
-
-        bool operator()(const Pair<V, copyKey>& p1, const Pair<V, copyKey>& p2)
-        {
-            return strcmp(p1.key, p2.key) < 0;
-        }
-    };
-
-    template<typename V, bool copyKey>
-    struct Equal
-    {
-
-        bool operator()(const Pair<V, copyKey>& p1, const Pair<V, copyKey>& p2)
-        {
-            return strcmp(p1.key, p2.key) == 0;
-        }
-    };
-
-    template<class V, bool copyKey = true >
     struct Map
     {
-        std::vector<Pair<V, copyKey>> list;
-        size_t sorted;
+        std::vector<Pair<V>> list;
 
-        Map() : list(), sorted(0)
+        Map() : list(), inserting(false)
         {
         }
 
-        Map(Map&& other)
+        Map(Map&& other) : list(), inserting(false)
         {
+            if (other.inserting) throw RuntimeError("Move constructor during insert");
             this->list = move(other.list);
-            this->sorted = other.sorted;
-            other.sorted = 0;
         }
 
         Map& operator=(Map&& other)
         {
+            if (other.inserting || inserting) {
+                throw RuntimeError("Move assignment during insert on %s", (inserting ? "this" : "other"));
+            }
+
             this->list = move(other.list);
-            this->sorted = other.sorted;
-            other.sorted = 0;
             return *this;
         }
 
-        V& add(const char* key, V& value, bool ownKey = false)
-        {
-            if (!key) throw RuntimeError("NULL is not allowed as map key");
-            list.push_back(Pair<V, copyKey>(key, value));
-            return list.back().value;
-        }
-
-        V& add(const char* key, V&& value, bool ownKey = false)
-        {
-            if (!key) throw RuntimeError("NULL is not allowed as map key");
-            list.push_back(Pair<V, copyKey>(key, std::move(value)));
-            return list.back().value;
-        }
-
-        int find(const char* key)
+        int find(const char* key) const
         {
             bool found;
             int pos = search(key, found);
@@ -172,22 +97,17 @@ namespace refude
             }
         }
 
-        int find(std::string key) 
+        int find(std::string key) const
         {
             return find(key.data());
         }
 
-        bool contains(const char* key) 
+        Pair<V>& pairAt(int pos)
         {
-            return find(key) > -1;
+            return list[pos];
         }
 
-        bool contains(std::string key) 
-        {
-            return find(key.data()) > -1;
-        }
-
-        int find_longest_prefix(const char* key)
+        int find_longest_prefix(const char* key) const
         {
             bool found;
             int pos = search(key, found);
@@ -207,10 +127,17 @@ namespace refude
             bool found;
             int pos = search(key, found);
             if (!found) {
-                list.insert(list.begin() + pos, Pair<V, copyKey>(key, V()));
-                sorted++;
+                list.insert(list.begin() + pos, Pair<V>(key, V()));
             }
             return list.at(pos).value;
+        }
+
+        const V& operator[](const char* key) const
+        {
+            bool found;
+            int pos = search(key, found);
+            if (! found) throw RuntimeError("Key not found: %s", key);
+            return list[pos].value;
         }
 
         V& operator[](const std::string& key)
@@ -225,7 +152,6 @@ namespace refude
             if (!found) throw RuntimeError("Key not found: %s", key);
             V tmp = std::move(list[pos].value);
             list.erase(list.begin() + pos);
-            sorted--;
             return tmp;
         }
 
@@ -240,7 +166,6 @@ namespace refude
             int pos = search(key, found);
             if (found) {
                 list.erase(list.begin() + pos);
-                sorted--;
             }
         }
         
@@ -251,75 +176,51 @@ namespace refude
 
         void clear()
         {
+            if (inserting) throw RuntimeError("Clearing map during insert");
             list.erase(list.begin(), list.end());
-            sorted = 0;
         }
 
-        size_t size()
+        size_t size() const
         {
-            sort();
+            if (inserting) throw RuntimeError("Call size during insert");
             return list.size();
         }
 
-        const char* keyAt(size_t pos)
+
+        void beginInsert() 
         {
-            sort();
-            return list.at(pos).key;
+            if (inserting) throw RuntimeError("Call beginInsert, but already inserting");
+            inserting = true;
         }
 
-        V& valueAt(size_t pos)
+        void endInsert() 
         {
-            sort();
-            return list.at(pos).value;
-        }
-
-        void sort()
-        {
-            if (sorted < list.size()) {
-                if (sorted < list.size() - 1) {
-                    std::sort(list.begin() + sorted, list.end(), LessThan<V, copyKey>());
+            if (!inserting) throw RuntimeError("Call endInsert, but not inserting");
+            inserting = false;
+            std::stable_sort(list.begin(), list.end(), [](const Pair<V>& p1, const Pair<V>& p2) -> bool { 
+                return strcmp(p1.key, p2.key) < 0; 
+            });
+            
+            if (list.size() >= 2) {
+                auto to = list.begin();
+                for(auto from = list.begin() + 1; from != list.end(); from++) {
+                    if (strcmp(to->key, from->key) < 0) {
+                        to++; 
+                    }
+                    if (to != from) {
+                        *to = std::move(*from);
+                    }
                 }
-                if (sorted > 0) {
-                    std::inplace_merge(list.begin(), list.begin() + sorted, list.end(), LessThan<V, copyKey>());
-                }
-                list.erase(std::unique(list.begin(), list.end(), Equal<V, copyKey>()), list.end());
-                sorted = list.size();
+                list.erase(to + 1, list.end());
             }
         }
 
-        std::vector<const char*> keys()
+        void insert(const char* key, V&& value)
         {
-            std::vector<const char*> res;
-            for (int i = 0; i < size(); i++) {
-                res.push_back(list.at(i).key);
-            }
-            return res;
+            if (!inserting) throw RuntimeError("Call insert, but not inserting");
+            list.push_back(Pair<V>(key, std::move(value)));
         }
-
-        std::vector<V*> values()
-        {
-            std::vector<V*> res;
-            for (int i = 0; i < size(); i++) {
-                res.push_back(&(list.at(i).value));
-            }
-            return res;
-        }
-
-        std::vector<const char*> keys(const char* prefix)
-        {
-            bool dummy;
-            int prefixLength = strlen(prefix);
-            int pos = search(prefix, dummy);
-            std::vector<const char*> res;
-            while (pos < size() && !strncmp(prefix, list.at(pos).key, prefixLength)) {
-                res.push_back(list.at(pos).key);
-                pos++;
-            }
-
-            return res;
-        }
-
-        //typedef void (*Visitor)(const char*, V&);
+        
         template <typename Visitor>
         void each(Visitor visitor)
         {
@@ -329,6 +230,10 @@ namespace refude
         }
 
     private:
+        bool inserting;
+
+
+        
 
         /**
          * 
@@ -338,9 +243,8 @@ namespace refude
          *         equal to the given key or, if none such exists, size().
          *         This returned value is where the given key would be inserted in the map.
          */
-        int search(const char * key, bool& found)
+        int search(const char * key, bool& found) const
         {
-            sort();
             int lo = -1;
             int hi = list.size();
             while (lo < hi - 1) {

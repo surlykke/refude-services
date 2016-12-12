@@ -28,9 +28,9 @@ namespace refude
 
     protected:
         JsonWriter();
-        void write(Json& json);
+        void write(refude::Json& json);
         void writeObject(Json& json);
-        virtual void writeKeyValue(int& written, const char* key, Json& value);
+        virtual void writeKeyValue(int& written, const char* key, refude::Json& value);
         void writeString(const char *string);
         void writeChar(const char chr);
     };

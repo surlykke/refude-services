@@ -27,18 +27,13 @@ namespace refude
     Buffer CollectionResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
     {
         if (*(request.remainingPath)) {
-            if (indexes.contains(request.remainingPath)) {
-                Json& json = jsonArray[indexes[request.remainingPath]];
-                return LocalizingJsonWriter(json, getAcceptedLocales(request)).buffer;
-            }
-            else {
-                throw HttpCode::Http404;
-            }
+            if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
+            Json& json = jsonArray[indexes[request.remainingPath]];
+            return LocalizingJsonWriter(json, getAcceptedLocales(request)).buffer;
         }
         else {
             return LocalizingJsonWriter(jsonArray, getAcceptedLocales(request)).buffer;
         }
-
     }
 
     CollectionResourceUpdater::CollectionResourceUpdater(CollectionResource::ptr collectionResource) :
@@ -54,14 +49,14 @@ namespace refude
                 const char* resourceIdKey = collectionResource->resourceIdKey;
                 Map<int> newJsons;
                 for (uint i = 0; i < newJsonArray.size(); i++) {
-                    const char* id = newJsonArray[i][resourceIdKey];
+                    const char* id = newJsonArray[i][resourceIdKey].toString();
                     newJsons[id] = i;
-                    addedResources.insert((const char*) newJsonArray[i][resourceIdKey]);
+                    addedResources.insert(newJsonArray[i][resourceIdKey].toString());
                 }
 
                 for (uint i = 0; i < collectionResource->jsonArray.size(); i++) {
-                    const char* id = collectionResource->jsonArray[i][resourceIdKey];
-                    if (newJsons.contains(id)) {
+                    const char* id = collectionResource->jsonArray[i][resourceIdKey].toString();
+                    if (newJsons.find(id) >= 0) {
                         addedResources.erase(id);
                         if (collectionResource->jsonArray[i] != newJsonArray[newJsons[id]]) {
                             updatedResources.insert(id);
@@ -76,7 +71,7 @@ namespace refude
             collectionResource->jsonArray = std::move(newJsonArray);
             collectionResource->indexes.clear();
             for (uint i = 0; i < collectionResource->jsonArray.size(); i++) {
-                collectionResource->indexes[collectionResource->jsonArray[i][collectionResource->resourceIdKey]] = i;
+                collectionResource->indexes[collectionResource->jsonArray[i][collectionResource->resourceIdKey].toString()] = i;
             }
             collectionResource->clearCache();
         }
@@ -86,8 +81,8 @@ namespace refude
     void CollectionResourceUpdater::updateSingle(Json& json)
     {
         std::unique_lock<std::recursive_mutex> lock(collectionResource->m);
-        const char* resourceId = json[collectionResource->resourceIdKey];
-        if (collectionResource->indexes.contains(resourceId)) {
+        const char* resourceId = json[collectionResource->resourceIdKey].toString();
+        if (collectionResource->indexes.find(resourceId) >= 0) {
             collectionResource->jsonArray[collectionResource->indexes[resourceId]] = json.copy();
             updatedResources.insert(resourceId);
         }

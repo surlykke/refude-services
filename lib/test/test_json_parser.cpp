@@ -12,9 +12,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <iostream>
-#include "jsonwriter.h"
-#include "json.h"
-#include "jsonreader.h"
+#include <refude/jsonwriter.h>
+#include <refude/json.h>
+#include <refude/jsonreader.h>
 
 using namespace refude;
 int main()

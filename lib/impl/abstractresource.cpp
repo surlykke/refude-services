@@ -89,7 +89,7 @@ namespace refude
     std::vector<std::string> AbstractResource::getAcceptedLocales(HttpMessage& request)
     {
         std::vector<std::string> result;
-        if (!request.headers.contains("accept-language")) {
+        if (request.headers.find("accept-language") < 0) {
             return result;
         }
 

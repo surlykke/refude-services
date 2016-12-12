@@ -22,7 +22,7 @@ namespace refude
         void doPOST(int& socket, HttpMessage& request) override
         {
             std::cout << "POST against " << request.remainingPath << "\n";
-            if (! indexes.contains(request.remainingPath)) throw HttpCode::Http404;
+            if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
             errno = 0;
             Window windowToRaise = strtoul(request.remainingPath, NULL, 0);
             if (errno != 0) throw C_Error();

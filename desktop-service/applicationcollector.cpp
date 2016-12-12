@@ -57,7 +57,7 @@ namespace refude
                 std::string icon = appId.substr(0, appId.size() - 8); // strip ending '.desktop'
                 
                 DesktopEntryReader reader(desktopFilePath);
-                if (reader.json.contains("Hidden") && (bool)reader.json["Hidden"]) {
+                if (reader.json.contains("Hidden") && reader.json["Hidden"].toBool()) {
                     jsonMap.erase(appId.data());
                 }
                 else {
@@ -78,8 +78,9 @@ namespace refude
         mimeappsList.removedAssociations.each([&jsonMap](const char* mimetype, 
                                                      std::set<std::string>& deAssociatedApplications) {
             for (const std::string& deAssociatedApplication : deAssociatedApplications) {
-                if (jsonMap.contains(deAssociatedApplication)) {
-                    Json& associatedAppsArray = jsonMap[deAssociatedApplication]["mimetype"];
+                int pos = jsonMap.find(deAssociatedApplication);
+                if ( pos >= 0) {
+                    Json& associatedAppsArray = jsonMap.pairAt(pos).value["mimetype"];
                     while (int index = associatedAppsArray.find(deAssociatedApplication) > -1) {
                         associatedAppsArray.take(index);
                     }
@@ -87,11 +88,11 @@ namespace refude
             }
         });
         
-        mimeappsList.addedAssociations.each([&jsonMap](const char* mimetype, 
-                                                   std::set<std::string>& associatedApplications) {
+        mimeappsList.addedAssociations.each([&jsonMap](const char* mimetype, std::set<std::string>& associatedApplications) {
             for (const std::string& associatedApplication : associatedApplications) {
-                if (jsonMap.contains(associatedApplication)) {
-                    jsonMap[associatedApplication]["mimetype"].append(mimetype);
+                int pos = jsonMap.find(associatedApplication);
+                if (pos >= 0) {
+                    jsonMap.pairAt(pos).value["mimetype"].append(mimetype);
                 }
             }
         });

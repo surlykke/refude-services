@@ -11,8 +11,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "jsonwriter.h"
-#include "json.h"
+#include <refude/jsonwriter.h>
+#include <refude/json.h>
 
 using namespace refude;
 int main()
@@ -33,6 +33,6 @@ int main()
     json.append( 3);
     json.take(2);
     Json taken = json.take(0);
-    std::cout << "At 0: " << (double)taken << "\n";
+    std::cout << "At 0: " << taken.toDouble() << "\n";
     std::cout << JsonWriter(json).buffer.data() << "\n";
 }

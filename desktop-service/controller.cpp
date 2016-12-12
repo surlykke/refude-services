@@ -31,8 +31,8 @@ namespace refude
         ApplicationsResource() : CollectionResource("applicationId") {}
         void doPOST(int& socket, HttpMessage& request) override
         {
-            if (! indexes.contains(request.remainingPath)) throw HttpCode::Http404;
-            runApplication(jsonArray[indexes[request.remainingPath]]["Exec"]);
+            if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
+            runApplication(jsonArray[indexes[request.remainingPath]]["Exec"].toString());
             throw HttpCode::Http204;
         }
 
@@ -43,7 +43,7 @@ namespace refude
         MimetypesResource() : CollectionResource("mimetype") {}
         void doPATCH(int& socket, HttpMessage& request) override
         {
-            if (! indexes.contains(request.remainingPath))  throw HttpCode::Http404;
+            if (indexes.find(request.remainingPath) < 0)  throw HttpCode::Http404;
             Json mergeJson;
             mergeJson << request.body;
             if (mergeJson.type() != JsonType::Object) throw HttpCode::Http406;
@@ -56,7 +56,7 @@ namespace refude
             defaultAppsForMime.clear();
             mergeJson["defaultApplications"].eachElement([&defaultAppsForMime](Json& element) { 
                 if (element.type() != JsonType::String) throw HttpCode::Http422;
-                defaultAppsForMime.push_back((const char*)element);
+                defaultAppsForMime.push_back(element.toString());
             });
 
             mimeappsList.write();

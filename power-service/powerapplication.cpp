@@ -36,7 +36,7 @@ namespace refude
         void doPOST(int& socket, HttpMessage& request) override
         {
             std::cout << "POST against " << request.path << ", remaining path: " << request.remainingPath << "\n";
-            if (!indexes.contains(request.remainingPath)) throw HttpCode::Http404;
+            if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
             managerIf->call(request.remainingPath, false);
             throw HttpCode::Http204;
         }
@@ -113,34 +113,34 @@ namespace refude
             QVariantMap map =  device->GetAll(DEV_IF).value();
             Json jsonDevice = JsonConst::EmptyObject; 
             QString deviceId = device->path().mid(QString("/org/freedesktop/UPower/devices/").size());
-            jsonDevice.append("deviceId", deviceId.toUtf8().constData());
-            jsonDevice.append("NativePath", map["NativePath"].toString().toUtf8().constData());
-            jsonDevice.append("Vendor", map["Vendor"].toString().toUtf8().constData());
-            jsonDevice.append("Model", map["Model"].toString().toUtf8().constData());
-            jsonDevice.append("Serial", map["Serial"].toString().toUtf8().constData());
-            jsonDevice.append("UpdateTime", map["UpdateTime"].toDouble());
-            jsonDevice.append("Type", deviceType(map["Type"].toInt()));
-            jsonDevice.append("PowerSupply", map["PowerSupply"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
-            jsonDevice.append("HasHistory", map["HasHistory"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
-            jsonDevice.append("HasStatistics", map["HasStatistics"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
-            jsonDevice.append("Online", map["Online"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
-            jsonDevice.append("Energy", map["Energy"].toDouble());
-            jsonDevice.append("EnergyEmpty", map["EnergyEmpty"].toDouble());
-            jsonDevice.append("EnergyFull", map["EnergyFull"].toDouble());
-            jsonDevice.append("EnergyFullDesign", map["EnergyFullDesign"].toDouble());
-            jsonDevice.append("EnergyRate", map["EnergyRate"].toDouble());
-            jsonDevice.append("Voltage", map["Voltage"].toDouble());
-            jsonDevice.append("TimeToEmpty", map["TimeToEmpty"].toDouble());
-            jsonDevice.append("TimeToFull", map["TimeToFull"].toDouble());
-            jsonDevice.append("Percentage", map["Percentage"].toDouble());
-            jsonDevice.append("Temperature", map["Temperature"].toDouble());
-            jsonDevice.append("IsPresent", map["IsPresent"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
-            jsonDevice.append("State", deviceState(map["State"].toDouble()));
-            jsonDevice.append("IsRechargeable", map["IsRechargeable"].toBool() ? JsonConst::TRUE : JsonConst::FALSE);
-            jsonDevice.append("Capacity", map["Capacity"].toDouble());
-            jsonDevice.append("Technology", deviceTechnology(map["Technology"].toDouble()));
-            jsonDevice.append("WarningLevel", map["WarningLevel"].toDouble());
-            jsonDevice.append("IconName", map["IconName"].toString().toUtf8().constData());
+            jsonDevice["deviceId"] = deviceId.toUtf8().constData();
+            jsonDevice["NativePath"] = map["NativePath"].toString().toUtf8().constData();
+            jsonDevice["Vendor"] = map["Vendor"].toString().toUtf8().constData();
+            jsonDevice["Model"] = map["Model"].toString().toUtf8().constData();
+            jsonDevice["Serial"] = map["Serial"].toString().toUtf8().constData();
+            jsonDevice["UpdateTime"] = map["UpdateTime"].toDouble();
+            jsonDevice["Type"] = deviceType(map["Type"].toInt());
+            jsonDevice["PowerSupply"] = map["PowerSupply"].toBool() ? JsonConst::TRUE : JsonConst::FALSE;
+            jsonDevice["HasHistory"] = map["HasHistory"].toBool() ? JsonConst::TRUE : JsonConst::FALSE;
+            jsonDevice["HasStatistics"] = map["HasStatistics"].toBool() ? JsonConst::TRUE : JsonConst::FALSE;
+            jsonDevice["Online"] = map["Online"].toBool() ? JsonConst::TRUE : JsonConst::FALSE;
+            jsonDevice["Energy"] = map["Energy"].toDouble();
+            jsonDevice["EnergyEmpty"] = map["EnergyEmpty"].toDouble();
+            jsonDevice["EnergyFull"] = map["EnergyFull"].toDouble();
+            jsonDevice["EnergyFullDesign"] = map["EnergyFullDesign"].toDouble();
+            jsonDevice["EnergyRate"] = map["EnergyRate"].toDouble();
+            jsonDevice["Voltage"] = map["Voltage"].toDouble();
+            jsonDevice["TimeToEmpty"] = map["TimeToEmpty"].toDouble();
+            jsonDevice["TimeToFull"] = map["TimeToFull"].toDouble();
+            jsonDevice["Percentage"] = map["Percentage"].toDouble();
+            jsonDevice["Temperature"] = map["Temperature"].toDouble();
+            jsonDevice["IsPresent"] = map["IsPresent"].toBool() ? JsonConst::TRUE : JsonConst::FALSE;
+            jsonDevice["State"] = deviceState(map["State"].toDouble());
+            jsonDevice["IsRechargeable"] = map["IsRechargeable"].toBool() ? JsonConst::TRUE : JsonConst::FALSE;
+            jsonDevice["Capacity"] = map["Capacity"].toDouble();
+            jsonDevice["Technology"] = deviceTechnology(map["Technology"].toDouble());
+            jsonDevice["WarningLevel"] = map["WarningLevel"].toDouble();
+            jsonDevice["IconName"] = map["IconName"].toString().toUtf8().constData();
 
             deviceJsons.append(std::move(jsonDevice));
         }
@@ -189,7 +189,7 @@ namespace refude
 
         for (int i = 0; i < allActions.size(); i++) {
             QDBusReply<QString> canAction = 
-                managerInterface->call(QString("Can") + (const char*)allActions[i]["actionId"]);
+                managerInterface->call(QString("Can") + allActions[i]["actionId"].toString());
 
             if (canAction.value() == "yes") {
                 availableActions.append(std::move(allActions[i]));

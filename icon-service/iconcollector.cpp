@@ -56,11 +56,11 @@ namespace refude
             }
 
             if (iconDirJson.contains("Context")) {
-                instance["context"] = (const char*) iconDirJson["Context"];
+                instance["context"] = iconDirJson["Context"].toString();
             }
             instance["path"] = filePath;
-            instance["MinSize"] = (double) iconDirJson["MinSize"];
-            instance["MaxSize"] = (double) iconDirJson["MaxSize"];
+            instance["MinSize"] = iconDirJson["MinSize"].toDouble();
+            instance["MaxSize"] = iconDirJson["MaxSize"].toDouble();
 
             if (iconMap[iconName].undefined()) {
                 iconMap[iconName] = JsonConst::EmptyArray;

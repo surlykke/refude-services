@@ -26,20 +26,15 @@ namespace refude
 
     const char* HttpMessage::header(const char* headerName)
     {
-        int index = headers.find(headerName);
-        return index == -1 ? NULL : headers.valueAt(index);
+        int pos = headers.find(headerName);
+        return pos < 0 ? NULL : headers.pairAt(pos).value;
     }
 
     const char* HttpMessage::parameter(const char* parameterName)
     {
-        if (queryParameterMap.contains(parameterName)) {
-            return queryParameterMap[parameterName][0];
-        }
-        else {
-            return NULL;
-        }
+        int pos = queryParameterMap.find(parameterName);
+        return pos < 0 ? NULL : queryParameterMap.pairAt(pos).value[0];
     }
-
 
     void HttpMessage::clear()
     {
@@ -179,9 +174,11 @@ namespace refude
 
     void HttpMessageReader::readHeaders()
     {
+        _message.headers.beginInsert();
         while (true) {
             if (nextChar() == '\r') {
                 if (nextChar() != '\n') throw HttpCode::Http400;
+                _message.headers.endInsert();
                 return;
             }
 
@@ -221,7 +218,7 @@ namespace refude
 
         if (nextChar() != '\n') throw HttpCode::Http400;
         _message.buffer[endOfHeaderValue] = '\0';
-        _message.headers.add(_message.buffer + startOfHeaderLine, _message.buffer + startOfHeaderValue);
+        _message.headers.insert(_message.buffer + startOfHeaderLine, _message.buffer + startOfHeaderValue);
     }
 
     bool HttpMessageReader::isTChar(char c)
@@ -284,21 +281,21 @@ namespace refude
             buf << "HTTP " << method2String(method) << " " << path;
             if (queryParameterMap.size() > 0) {
                 char separator = '?';
-                for (int i = 0; i < queryParameterMap.size(); i++) {
-                    for (const char* value : queryParameterMap.valueAt(i)) {
-                        buf << separator << queryParameterMap.keyAt(i) << "=" << value;
+                queryParameterMap.each([&buf, &separator](const char* key, const std::vector<const char*>& values){
+                    for (const char* value : values) {
+                        buf << separator << key << "=" << value;
                         separator = '&';
                     }
-                }
+                });
             }
         }
         else {
             buf << status;
         }
         buf << "\n";
-        for (int i = 0; i < headers.size(); i++) {
-            buf << headers.keyAt(i) << ": " << headers.valueAt(i) << "\n";
-        }
+        headers.each([&buf](const char* key, const char* value) {
+            buf << key << ": " << value << "\n";
+        });
         buf << "\n";
         if (body) {
             buf << body << "\n";

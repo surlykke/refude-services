@@ -21,8 +21,8 @@ namespace refude
         Method method;
         int status;
         char* path;
-        Map<const char*, false> headers;
-        Map<std::vector<const char*>, false> queryParameterMap;
+        Map<const char*> headers;
+        Map<std::vector<const char*>> queryParameterMap;
         int contentLength;
         char* body;
         

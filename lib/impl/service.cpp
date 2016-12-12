@@ -150,14 +150,11 @@ namespace refude
             }
         }
     
-        std::cout << "Mapping " << path;
         if (wildcarded) {
-            std::cout << "\n";
-            prefixMappings.add(path, resource);
+            prefixMappings[path] = resource;
         }
         else {
-            std::cout << "\n";
-            resourceMappings.add(path, resource);
+            resourceMappings[path] = resource;
         }
 
     }
@@ -194,7 +191,7 @@ namespace refude
     {
         Map<AbstractResource::ptr>& map = prefix ? prefixMappings : resourceMappings;
         int pos = map.find(path); 
-        return pos < 0 ? NULL : map.valueAt(pos);
+        return pos < 0 ? NULL : map.pairAt(pos).value;
     }
 
 
@@ -258,17 +255,17 @@ namespace refude
                     AbstractResource::ptr handler; 
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex > -1) {
-                        handler = resourceMappings.valueAt(resourceIndex);
-                        request.setMatchedPathLength(strlen(resourceMappings.keyAt(resourceIndex)));
+                        handler = resourceMappings.pairAt(resourceIndex).value;
+                        request.setMatchedPathLength(strlen(resourceMappings.pairAt(resourceIndex).key));
                     }
                     else { 
                         resourceIndex = prefixMappings.find_longest_prefix(request.path);
                         if (resourceIndex >= 0) {
-                            const char* matchedPath = prefixMappings.keyAt(resourceIndex); 
+                            const char* matchedPath = prefixMappings.pairAt(resourceIndex).key; 
                             const char firstCharAfterMatch = request.path[strlen(matchedPath)];
                             if ( firstCharAfterMatch == '\0' || firstCharAfterMatch == '/') {
                                 request.setMatchedPathLength(strlen(matchedPath));
-                                handler = prefixMappings.valueAt(resourceIndex);
+                                handler = prefixMappings.pairAt(resourceIndex).value;
                             }
                         }
                     }

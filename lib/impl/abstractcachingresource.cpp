@@ -25,7 +25,7 @@ namespace refude
         std::lock_guard<std::recursive_mutex> lock(m);
     
         Buffer requestSignature = getSignature(request);
-        if (!cache.contains(requestSignature.data())) {
+        if (cache.find(requestSignature.data()) < 0) {
             std::map<std::string, std::string> additionalHeaders;
             Buffer content = buildContent(request, additionalHeaders);
             Buffer& response = cache[requestSignature.data()];

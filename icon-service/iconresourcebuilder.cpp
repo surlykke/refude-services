@@ -62,7 +62,9 @@ namespace refude
                 }
 
                 ThemeReader(themeJson, *dirIterator + '/' + themeDir);
+                
                 IconMap& iconMap = themeIconMap[themeDir];
+
                 themeJson["IconDirectories"].eachEntry([&](const char* iconDirPath, Json& iconDirJson) {
                     IconCollector(*dirIterator + "/" + themeDir + "/" + iconDirPath, iconDirJson).collectInto(iconMap);
                 });
@@ -74,7 +76,7 @@ namespace refude
                     }
                 }
                 else {
-                    inheritanceMap[themeDir] = (const char*) themeJson["Inherits"];
+                    inheritanceMap[themeDir] = themeJson["Inherits"].toString();
                 }
 
             }

@@ -54,7 +54,6 @@ namespace refude
         }              
         )json";
 
-        Map<Json> jsonMap;
 
         tinyxml2::XMLDocument* doc = new tinyxml2::XMLDocument;
         doc->LoadFile("/usr/share/mime/packages/freedesktop.org.xml");
@@ -129,27 +128,25 @@ namespace refude
                 json["genericIcon"] = type + "-x-generic";
             }
             
-            jsonMap.add(mimetype.data(), std::move(json));
+            jsonArray.append(std::move(json));
         }
 
-        jsonMap.each([this] (const char* key, Json& json) {
-            jsonArray.append(std::move(json));
-        });
     }
 
     void MimetypeCollector::addAssociations(Json& applicationArray)
     {
         Map<uint> index;
         for (uint i = 0; i < jsonArray.size(); i++) {
-            index.add(jsonArray[i]["mimetype"], i);
+            index[jsonArray[i]["mimetype"].toString()] = i;
         }
 
 
         applicationArray.eachElement([this, &index](Json& appJson) {
-            const char* appId = appJson["applicationId"];
-            appJson["mimetype"].eachElement([this, &index, &appId](const char* mimetype) {
-                if (index.contains(mimetype)) {
-                    jsonArray[index[mimetype]]["associatedApplications"].append(appId);
+            const char* appId = appJson["applicationId"].toString();
+            appJson["mimetype"].eachElement([this, &index, &appId](const Json& mimetype) {
+                int pos = index.find(mimetype.toString());
+                if (pos >= 0) {
+                    jsonArray[index.pairAt(pos).value]["associatedApplications"].append(appId);
                 }
             });
         });
@@ -160,14 +157,14 @@ namespace refude
     {
         Map<uint> index;
         for (uint i = 0; i < jsonArray.size(); i++) {
-            index.add(jsonArray[i]["mimetype"], i);
+            index[jsonArray[i]["mimetype"].toString()] = i;
         }
 
-        defaultApplications.each([this, &index](const char* mimetype, 
-                                        std::vector<std::string>& defaultApplicationIds) {
-            if (index.contains(mimetype)) {
+        defaultApplications.each([this, &index](const char* mimetype, std::vector<std::string>& defaultApplicationIds) {
+            int pos = index.find(mimetype);
+            if (pos >= 0) {
                 for (std::string& defaultApplicationId : defaultApplicationIds) {
-                    jsonArray[index[mimetype]]["defaultApplications"].append(defaultApplicationId);
+                    jsonArray[index.pairAt(pos).value]["defaultApplications"].append(defaultApplicationId);
                 }
             }
         });

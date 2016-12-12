@@ -33,11 +33,11 @@ namespace refude
         return typeNames[(uint8_t)type];
     }
 
-    bool Json::undefined() {
+    bool Json::undefined() const {
         return mType == JsonType::Undefined;
     }
 
-    JsonType Json::type()
+    JsonType Json::type() const
     {
         return mType;
     }
@@ -119,9 +119,11 @@ namespace refude
         }
         else if (mType == JsonType::Object) {
             Json obj = JsonConst::EmptyObject;
+            std::vector<Pair<Json>> copiedEntries;
             for (size_t sz = 0; sz < entries->size(); sz++) {
-                obj.append(entries->list[sz].key, entries->list[sz].value.copy());
+                copiedEntries.push_back(Pair<Json>(entries->list[sz].key, entries->list[sz].value.copy()));
             }
+            obj.append(std::move(copiedEntries));
             return obj;
         }
         else if (mType == JsonType::Array) {
@@ -197,8 +199,8 @@ namespace refude
                 return false;
             }
             for (int i = 0; i < size(); i++) {
-                if (strcmp(entries->keyAt(i), other.entries->keyAt(i)) ||
-                    entries->valueAt(i) != other.entries->valueAt(i)) {
+                if (strcmp(entries->list.at(i).key, other.entries->list.at(i).key) ||
+                    entries->list.at(i).value != other.entries->list.at(i).value) {
                     return false;
                 }
             }
@@ -240,13 +242,6 @@ namespace refude
         typeAssert(JsonType::Array, "operator[%d]", index);
         return (*elements)[index];
     }
-
-    std::vector<const char*> Json::keys() const
-    {
-        typeAssert(JsonType::Object, "keys()");
-        return entries->keys();
-    }
-
 
     Json Json::take(int index)
     {
@@ -314,19 +309,21 @@ namespace refude
         elements->push_back(std::move(json));
         return elements->back();
     }
-
-    Json& Json::append(const char* key, Json&& json) {
-        typeAssert(JsonType::Object, "append(\"%s\", Json&&)", key);
-        return entries->add(key, std::move(json));
-    }
-
-
-
     Json& Json::insertAt(int index, Json&& json)
     {
         typeAssert(JsonType::Array, "insertAt(%d, Json&&)", index);
         elements->insert(elements->begin() + index, std::move(json));
         return elements->at(index);
+    }
+
+
+    void Json::append(std::vector<Pair<Json>>&& pairs) {
+        typeAssert(JsonType::Object, "append(pairs)");
+        entries->beginInsert();
+        for (auto& p : pairs) {
+            entries->insert(p.key, std::move(p.value));
+        }
+        entries->endInsert();
     }
 
     Json Json::take(const char* key)
@@ -342,29 +339,24 @@ namespace refude
     }
 
 
-    refude::Json::operator bool() const
+    const char* refude::Json::toString() const
     {
-        typeAssert(JsonType::Boolean, "operator bool()");
-        return boolean;
+        typeAssert(JsonType::String, "toString()");
+        return str;
     }
 
-    refude::Json::operator long() const
+    double refude::Json::toDouble() const
     {
-        typeAssert(JsonType::Number, "operator long()");
-        return (long)number;
-    }
-
-    refude::Json::operator double() const
-    {
-        typeAssert(JsonType::Number, "operator double()");
+        typeAssert(JsonType::Number, "toDouble()");
         return number;
     }
 
-    refude::Json::operator const char *() const
+    bool refude::Json::toBool() const
     {
-        typeAssert(JsonType::String, "operator const char*()");
-        return str;
+        typeAssert(JsonType::Boolean, "toBool()");
+        return boolean;
     }
+
 
     Json& operator<<(Json& json, const char* serialized)
     {

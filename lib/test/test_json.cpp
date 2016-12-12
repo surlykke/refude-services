@@ -11,8 +11,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "jsonwriter.h"
-#include "json.h"
+#include <refude/jsonwriter.h>
+#include <refude/json.h>
 
 using namespace refude;
 int main()
@@ -20,11 +20,13 @@ int main()
 
    std::cout << "Start building\n";
     Json json = JsonConst::EmptyObject;
+    std::vector<Pair<Json>> v;
     for (int i = 0; i < 5000000; i++) {
-        json.append("foo", 1);
-        json.append("baa", 2);
-        json.append("yxy", 3);
+        v.push_back(Pair<Json>("foo", 1));
+        v.push_back(Pair<Json>("baa", 2));
+        v.push_back(Pair<Json>("yxy", 3));
     }
+    json.append(std::move(v));
     std::cout << "Start sorting\n";
     std::cout << JsonWriter(json).buffer.data() << "\n";
 }

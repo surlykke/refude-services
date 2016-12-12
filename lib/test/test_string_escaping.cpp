@@ -12,9 +12,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <iostream>
-#include "jsonwriter.h"
-#include "json.h"
-#include "jsonreader.h"
+#include <refude/jsonwriter.h>
+#include <refude/json.h>
+#include <refude/jsonreader.h>
 
 using namespace refude;
 int main()
@@ -30,7 +30,7 @@ int main()
         std::cout << "Parsing " << buf << "\n";
         Json json = JsonReader(buf).read();
         std::cout << "JsonReader done, json.mType: " << json.typeAsString() << "\n";
-        std::cout << "Som const char: " << (const char*)json << "\n";
+        std::cout << "Som const char: " << json.toString() << "\n";
         std::cout << "Udskrevet: "  << JsonWriter(json).buffer.data() << "\n";
     }
     catch (RuntimeError re) {

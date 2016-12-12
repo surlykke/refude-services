@@ -42,7 +42,7 @@ namespace refude
     {
         const char* iconName = request.remainingPath;
 
-        if (! iconPaths.contains(iconName)) {
+        if (iconPaths.find(iconName) < 0) {
             std::cout << "name ikke fundet\n";
             throw HttpCode::Http404;
         }
