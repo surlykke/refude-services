@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <iostream>
+#include <algorithm>
 #include <refude/xdg.h>
 #include "getprop.h"
 #include "windowinfo.h"
@@ -69,6 +70,7 @@ namespace refude
         DefaultDisplay disp;
         Window root = XDefaultRootWindow(disp);
         std::vector<Window> windows = getProp<Window>(disp, root, "_NET_CLIENT_LIST_STACKING");
+        std::reverse(windows.begin(), windows.end());
         std::vector<WindowInfo> result;
         for (Window w : windows) {
             WindowInfo windowInfo(w);
