@@ -9,11 +9,9 @@ SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-rdynamic")
 
 include(GNUInstallDirs)
 
-file(GLOB SOURCE_FILES impl/*.cpp impl/map.h)
+file(GLOB SOURCE_FILES impl/*.cpp)
 
-file(GLOB PUBLIC_HEADERS public_headers/*.h)
-
-include_directories(public_headers private_headers)
+file(GLOB PUBLIC_HEADERS *.h)
 
 add_library(${PROJECT} SHARED ${SOURCE_FILES} )
 
