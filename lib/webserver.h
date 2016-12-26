@@ -9,6 +9,7 @@
 #ifndef WEBSERVER_H
 #define WEBSERVER_H
 #include <string>
+#include "fd.h"
 #include "abstractresource.h"
 #include "magic.h"
 namespace refude 
@@ -24,13 +25,12 @@ namespace refude
     public:
         typedef std::shared_ptr<WebServer> ptr;
         WebServer(const char* rootDir);
-        void doGET(int& socket, HttpMessage& request) override;
+        void doGET(Fd& requestSocket, HttpMessage& request, Server* server) override;
         virtual PathMimetypePair findFile(HttpMessage& request);
     
     private:
         magic_t magic_cookie;
-        const std::string rootDir;
-        int rootFd;
+        Fd rootFd;
     };
 }
 #endif // WEBSERVER_H

@@ -8,7 +8,7 @@
 
 #include <vector>
 #include <unistd.h>
-#include <refude/jsonwriter.h>
+#include "jsonwriter.h"
 #include "windowinfo.h"
 #include "controller.h"
 namespace refude 
@@ -19,7 +19,7 @@ namespace refude
         WindowsResource(Controller* controller) : CollectionResource("Id") { }
 
       
-        void doPOST(int& socket, HttpMessage& request) override
+        void doPOST(Fd& socket, HttpMessage& request, Server* server) override
         {
             std::cout << "POST against " << request.remainingPath << "\n";
             if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
@@ -71,10 +71,10 @@ namespace refude
         displayResource(std::make_shared<JsonResource>()),
         iconsResource(std::make_shared<RunningAppsIcons>())
     {
-        dispatcher.map(notifier, "notify");
-        dispatcher.map(windowsResource, true, "windows");
-        dispatcher.map(iconsResource, true, "icons");
-        dispatcher.map(displayResource, "display");
+        dispatcher.map(notifier, "/notify");
+        dispatcher.mapPrefix(windowsResource, "/windows");
+        dispatcher.mapPrefix(iconsResource, "/icons");
+        dispatcher.map(displayResource, "/display");
         buildDisplayResource(); 
     }
 
@@ -111,7 +111,7 @@ namespace refude
         displayJson["geometry"]["w"] = rootWindowInfo.width;
 
         if (displayJson != displayResource->getJson()) {
-            notifier->resourceUpdated("display");
+            notifier->notify("resource-updated", "display");
             displayResource->setJson(std::move(displayJson));
         }
     }

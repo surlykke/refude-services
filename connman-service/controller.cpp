@@ -7,9 +7,9 @@
  */
 
 #include <QDBusReply>
-#include <refude/json.h>
-#include <refude/jsonwriter.h>
-#include <refude/xdg.h>
+#include "json.h"
+#include "jsonwriter.h"
+#include "xdg.h"
 
 #include "agentadaptor.h"
 #include "controller.h"
@@ -64,9 +64,9 @@ namespace refude
         QDBusReply<ObjectPropertiesList> GetServicesReply = manager.call("GetServices");
         onServicesUpdated(GetServicesReply.value(), QList<QDBusObjectPath>());
 
-        service.map(technologiesResource, true, "technologies");
-        service.map(servicesResource, true, "services");
-        service.map(notifier, true, "notify");
+        service.mapPrefix(technologiesResource, "/technologies");
+        service.mapPrefix(servicesResource, "/services");
+        service.map(notifier, "/notify");
 
         std::string socketpath = xdg::runtime_dir() + "/org.refude.connman-service";
         service.serve(socketpath.data());

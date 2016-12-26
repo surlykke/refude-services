@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <string.h>
 #include "inireader.h"
-#include <refude/errorhandling.h>
+#include "errorhandling.h"
 
 namespace refude 
 {

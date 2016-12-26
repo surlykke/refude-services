@@ -28,7 +28,7 @@ namespace refude
         void setJson(Json&& json);
 
     protected:
-        virtual Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers);
+        virtual Buffer::ptr buildContent(HttpMessage& request);
         Json json;
     };
 }

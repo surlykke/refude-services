@@ -8,10 +8,10 @@
 
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
-#include <refude/notifierresource.h>
-#include <refude/jsonresource.h>
-#include <refude/collectionresource.h>
-#include <refude/service.h>
+#include "notifierresource.h"
+#include "jsonresource.h"
+#include "collectionresource.h"
+#include "server.h"
 
 #include "runningappsicons.h"
 
@@ -23,7 +23,7 @@ namespace refude
         Controller();
         ~Controller();
         void run();
-        Service dispatcher;
+        Server dispatcher;
         void buildDisplayResource();
         void updateWindowsResource();
      

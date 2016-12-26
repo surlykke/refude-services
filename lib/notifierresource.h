@@ -9,10 +9,14 @@
 #ifndef NOTIFIERRESOURCE_H
 #define NOTIFIERRESOURCE_H
 
-#include <mutex>
+#include <functional>
 #include <vector>
+#include <thread>
 
+
+#include "queue.h"
 #include "abstractresource.h"
+#include "service.h"
 
 namespace refude 
 {
@@ -22,18 +26,9 @@ namespace refude
     public:
         typedef std::shared_ptr<NotifierResource> ptr;
         NotifierResource();
-
-        virtual void doGET(int& socket, HttpMessage& request) override;
-        void resourceRemoved(const char* path);
-        void resourceRemoved(const char* p1, const char* p2);
-        void resourceRemoved(const char* p1, const char* p2, const char* p3);
-        void resourceAdded(const char* path);
-        void resourceAdded(const char* p1, const char* p2);
-        void resourceAdded(const char* p1, const char* p2, const char* p3);
-        void resourceUpdated(const char* path);
-        void resourceUpdated(const char* p1, const char* p2);
-        void resourceUpdated(const char* p1, const char* p2, const char* p3);
-        void notifyClients(const char* event, const char* path);
+        virtual void handleRequest(Fd& socket, HttpMessage& request, Server* server) override ;
+        void notify(const char* event, std::string path);
+        void notify(const char* event, const char* path);
 
     private:
         void addClient(int socket);

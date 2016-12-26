@@ -8,20 +8,22 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include <refude/service.h>
-#include <refude/errorhandling.h>
+#include "app.h"
+#include "server.h"
+#include "errorhandling.h"
+#include "xdg.h"
 
 #include "iconresourcebuilder.h"
-#include <refude/xdg.h>
 
 int main(int argc, char *argv[])
 {
     using namespace refude;
-    Service service;
+    Server service;
     IconResourceBuilder iconResourceBuilder;
     iconResourceBuilder.buildResources();
     iconResourceBuilder.mapResources(service);
     std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.icon-service";
     service.serve(socketPath.data());
-    service.wait();
+    std::cout << "About to run..\n";
+    App::run();
 }

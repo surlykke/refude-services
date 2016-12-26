@@ -6,10 +6,10 @@
  * Please refer to the GPL2 file for a copy of the license.
  */
 
-#include <refude/service.h>
-#include <refude/notifierresource.h>
-#include <refude/collectionresource.h>
-#include <refude/xdg.h>
+#include "server.h"
+#include "notifierresource.h"
+#include "collectionresource.h"
+#include "xdg.h"
 #include "powerapplication.h"
 
 int main(int argc, char *argv[])
@@ -20,11 +20,10 @@ int main(int argc, char *argv[])
     powerApplication.collectActionJsons();
     powerApplication.collectDeviceJsons();
 
-    Service service;
-	service.dumpRequests = true;   
-    service.map(powerApplication.actionsResource, true, "actions");
-    service.map(powerApplication.devicesResource, true, "devices");
-    service.map(powerApplication.notifierResource, "notify");
+    Server service;
+    service.mapPrefix(powerApplication.actionsResource, "/actions");
+    service.map(powerApplication.devicesResource, "/devices");
+    service.map(powerApplication.notifierResource, "/notify");
 
     std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.power-service";
     service.serve(socketPath.data());

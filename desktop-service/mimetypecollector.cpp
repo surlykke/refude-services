@@ -7,7 +7,7 @@
  */
 
 #include <tinyxml2.h>
-#include <refude/utils.h>
+#include "utils.h"
 
 #include "mimetypecollector.h"
 namespace refude

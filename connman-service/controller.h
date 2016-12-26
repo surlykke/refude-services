@@ -10,8 +10,8 @@
 #define CONTROLLER_H
 
 #include <QCoreApplication>
-#include "refude/collectionresource.h"
-#include "refude/service.h"
+#include "collectionresource.h"
+#include "server.h"
 #include "connmanobject.h"
 #include "agent.h"
 
@@ -38,7 +38,7 @@ namespace refude
         CollectionResource::ptr technologiesResource;
         CollectionResource::ptr servicesResource;
         NotifierResource::ptr notifier;
-        Service service;
+        Server service;
 
     private slots:
         void onTechnologyAdded(const QDBusObjectPath& path, const QVariantMap& properties);

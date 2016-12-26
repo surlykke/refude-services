@@ -9,14 +9,15 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+#include <memory>
+
 namespace refude
 {
     /**
      * Basically a wrapper for char* string. Grows the string as needed
      * 
-     * Used for medium to huge strings - primarily
-     * serialization of json objects, so we start out with not-so-small 128 bytes, and do 
-     * no short-string optimizations
+     * Used for medium to huge strings - primarily serialization of json objects,
+     * so we start out with not-so-small 128 bytes, and do no short-string optimizations.
      * There is no copy semantics, to make sure we do not accidentically make performance heavy 
      * copies. To copy a buffer, do:
      * 
@@ -30,7 +31,8 @@ namespace refude
     class Buffer
     {
     public:
-        static Buffer fromFile(const char* filePath);
+        typedef std::shared_ptr<Buffer> ptr;
+
         Buffer();
         Buffer(Buffer& other) = delete;
         Buffer(Buffer&& other);
@@ -39,11 +41,13 @@ namespace refude
         Buffer& operator=(Buffer&& other);
 
         ~Buffer();
-        Buffer& write(const char* string);
-        Buffer& writen(const char* string, size_t n);
-        Buffer& write(char ch);
-        Buffer& write(double d);
-        Buffer& write(int i); 
+        Buffer& writeStr(const char* string);
+        Buffer& writeStrn(const char* string, size_t n);
+        Buffer& writeChr(char ch);
+        Buffer& writeDouble(double d);
+        Buffer& writeLong(long i);
+        Buffer& writeFile(const char* filePath);
+        Buffer& writeFile(int fd);
 
         void toFile(const char* filePath);
         void clear();
@@ -60,10 +64,5 @@ namespace refude
         int _capacity;
 
     };
-
-    Buffer& operator<<(Buffer& buffer, const char* str);
-    Buffer& operator<<(Buffer& buffer, const char ch);
-    Buffer& operator<<(Buffer& buffer, double d);
-    Buffer& operator<<(Buffer& buffer, int i);
 }
 #endif // BUFFER_H

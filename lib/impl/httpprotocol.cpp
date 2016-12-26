@@ -88,7 +88,7 @@ namespace refude
     };
 
 
-    const char* status_line[] =
+    const char* const status_line[] =
     {
         "HTTP/1.1 200 OK\r\n",
         "HTTP/1.1 201 Created\r\n",
@@ -157,5 +157,21 @@ namespace refude
     const char* statusLine(HttpCode status) 
     {
         return status_line[(int)status];
+    }
+
+    Buffer::ptr buildResponse(HttpCode code, const char* body)
+    {
+        Buffer::ptr resp = std::make_shared<Buffer>();
+        resp->writeStr(statusLine(code));
+        if (body) {
+            resp->writeStr("Content-Type: text/plain\r\n")
+                 .writeStr("Content-Length: ").writeLong(strlen(body)).writeStr("\r\n")
+                 .writeStr(body);
+        }
+        else {
+             resp->writeStr("\r\n");
+        }
+
+        return resp;
     }
 }

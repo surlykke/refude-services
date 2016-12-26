@@ -8,22 +8,25 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include <refude/service.h>
-#include <refude/errorhandling.h>
+#include "server.h"
+#include "errorhandling.h"
 
-#include <refude/xdg.h>
+#include "xdg.h"
 #include "controller.h"
+#include "desktopwatcher.h"
+#include "app.h"
 
 int main(int argc, char *argv[])
 {
     using namespace refude;
-    Controller controller;
     try {
-        controller.setupAndRun();
+        std::cout << "Controller()\n";
+        Controller controller;
+        /*DesktopWatcher watcher(controller, true);
+        std::thread t(&DesktopWatcher::start, &watcher);*/
         std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.desktop-service";
-        controller.service.dumpRequests = true;
         controller.service.serve(socketPath.data());
-        controller.service.wait();
+        App::run();
     }
     catch (RuntimeError re) {
         std::cerr << re.what() << "\n";

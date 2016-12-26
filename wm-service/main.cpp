@@ -8,10 +8,10 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include <refude/service.h>
-#include <refude/errorhandling.h>
+#include "server.h"
+#include "errorhandling.h"
 
-#include <refude/xdg.h>
+#include "xdg.h"
 #include "controller.h"
 
 int main(int argc, char *argv[])

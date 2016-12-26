@@ -7,8 +7,8 @@
  */
 
 #include <dirent.h>
-#include <refude/utils.h>
-#include <refude/jsonwriter.h>
+#include "utils.h"
+#include "jsonwriter.h"
 
 #include "themereader.h"
 

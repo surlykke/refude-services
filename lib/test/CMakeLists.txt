@@ -23,9 +23,6 @@ target_link_libraries(test_json_2 refude pthread magic dl)
 add_executable(test_json_parser test_json_parser.cpp data.json)
 target_link_libraries(test_json_parser refude pthread magic dl)
 
-add_executable(test_notification test_notification.cpp)
-target_link_libraries(test_notification refude pthread magic dl)
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/string.json ${CMAKE_CURRENT_BINARY_DIR}/string.json)
 add_executable(test_string_escaping test_string_escaping.cpp data.json)
 target_link_libraries(test_string_escaping refude pthread magic dl)

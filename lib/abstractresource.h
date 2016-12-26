@@ -13,33 +13,37 @@
 #include <vector>
 #include <memory>
 #include "map.h"
-
+#include "fd.h"
 #include "httpprotocol.h"
 #include "httpmessage.h"
 
 namespace refude
 {
-
-
+    class Server;
     struct  AbstractResource
     {
         typedef std::shared_ptr<AbstractResource> ptr;
+
+        enum class Type {
+            RequestResponse,
+            LongRunning
+        };
 
         AbstractResource() {}
 
         virtual ~AbstractResource() {}
 
-        virtual void handleRequest(int &socket, HttpMessage& request);
+        virtual void handleRequest(Fd& socket, HttpMessage& request, Server* server);
 
-        virtual void     doGET(int& socket, HttpMessage& request);
-        virtual void   doPATCH(int& socket, HttpMessage& request);
-        virtual void    doPOST(int& socket, HttpMessage& request);
-        virtual void  doDELETE(int& socket, HttpMessage& request);
-        virtual void     doPUT(int& socket, HttpMessage& request);
-        virtual void    doHEAD(int& socket, HttpMessage& request);
-        virtual void   doTRACE(int& socket, HttpMessage& request);
-        virtual void doOPTIONS(int& socket, HttpMessage& request);
-        virtual void doCONNECT(int& socket, HttpMessage& request);
+        virtual void     doGET(Fd& socket, HttpMessage& request, Server* server);
+        virtual void   doPATCH(Fd& socket, HttpMessage& request, Server* server);
+        virtual void    doPOST(Fd& socket, HttpMessage& request, Server* server);
+        virtual void  doDELETE(Fd& socket, HttpMessage& request, Server* server);
+        virtual void     doPUT(Fd& socket, HttpMessage& request, Server* server);
+        virtual void    doHEAD(Fd& socket, HttpMessage& request, Server* server);
+        virtual void   doTRACE(Fd& socket, HttpMessage& request, Server* server);
+        virtual void doOPTIONS(Fd& socket, HttpMessage& request, Server* server);
+        virtual void doCONNECT(Fd& socket, HttpMessage& request, Server* server);
 
         /**
          * Extract acceptable locales from accept-language header as an ordered  list.
@@ -52,15 +56,7 @@ namespace refude
          * @return 
          */
         std::vector<std::string> getAcceptedLocales(HttpMessage& request);
-
-    protected:
-        void buildResponse(Buffer& response, Buffer&& content, 
-                           const std::map<std::string, std::string>& headers);
-
-        void sendFully(int socket, const char* data, int nbytes);
-
     };
-
 }
 
 

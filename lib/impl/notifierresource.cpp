@@ -11,17 +11,51 @@
 #include <asm-generic/socket.h>
 #include <sys/socket.h>
 
-#include "notifierresource.h"
+#include "comm.h"
 #include "errorhandling.h"
+
+#include "notifierresource.h"
 
 namespace refude
 {
+    typedef std::function<void()> NotificationTask;
 
-    static const char* eventLine[] ={
-        "event:created",
-        "event:updated",
-        "event:removed"
+    class NotificationLoop
+    {
+        friend class NotifierResource;
+
+        static void run(NotificationTask&& task)
+        {
+            inst().notificationTasks.enqueue(std::move(task));
+        }
+
+        static NotificationLoop& inst()
+        {
+            static NotificationLoop notificationLoop;
+            return notificationLoop;
+        }
+
+        NotificationLoop() :
+            notificationTasks(),
+            taskRunnerThread(&NotificationLoop::taskRunner, this)
+        {
+        }
+
+        void taskRunner() {
+            for (;;) {
+                std::cout << "Notify loop - task\n";
+                notificationTasks.dequeue()();
+                std::cout << " -\n";
+            }
+        }
+
+        Queue<NotificationTask> notificationTasks;
+        std::thread taskRunnerThread;
     };
+
+
+
+
 
     NotifierResource::NotifierResource() :
         AbstractResource(),
@@ -30,103 +64,46 @@ namespace refude
     {
     }
 
-    void NotifierResource::doGET(int& socket, HttpMessage& request)
+    void NotifierResource::handleRequest(Fd& socket, HttpMessage& request, Server* server)
     {
-        struct timeval tv;
-        tv.tv_sec = 0;
-        tv.tv_usec = 0;
-        setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof (struct timeval));
+        /*NotificationLoop::run([this, socket]() {
+            struct timeval tv;
+            tv.tv_sec = 0;
+            tv.tv_usec = 0;
+            setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char *) &tv, sizeof (struct timeval));
 
-        static const char* response =
-                "HTTP/1.1 200 OK\r\n"
-                "Connection: keep-alive\r\n"
-                "Content-Type: text/event-stream\r\n"
-                "Transfer-Encoding: chunked\r\n"
-                "\r\n";
-        static int responseLength = strlen(response);
+            static const char* response =
+                    "HTTP/1.1 200 OK\r\n"
+                    "Connection: keep-alive\r\n"
+                    "Content-Type: text/event-stream\r\n"
+                    "Transfer-Encoding: chunked\r\n"
+                    "\r\n";
+            static int responseLength = strlen(response);
 
 
-        sendFully(socket, response, responseLength);
-        addClient(socket);
-        socket = -1;
+            sendFully(socket, response, responseLength);
+            mClientSockets.push_back(socket);
+        });
+
+        socket = -1;*/
     }
 
-    void NotifierResource::addClient(int socket)
+    void NotifierResource::notify(const char* event, std::string data)
     {
-        std::lock_guard<std::mutex> lock(mMutex);
-        mClientSockets.push_back(socket);
+        notify(event, data.data());
     }
 
-    void NotifierResource::resourceAdded(const char* path)
+    void NotifierResource::notify(const char* event, const char* data)
     {
-        notifyClients("resource-added", path);
-    }
+        std::cout << "notify:" << event << ":" << data << "\n";
+        /*NotificationLoop::run([this, event, data]() {
+            char notification[300];
 
-    void NotifierResource::resourceAdded(const char* p1, const char* p2)
-    {
-        resourceAdded((std::string(p1) + "/" + p2).data());
-    }
-
-    void NotifierResource::resourceAdded(const char* p1, const char* p2, const char* p3)
-    {
-        resourceAdded((std::string(p1) + "/" + p2 + "/" + p3).data());
-    }
-
-    void NotifierResource::resourceRemoved(const char* path)
-    {
-        notifyClients("resource-removed", path);
-    }
-
-    void NotifierResource::resourceRemoved(const char* p1, const char* p2)
-    {
-        resourceRemoved((std::string(p1) + "/" + p2).data());
-    }
-
-    void NotifierResource::resourceRemoved(const char* p1, const char* p2, const char* p3)
-    {
-        resourceRemoved((std::string(p1) + "/" + p2 + "/" + p3).data());
-    }
- 
-    void NotifierResource::resourceUpdated(const char* path)
-    {
-        notifyClients("resource-updated", path);
-    }
-
-    void NotifierResource::resourceUpdated(const char* p1, const char* p2)
-    {
-        resourceUpdated((std::string(p1) + "/" + p2).data());
-    }
-
-    void NotifierResource::resourceUpdated(const char* p1, const char* p2, const char* p3)
-    {
-        resourceUpdated((std::string(p1) + "/" + p2 + "/" + p3).data());
-    }
-   
-    void NotifierResource::notifyClients(const char* event, const char* data)
-    {
-        static const char* notificationTemplate =
-                "%x\r\n"     // chunk length
-                "event:%s\n" // event 
-                "data:%s\n"  // data
-                "\n"
-                "\r\n";
-
-        char notification[300];
-
-        if (strlen(data) > 256) {
-            throw RuntimeError("Path too long");
-        }
-
-        int chunkLength = strlen(event) + strlen(data) + 14;
-        int dataLength = snprintf(notification,
-                                  256,
-                                  notificationTemplate,
-                                  chunkLength,
-                                  event,
-                                  data);
-
-        {
-            std::lock_guard<std::mutex> lock(mMutex);
+            int chunkLength = (int)strlen(event) + (int)strlen(data) + 14;
+            int dataLength = snprintf(notification, 300, "%x\r\nevent:%s\ndata:%s\n\n\r\n", chunkLength,  event, data);
+            if (dataLength >= 300) {
+                throw RuntimeError("data too long");
+            }
 
             for (auto it = mClientSockets.begin(); it != mClientSockets.end(); it++) {
                 try {
@@ -148,6 +125,6 @@ namespace refude
                     it++;
                 }
             }
-        }
+        });*/
     }
 }

@@ -12,9 +12,9 @@
 #include <unistd.h>
 #include <iostream>
 
-#include <refude/map.h>
-#include <refude/json.h>
-#include <refude/jsonwriter.h>
+#include "map.h"
+#include "json.h"
+#include "jsonwriter.h"
 
 using namespace refude;
 int main()

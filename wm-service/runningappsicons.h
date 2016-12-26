@@ -11,8 +11,8 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include <refude/map.h>
-#include <refude/webserver.h>
+#include "map.h"
+#include "webserver.h"
 namespace refude
 {
     struct SizePath

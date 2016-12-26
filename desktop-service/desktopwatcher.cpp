@@ -11,9 +11,9 @@
 #include <limits.h>
 #include <unistd.h>
 #include <thread>
-#include <refude/errorhandling.h>
-#include <refude/utils.h>
-#include <refude/xdg.h>
+#include "errorhandling.h"
+#include "utils.h"
+#include "xdg.h"
 #include "desktopwatcher.h"
 
 #define LEN (sizeof(struct inotify_event) + NAME_MAX + 1)
@@ -36,7 +36,9 @@ namespace refude
     {
         try {
             if (emitEventOnStart) {
+                std::cout << "Call controller.update()\n";
                 controller.update();
+                std::cout << "Called\n";
             }
 
             char buf[LEN];
@@ -88,6 +90,9 @@ namespace refude
         }
     }
 
+    /**
+     * @brief DesktopWatcher::start Will not return - should be run in a separate thread
+     */
     void DesktopWatcher::start()
     {
         int wd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
@@ -108,7 +113,7 @@ namespace refude
             }
         }
     
-        watchingThread = std::thread(&DesktopWatcher::watcher, this, wd);
+        watcher(wd);
 
     }
 

@@ -44,10 +44,10 @@ namespace refude
     {
         if (!value.undefined()) {
             if (written) {
-                buffer.write(", ");
+                buffer.writeStr(", ");
             }
             writeString(key);
-            buffer.write(": ");
+            buffer.writeStr(": ");
             write(value);
             written++;
         }
@@ -56,63 +56,63 @@ namespace refude
     void JsonWriter::write(Json& json)
     {
         if (json.mType == JsonType::Object) {
-            buffer.write('{');
+            buffer.writeChr('{');
             int written = 0;
             json.eachEntry([&written, this](const char* key, Json& value) {
                 writeKeyValue(written, key, value);
             });
-            buffer.write('}');
+            buffer.writeChr('}');
         }
         else if (json.mType == JsonType::Array) {
-            buffer.write('[');
+            buffer.writeChr('[');
             for (int i = 0; i < json.elements->size(); i++) {
                 if (i) {
-                    buffer.write(", ");
+                    buffer.writeStr(", ");
                 }
                 write(json.elements->at(i));
             }
-            buffer.write(']');
+            buffer.writeChr(']');
         }
         else if (json.mType == JsonType::String) {
             writeString(json.str);
         }
         else if (json.mType == JsonType::Number) {
-                buffer.write(json.number);
+                buffer.writeDouble(json.number);
         }
         else if (json.mType == JsonType::Boolean) {
-                json.boolean ? buffer.write("true") : buffer.write("false");
+                json.boolean ? buffer.writeStr("true") : buffer.writeStr("false");
         }
         else if (json.mType == JsonType::Null) {
-                buffer.write("null");
+                buffer.writeStr("null");
         }
         else if (json.mType == JsonType::Undefined) {
-            buffer.write("undefined");
+            buffer.writeStr("undefined");
         }
     }
 
     void JsonWriter::writeString(const char* string)
     {
-        buffer.write('"');
+        buffer.writeChr('"');
         const char* c = string;
         while (*c) {
             writeChar(*(c++));
         }
-        buffer.write('"');
+        buffer.writeChr('"');
     }
 
     void JsonWriter::writeChar(const char chr)
     {
         if (0 <= chr && chr < 32) {
-            buffer.write(escapeStrings[chr]);
+            buffer.writeStr(escapeStrings[chr]);
         }
         else if (chr == '"') {
-            buffer.write("\\\"");
+            buffer.writeStr("\\\"");
         }
         else if (chr == '\\') {
-            buffer.write("\\\\");
+            buffer.writeStr("\\\\");
         }
         else {
-            buffer.write(chr); 
+            buffer.writeChr(chr);
         }
     }
 

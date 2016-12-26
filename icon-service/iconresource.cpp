@@ -10,9 +10,9 @@
 #include <limits.h>
 #include <sys/stat.h>
 
-#include <refude/map.h>
-#include <refude/utils.h>
-#include <refude/jsonwriter.h>
+#include "map.h"
+#include "utils.h"
+#include "jsonwriter.h"
 
 #include "iconresource.h"
 namespace refude

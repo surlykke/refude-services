@@ -6,8 +6,8 @@
  * Please refer to the LGPL21 file for a copy of the license.
  */
 
-#include <refude/errorhandling.h>
-#include <refude/utils.h>
+#include "errorhandling.h"
+#include "utils.h"
 
 #include "xdg.h"
 

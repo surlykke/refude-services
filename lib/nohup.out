@@ -1,0 +1,193 @@
+GET /applications HTTP/1.1
+Host: localhost:7938
+Accept: application/json, text/plain, */*
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+Der blev oprettet et nyt vindue i den aktuelle browsersession.
+GET /applications HTTP/1.1
+Host: localhost:7938
+Accept: application/json, text/plain, */*
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/pysol.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+GET /applications HTTP/1.1
+Host: localhost:7938
+Accept: application/json, text/plain, */*
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/pysol.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+Der blev oprettet et nyt vindue i den aktuelle browsersession.
+GET /applications HTTP/1.1
+Host: localhost:7938
+Accept: application/json, text/plain, */*
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/pysol.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/pysol.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+GET /applications HTTP/1.1
+Host: localhost:7938
+Accept: application/json, text/plain, */*
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/pysol.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/pysol.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+POST /applications/chromium.desktop HTTP/1.1
+Host: localhost:7938
+Content-Length: 0
+Accept: application/json, text/plain, */*
+Origin: file://
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) refudeDo/0.0.1 Chrome/53.0.2785.143 Electron/1.4.13 Safari/537.36
+Accept-Encoding: gzip, deflate
+Accept-Language: da
+
+
+Der blev oprettet et nyt vindue i den aktuelle browsersession.

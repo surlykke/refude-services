@@ -9,7 +9,7 @@
 #include <string.h>
 #include <iostream>
 #include <algorithm>
-#include <refude/xdg.h>
+#include "xdg.h"
 #include "getprop.h"
 #include "windowinfo.h"
 

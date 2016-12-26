@@ -7,19 +7,19 @@
  */
 
 #include <set>
-#include <refude/service.h>
-#include <refude/jsonresource.h>
-#include <refude/jsonwriter.h>
-#include <refude/notifierresource.h>
+#include "server.h"
+#include "jsonresource.h"
+#include "jsonwriter.h"
+#include "notifierresource.h"
+#include "xdg.h"
 
 
 #include "applicationcollector.h"
 #include "mimetypecollector.h"
 #include "mimeappslistreader.h"
-#include <refude/xdg.h>
 #include "desktopwatcher.h"
 #include "runapplication.h"
-
+#include "fd.h"
 #include "controller.h"
 #include "typedefs.h"
 
@@ -29,11 +29,11 @@ namespace refude
     struct ApplicationsResource : public CollectionResource
     {
         ApplicationsResource() : CollectionResource("applicationId") {}
-        void doPOST(int& socket, HttpMessage& request) override
+        void doPOST(Fd& socket, HttpMessage& request, Server* server) override
         {
             if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
             runApplication(jsonArray[indexes[request.remainingPath]]["Exec"].toString());
-            throw HttpCode::Http204;
+            throw HttpCode::Http204; // Hackish - I know.
         }
 
     };
@@ -41,7 +41,7 @@ namespace refude
     struct MimetypesResource : public CollectionResource
     {
         MimetypesResource() : CollectionResource("mimetype") {}
-        void doPATCH(int& socket, HttpMessage& request) override
+        void doPATCH(Fd& socket, HttpMessage& request, Server* server) override
         {
             if (indexes.find(request.remainingPath) < 0)  throw HttpCode::Http404;
             Json mergeJson;
@@ -69,22 +69,16 @@ namespace refude
         service(),
         applicationsResource(std::make_shared<ApplicationsResource>()),
         mimetypesResource(std::make_shared<MimetypesResource>()),
-        notifier(std::make_shared<NotifierResource>()),
-        desktopWatcher(new DesktopWatcher(*this, true))        
+        notifier(std::make_shared<NotifierResource>())
     {
         
-        service.map(applicationsResource, true, "applications");
-        service.map(mimetypesResource, true, "mimetypes");
-        service.map(notifier, true, "notify");
+        service.mapPrefix(applicationsResource, "/applications");
+        service.mapPrefix(mimetypesResource, "/mimetypes");
+        service.map(notifier, "/notify");
     }
 
     Controller::~Controller()
     {
-    }
-
-    void Controller::setupAndRun()
-    {
-        desktopWatcher->start();
     }
 
     void Controller::update()

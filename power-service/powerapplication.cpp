@@ -15,9 +15,9 @@
 #include <QDebug>
 #include <QDBusObjectPath>
 #include <sys/socket.h>
-#include <refude/collectionresource.h>
-#include <refude/jsonwriter.h>
-#include <refude/jsonreader.h>
+#include "collectionresource.h"
+#include "jsonwriter.h"
+#include "jsonreader.h"
 #include "properties_if.h"
 
 #include "powerapplication.h"
@@ -33,7 +33,7 @@ namespace refude
         {
         }
 
-        void doPOST(int& socket, HttpMessage& request) override
+        void doPOST(Fd& socket, HttpMessage& request, Server* server) override
         {
             std::cout << "POST against " << request.path << ", remaining path: " << request.remainingPath << "\n";
             if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;

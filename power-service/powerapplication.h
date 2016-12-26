@@ -12,10 +12,10 @@
 #include <vector>
 #include <map>
 #include <QCoreApplication>
-#include <refude/json.h>
-#include <refude/service.h>
-#include <refude/notifierresource.h>
-#include <refude/jsonresource.h>
+#include "json.h"
+#include "server.h"
+#include "notifierresource.h"
+#include "jsonresource.h"
     
 class QDBusInterface;
     

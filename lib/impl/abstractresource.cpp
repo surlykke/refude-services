@@ -11,77 +11,69 @@
 #include <iterator>
 #include <sys/socket.h>
 #include "errorhandling.h"
+#include "server.h"
 #include "abstractresource.h"
 
 namespace refude
 {
 
-    void AbstractResource::handleRequest(int& socket, HttpMessage& request)
+    void AbstractResource::handleRequest(Fd& socket, HttpMessage& request, Server* server)
     {
         switch (request.method) {
-        case Method::GET: doGET(socket, request);
-            break;
-        case Method::PATCH: doPATCH(socket, request);
-            break;
-        case Method::POST: doPOST(socket, request);
-            break;
-        case Method::DELETE: doDELETE(socket, request);
-            break;
-        case Method::PUT: doPUT(socket, request);
-            break;
-        case Method::HEAD: doHEAD(socket, request);
-            break;
-        case Method::TRACE: doTRACE(socket, request);
-            break;
-        case Method::OPTIONS: doOPTIONS(socket, request);
-            break;
-        case Method::CONNECT: doCONNECT(socket, request);
-            break;
+        case Method::GET: doGET(socket, request, server); break;
+        case Method::PATCH: doPATCH(socket, request, server); break;
+        case Method::POST: doPOST(socket, request, server); break;
+        case Method::DELETE: doDELETE(socket, request, server); break;
+        case Method::PUT: doPUT(socket, request, server); break;
+        case Method::HEAD: doHEAD(socket, request, server); break;
+        case Method::TRACE: doTRACE(socket, request, server); break;
+        case Method::OPTIONS: doOPTIONS(socket, request, server); break;
+        case Method::CONNECT: doCONNECT(socket, request, server); break;
         case Method::UNKNOWN: throw HttpCode::Http406; // FIXME Is this the right one
         }
     }
 
-    void AbstractResource::doGET(int& socket, HttpMessage& request)
+    void AbstractResource::doGET(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
 
-    void AbstractResource::doPATCH(int& socket, HttpMessage& request)
+    void AbstractResource::doPATCH(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
 
-    void AbstractResource::doPOST(int& socket, HttpMessage& request)
+    void AbstractResource::doPOST(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
 
-    void AbstractResource::doDELETE(int& socket, HttpMessage& request)
+    void AbstractResource::doDELETE(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
 
-    void AbstractResource::doPUT(int& socket, HttpMessage& request)
+    void AbstractResource::doPUT(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
 
-    void AbstractResource::doHEAD(int& socket, HttpMessage& request)
+    void AbstractResource::doHEAD(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
 
-    void AbstractResource::doTRACE(int& socket, HttpMessage& request)
+    void AbstractResource::doTRACE(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
 
-    void AbstractResource::doOPTIONS(int& socket, HttpMessage& request)
+    void AbstractResource::doOPTIONS(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
 
-    void AbstractResource::doCONNECT(int& socket, HttpMessage& request)
+    void AbstractResource::doCONNECT(Fd& socket, HttpMessage& request, Server* server)
     {
         throw HttpCode::Http405;
     }
@@ -134,30 +126,4 @@ namespace refude
         }
     }
 
-    void AbstractResource::buildResponse(Buffer& response, Buffer&& content,
-                                         const std::map<std::string, std::string>& headers)
-    {
-        response.write("HTTP/1.1 200 OK\r\n"
-                       "Content-Type: application/json; charset=UTF-8\r\n");
-        for (auto headerPair : headers) {
-            response.write(headerPair.first.data());
-            response.write(":");
-            response.write(headerPair.second.data());
-            response.write("\r\n");
-        }
-        response.write("content-length: ");
-        response.write(content.size());
-        response.write("\r\n\r\n");
-        response.write(content.data());
-
-    }
-
-    void AbstractResource::sendFully(int socket, const char* data, int nbytes)
-    {
-        for (int bytesWritten = 0; bytesWritten < nbytes;) {
-            int n = send(socket, data + bytesWritten, nbytes - bytesWritten, MSG_NOSIGNAL);
-            if (n < 0) throw C_Error();
-            bytesWritten += n;
-        }
-    }
 }

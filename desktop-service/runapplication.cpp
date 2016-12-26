@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include <refude/errorhandling.h>
+#include "errorhandling.h"
 #include "runapplication.h"
 
 extern char** environ;

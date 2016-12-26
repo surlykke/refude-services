@@ -8,7 +8,7 @@
 
 #include "utils.h"
 #include "jsonwriter.h"
-
+#include "buffer.h"
 #include "localizingjsonwriter.h"
 
 #include "jsonresource.h"
@@ -34,12 +34,18 @@ namespace refude
     void JsonResource::setJson(Json&& json)
     {
         this->json = std::move(json);
-        clearCache();
+        cache.clear();
     }
 
-    Buffer JsonResource::buildContent(HttpMessage& request, std::map<std::string, std::string>& headers)
+    Buffer::ptr JsonResource::buildContent(HttpMessage& request)
     {
-        return LocalizingJsonWriter(json, getAcceptedLocales(request)).buffer;
+        Buffer::ptr result = std::make_shared<Buffer>();
+        LocalizingJsonWriter writer(json, getAcceptedLocales(request));
+        result->writeStr("HTTP/1.1 200 OK\r\n"
+                         "Content-Type: application/json; charset=UTF-8\r\n")
+               .writeStr("Content-Length: ").writeLong(writer.buffer.size()).writeStr("\r\n")
+               .writeStr(writer.buffer.data());
+        return result;
     }
 
 }

@@ -11,57 +11,16 @@
 #include <unistd.h>
 #include <string.h>
 #include "errorhandling.h"
+#include "fd.h"
 #include "buffer.h"
 
 namespace refude
 {
 
-    struct FileDescriptor 
-    {
-        FileDescriptor(const char* path, int flags) 
-        {
-            _fd = open(path, flags);
-            C_ERROR_IF(_fd < 0);
-        }
-
-        FileDescriptor(const char* path, int flags, int mode) 
-        {
-            _fd = open(path, flags, mode); 
-            C_ERROR_IF(_fd < 0);
-        }
-
-        ~FileDescriptor() 
-        {
-            if (_fd > -1) {
-                close(_fd);
-            }
-        }
-
-        operator int() { return _fd; }
-
-        int _fd;
-    };
-
-    Buffer Buffer::fromFile(const char* filePath)
-    {
-        Buffer buf;
-        FileDescriptor fd(filePath, O_RDONLY | O_CLOEXEC);
-        int bytesRead = 0;
-        buf.ensureCapacity(1024);
-        while((bytesRead = read(fd, buf._data, 1024)) > 0) {
-            buf._size += bytesRead;
-            buf._data[buf._size] = '\0';
-            buf.ensureCapacity(1024);
-        }
-        C_ERROR_IF(bytesRead < 0);
-        return buf;
-    }
-
-
     Buffer::Buffer() :
+        _data(0),
         _size(0),
-        _capacity(0),
-        _data(0)
+        _capacity(0)
     {
     }
 
@@ -88,12 +47,12 @@ namespace refude
         }
     }
 
-    Buffer& Buffer::write(const char* string)
+    Buffer& Buffer::writeStr(const char* string)
     {
-        return writen(string, strlen(string));
+        return writeStrn(string, strlen(string));
     }
 
-    Buffer& Buffer::writen(const char* string, size_t n)
+    Buffer& Buffer::writeStrn(const char* string, size_t n)
     {
         ensureCapacity(n);
         strncpy(_data + _size, string, n);
@@ -103,7 +62,7 @@ namespace refude
     }
 
     
-    Buffer& Buffer::write(char ch)
+    Buffer& Buffer::writeChr(char ch)
     {
         ensureCapacity(1);
         _data[_size++] = ch;
@@ -111,7 +70,7 @@ namespace refude
         return *this;
     }
 
-    Buffer& Buffer::write(double d)
+    Buffer& Buffer::writeDouble(double d)
     {
         ensureCapacity(25);
         int newSize = _size + snprintf(_data + _size, 25, "%.16g", d);
@@ -129,12 +88,34 @@ namespace refude
         return *this;
     }
 
-    Buffer& Buffer::write(int i)
+    Buffer& Buffer::writeLong(long i)
     {
         ensureCapacity(10);
-        _size += snprintf(_data + _size, 10, "%d", i);
+        _size += snprintf(_data + _size, 10, "%ld", i);
         return *this;
     }
+
+
+    Buffer& Buffer::writeFile(const char* path)
+    {
+        Fd fd = open(path, O_RDONLY | O_CLOEXEC);
+        writeFile(fd.fd);
+    }
+
+    Buffer& Buffer::writeFile(int fd)
+    {
+        for (;;) {
+            ensureCapacity(1025);
+            ssize_t bytesRead = read(fd, _data + _size, 1024);
+            if (bytesRead < 0) throw C_Error();
+            _size += bytesRead;
+            if (bytesRead < 1024) {
+                break;
+            }
+        }
+        _data[_size] = '\0';
+    }
+
 
     void Buffer::clear()
     {
@@ -158,13 +139,13 @@ namespace refude
 
     void Buffer::toFile(const char* filePath)
     {
-        FileDescriptor fd(filePath, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
+        Fd fd = open(filePath, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
         int bytesWritten = 0;
         int bytesWrittenTotal = 0;
-        while ((bytesWritten = ::write(fd, _data + bytesWrittenTotal, _size - bytesWrittenTotal)) > 0) {
+        while ((bytesWritten = ::write(fd.fd, _data + bytesWrittenTotal, _size - bytesWrittenTotal)) > 0) {
             bytesWrittenTotal += bytesWritten;
         }
-        C_ERROR_IF(bytesWritten < 0);
+        if (bytesWritten < 0) throw C_Error();
     }
 
 
@@ -189,25 +170,4 @@ namespace refude
 
         if (!_data) throw C_Error();
     }
-
-    Buffer& operator<<(Buffer& buffer, const char* str)
-    {
-        return buffer.write(str);
-    }
-
-    Buffer& operator<<(Buffer& buffer, const char ch)
-    {
-        return buffer.write(ch);
-    }
-
-    Buffer& operator<<(Buffer& buffer, double d)
-    {
-        return buffer.write(d);
-    }
-
-    Buffer& operator<<(Buffer& buffer, int i)
-    {
-        return buffer.write(i);
-    }
-
 }

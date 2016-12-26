@@ -22,18 +22,15 @@ namespace refude
         typedef std::shared_ptr<AbstractCachingResource> ptr;
         AbstractCachingResource();
         virtual ~AbstractCachingResource();
-        virtual void doGET(int& socket, HttpMessage& request) override;
+        virtual void doGET(Fd& socket, HttpMessage& request, Server* server) override;
         std::recursive_mutex m;
 
     protected:
-        virtual Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers) = 0;
+        virtual Buffer::ptr buildContent(HttpMessage& request) = 0;
         
         Buffer getSignature(HttpMessage& request);
-        void clearCache();
-    
-    private:
-        Map<Buffer> cache;
-        
+        Map<Buffer::ptr> cache;
+
     };
 
 }

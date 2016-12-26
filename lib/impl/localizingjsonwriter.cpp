@@ -39,10 +39,10 @@ namespace refude
 
             if (localizedValue) {
                 if (written) {
-                    buffer.write(", ");
+                    buffer.writeStr(", ");
                 }
                 writeString(key);
-                buffer.write(": ");
+                buffer.writeStr(": ");
                 write(*localizedValue);
                 written++;
             }

@@ -11,8 +11,8 @@
 #include <sys/types.h>
 #include <vector>
 #include <string>
-#include <refude/json.h>
-#include <refude/webserver.h>
+#include "json.h"
+#include "webserver.h"
 
 #include "types.h"
 

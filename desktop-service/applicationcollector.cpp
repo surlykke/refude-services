@@ -6,9 +6,9 @@
  * Please refer to the GPL2 file for a copy of the license.
  */
 
-#include <refude/utils.h>
-#include <refude/jsonwriter.h>
-#include <refude/xdg.h>
+#include "utils.h"
+#include "jsonwriter.h"
+#include "xdg.h"
 #include "desktopentryreader.h"
 #include "mimeappslistreader.h"
 #include "applicationcollector.h"

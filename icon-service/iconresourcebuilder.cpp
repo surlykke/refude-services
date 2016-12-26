@@ -6,10 +6,10 @@
  * Please refer to the GPL2 file for a copy of the license.
  */
 
-#include <refude/utils.h>
-#include <refude/jsonwriter.h>
-#include <refude/jsonresource.h>
-#include <refude/xdg.h>
+#include "utils.h"
+#include "jsonwriter.h"
+#include "jsonresource.h"
+#include "xdg.h"
 #include "themereader.h"
 #include "iconcollector.h"
 
@@ -89,24 +89,24 @@ namespace refude
         IconCollector("/usr/share/pixmaps", dummyIconJson).collectInto(usrSharePixmapsIcons);
     }
 
-    void IconResourceBuilder::mapResources(Service& service)
+    void IconResourceBuilder::mapResources(Server& service)
     {
         IconResource::ptr iconResource = std::make_shared<IconResource>(std::move(themeIconMap), 
                                                                         std::move(usrSharePixmapsIcons), 
                                                                         std::move(inheritanceMap));
 
-        service.map(iconResource, "icons", "icon");
+        service.map(iconResource, "/icons/icon");
 
         themeJsonMap.each([&service, this](const char* themeDirName, Json& themeJson){
             themesJson["themes"].append(themeDirName);
             JsonResource::ptr themeResource = std::make_shared<JsonResource>();
             themeResource->setJson(std::move(themeJson));
-            service.map(themeResource, "icons", "themes", themeDirName);
+            service.map(themeResource, (std::string("/icons/themes") + themeDirName).data());
         });
 
         JsonResource::ptr themesResource = std::make_shared<JsonResource>();
         themesResource->setJson(std::move(themesJson));
-        service.map(themesResource, "icons", "themes");
+        service.map(themesResource, "/icons/themes");
     }
 
 }

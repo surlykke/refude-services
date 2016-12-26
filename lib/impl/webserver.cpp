@@ -19,82 +19,28 @@
 
 namespace refude
 {
-    struct FileWriter
-    {
-        FileWriter(int socket, int dirFd, const char* filePath, const char* mimetype) :
-            socket(socket),
-            fd(0),
-            mimetype(mimetype)
-        {
-            if (*filePath == '/') {
-                filePath++;
-            }
-            fd = openat(dirFd, filePath, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
-            if (fd < 0) {
-                if (errno == ENOENT) {
-                    throw HttpCode::Http404;
-                }
-                else {
-                    throw C_Error();
-                }
-            }
-        }
-
-        ~FileWriter()
-        {
-            while (close(fd) < 0 && errno == EINTR);
-        }
-
-        void writeFile() {
-            struct stat fileStat;
-            if (fstat(fd, &fileStat) < 0) throw C_Error();
-            int filesize = fileStat.st_size;
-            static const char* headerTemplate =
-                    "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: %s\r\n"
-                    "Content-Length: %d\r\n"
-                    "\r\n";
-            char header[strlen(headerTemplate) + 256];
-            sprintf(header, headerTemplate, mimetype, filesize);
-            int bytesTotal = strlen(header);
-            for (int byteswritten = 0;  byteswritten < bytesTotal; ) {
-                int bytes = write(socket, header, bytesTotal - byteswritten);
-                if (bytes < 0) throw C_Error();
-                byteswritten += bytes;
-            }
-
-            off_t offset = 0L;
-            while (filesize > 0)  {
-                int bytes = sendfile(socket, fd, &offset, filesize);
-                if (bytes < 0) throw C_Error();
-                filesize -= bytes;
-            }
-
-        }
-
-        int socket;
-        int fd;
-        const char* mimetype;
-    };
-
     WebServer::WebServer(const char* rootDir) :
         AbstractResource(),
-        rootDir(rootDir),
-        rootFd(-1)
+        rootFd(open(rootDir, O_CLOEXEC | O_DIRECTORY | O_RDONLY))
     {
-        rootFd = open(rootDir, O_CLOEXEC | O_DIRECTORY | O_RDONLY);
-        if (rootFd < 0) throw C_Error();
         if (!(magic_cookie = magic_open(MAGIC_MIME))) throw C_Error();
         if (magic_load(magic_cookie, NULL)) {
             throw RuntimeError("Cannot load magic database - %s\n", magic_error(magic_cookie));
         }
         // FIXME deallocate in destructor...
     }
-    void WebServer::doGET(int& socket, HttpMessage& request)
+
+    void WebServer::doGET(Fd& requestSocket, HttpMessage& request, Server* server)
     {
         PathMimetypePair pair = findFile(request);
         if (pair.path) {
-            FileWriter(socket, rootFd, pair.path, pair.mimetype).writeFile();
+            Buffer::ptr result = std::make_shared<Buffer>();
+            Fd fd = openat(rootFd, pair.path, O_RDONLY | O_CLOEXEC);
+            result->writeStr("HTTP/1.1 200 OK\r\n")
+                   .writeStr("Content-Type: ").writeStr(pair.mimetype).writeStr("\r\n")
+                   .writeStr("Content-Length: ").writeLong(fd.size()).writeStr("\r\n")
+                   .writeStr("\r\n");
+            result->writeFile(fd.fd);
         }
         else { 
             throw HttpCode::Http404;

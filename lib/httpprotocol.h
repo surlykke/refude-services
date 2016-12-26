@@ -9,6 +9,8 @@
 #ifndef HTTPPROTOCOL_H
 #define    HTTPPROTOCOL_H
 
+#include "buffer.h"
+
 namespace refude
 {
     enum class Method {
@@ -136,6 +138,7 @@ namespace refude
 
     const char* statusLine(HttpCode status);
 
+    Buffer::ptr buildResponse(HttpCode code, const char* body = 0);
 
 }
 

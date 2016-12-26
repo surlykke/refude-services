@@ -16,7 +16,7 @@
 #include <QDBusObjectPath>
 #include <QDBusAbstractInterface>
 #include <QDebug>
-#include <refude/json.h>
+#include "json.h"
 
 typedef QPair<QDBusObjectPath, QVariantMap> ObjectProperties;
 typedef QList<ObjectProperties> ObjectPropertiesList;

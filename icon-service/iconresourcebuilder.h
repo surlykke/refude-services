@@ -8,7 +8,7 @@
 
 #ifndef ICONRESOURCEBUILDER_H
 #define ICONRESOURCEBUILDER_H
-#include <refude/service.h>
+#include "server.h"
 
 #include "icontheme.h"
 #include "iconresource.h"
@@ -22,7 +22,7 @@ namespace refude
         IconResourceBuilder();
         virtual ~IconResourceBuilder();
         void buildResources();
-        void mapResources(Service& service);
+        void mapResources(Server& service);
 
         Json themesJson;
         Map<Json> themeJsonMap;

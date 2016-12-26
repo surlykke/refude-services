@@ -10,6 +10,8 @@
 #define    HTTPMESSAGE_H
 #include <iostream>
 #include <vector>
+#include <memory>
+
 #include "map.h"
 #include "buffer.h"
 #include "httpprotocol.h"
@@ -18,6 +20,7 @@ namespace refude
 {
     struct HttpMessage
     {
+        typedef std::unique_ptr<HttpMessage> ptr;
         Method method;
         int status;
         char* path;
@@ -42,38 +45,9 @@ namespace refude
         const char* parameter(const char* parameterName);
         void clear();
         
-        Buffer toBuf();
+        //Buffer toBuf();
         
         void setMatchedPathLength(size_t matchedPathLength); 
-    };
-
-    class HttpMessageReader
-    {
-    public:
-        HttpMessageReader(int socket, HttpMessage& message, bool dumpRequest = false);
-        void readRequest();
-        void readResponse();
-        bool dumpRequest; 
-        void clear();
-        void receive();
-
-    private:
-        void readRequestLine();
-        void readQueryString();
-        void readStatusLine();
-        void readHeaderLines();
-        void readHeaderLine();
-        void readHeaders();
-        void readBody();
-        char currentChar();
-        char nextChar();
-        bool isTChar(char c);
-
-
-        int _socket;
-        HttpMessage& _message;
-        int _bufferEnd;
-        int _currentPos;
     };
 }
 

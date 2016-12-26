@@ -11,8 +11,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <refude/jsonwriter.h>
-#include <refude/json.h>
+#include "jsonwriter.h"
+#include "json.h"
 
 using namespace refude;
 int main()
