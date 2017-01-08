@@ -11,8 +11,8 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include <refude/map.h>
-#include <refude/webserver.h>
+#include "map.h"
+#include "webserver.h"
 namespace refude
 {
     struct SizePath
@@ -26,7 +26,7 @@ namespace refude
     class RunningAppsIcons : public WebServer
     {
     public:
-        typedef std::shared_ptr<RunningAppsIcons> ptr;
+        typedef std::unique_ptr<RunningAppsIcons> ptr;
         RunningAppsIcons();
         virtual ~RunningAppsIcons();
         virtual PathMimetypePair findFile(HttpMessage& request);

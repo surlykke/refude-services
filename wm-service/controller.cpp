@@ -8,29 +8,29 @@
 
 #include <vector>
 #include <unistd.h>
-#include <refude/jsonwriter.h>
+#include "jsonwriter.h"
+#include "xdg.h"
 #include "windowinfo.h"
 #include "controller.h"
 namespace refude 
 {
 
-    struct WindowsResource : public CollectionResource
+    struct ActionResource : public JsonResource
     {
-        WindowsResource(Controller* controller) : CollectionResource("Id") { }
-
+        ActionResource(Json&& action, Window window) :
+            JsonResource(std::move(action)),
+            window(window)
+        {
+        }
       
         void doPOST(int& socket, HttpMessage& request) override
         {
-            std::cout << "POST against " << request.remainingPath << "\n";
-            if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
-            errno = 0;
-            Window windowToRaise = strtoul(request.remainingPath, NULL, 0);
-            if (errno != 0) throw C_Error();
 
-            WindowInfo(windowToRaise).raiseAndFocus();
-
+            WindowInfo(window).raiseAndFocus();
             throw HttpCode::Http204;
         }
+
+        Window window;
     };
 
     std::map<Atom, const char*> buildWmStateMap() 
@@ -65,17 +65,54 @@ namespace refude
         }
     }
 
-    Controller::Controller() :
-        notifier(std::make_shared<NotifierResource>()),
-        windowsResource(std::make_shared<WindowsResource>(this)),
-        displayResource(std::make_shared<JsonResource>()),
-        iconsResource(std::make_shared<RunningAppsIcons>())
+    JsonResource::ptr buildWindowResource(const WindowInfo& window)
     {
-        dispatcher.map(notifier, "notify");
-        dispatcher.map(windowsResource, true, "windows");
-        dispatcher.map(iconsResource, true, "icons");
-        dispatcher.map(displayResource, "display");
-        buildDisplayResource(); 
+        Json windowJson = JsonConst::EmptyObject;
+        windowJson["id"] = std::to_string(window.window);
+        windowJson["name"] = window.title;
+        windowJson["state"] = JsonConst::EmptyArray;
+        for (Atom atom : window.windowState) {
+            const char* state = atomToString(atom);
+            if (state) {
+                windowJson["state"].append(state);
+            }
+        }
+
+        windowJson["comment"] = "";
+        windowJson["geometry"] = JsonConst::EmptyObject;
+        windowJson["geometry"]["x"] = window.x;
+        windowJson["geometry"]["y"] = window.y;
+        windowJson["geometry"]["w"] = window.width;
+        windowJson["geometry"]["h"] = window.height;
+        windowJson["windowIcon"] = window.iconName;
+        return std::make_unique<JsonResource>(std::move(windowJson));
+    }
+
+    JsonResource::ptr buildActionResource(const WindowInfo& window)
+    {
+        Json action = JsonConst::EmptyObject;
+        action["name"] = window.title;
+        action["comment"] = std::string("Raise and focus");
+        action["geometry"] = JsonConst::EmptyObject;
+        action["geometry"]["x"] = window.x;
+        action["geometry"]["y"] = window.y;
+        action["geometry"]["w"] = window.width;
+        action["geometry"]["h"] = window.height;
+        char iconUrl[1024] = {0};
+        snprintf(iconUrl, 1024, "/icons/%s", window.iconName.data());
+        action["iconUrl"] = iconUrl;
+
+        return std::make_unique<ActionResource>(std::move(action), window.window);
+    }
+
+    Controller::Controller() :
+        dispatcher(),
+        notifier(std::make_unique<NotifierResource>()),
+        jsonResources(&dispatcher, notifier.get()),
+        iconsResource(std::make_unique<RunningAppsIcons>())
+    {
+        dispatcher.map(std::move(notifier), "/notify");
+        dispatcher.map(std::move(iconsResource), "/icons");
     }
 
     Controller::~Controller()
@@ -84,7 +121,9 @@ namespace refude
 
     void Controller::run()
     {
-        updateWindowsResource();
+        update();
+        std::string socketPath = xdg::runtime_dir() + "/org.refude.wm-service";
+        dispatcher.serve(socketPath.data());
         Display *disp = XOpenDisplay(NULL);
         XSelectInput(disp, XDefaultRootWindow(disp), SubstructureNotifyMask);
         XEvent event;
@@ -95,56 +134,44 @@ namespace refude
                // we send at most one event pr. 1/10 seconds. (TODO: Right value?)
                usleep(100000);
                XSync(disp, True);
-               updateWindowsResource();
+               update();
            }
         }
     }
 
-    void Controller::buildDisplayResource()
+    Json Controller::buildDisplay()
     {
-        Json displayJson = JsonConst::EmptyObject;
-        displayJson["geometry"] = JsonConst::EmptyObject;
         WindowInfo rootWindowInfo = WindowInfo::rootWindow();
-        displayJson["geometry"]["x"] = rootWindowInfo.x;
-        displayJson["geometry"]["y"] = rootWindowInfo.y;
-        displayJson["geometry"]["h"] = rootWindowInfo.height;
-        displayJson["geometry"]["w"] = rootWindowInfo.width;
 
-        if (displayJson != displayResource->getJson()) {
-            notifier->resourceUpdated("display");
-            displayResource->setJson(std::move(displayJson));
-        }
+        Json json = JsonConst::EmptyObject;
+        json["geometry"] = JsonConst::EmptyObject;
+        json["geometry"]["x"] = rootWindowInfo.x;
+        json["geometry"]["y"] = rootWindowInfo.y;
+        json["geometry"]["h"] = rootWindowInfo.height;
+        json["geometry"]["w"] = rootWindowInfo.width;
+
+        return json;
     }
 
-    void Controller::updateWindowsResource()
+    void Controller::update()
     {
-        Json windowsJson = JsonConst::EmptyArray;
+        Json actions = JsonConst::EmptyArray;
+        Map<JsonResource::ptr> newResources;
 
-        for (const WindowInfo& window : WindowInfo::normalWindows()) {
-            Json windowJson = JsonConst::EmptyObject;
-            windowJson["Id"] = std::to_string(window.window);
-            windowJson["Name"] = window.title;
-            windowJson["State"] = JsonConst::EmptyArray;
-            for (Atom atom : window.windowState) {
-                const char* state = atomToString(atom);
-                if (state) {
-                    windowJson["State"].append(state);
-                }
-            }
-            
-            windowJson["Comment"] = "";
-            windowJson["geometry"] = JsonConst::EmptyObject;
-            windowJson["geometry"]["x"] = window.x;
-            windowJson["geometry"]["y"] = window.y;
-            windowJson["geometry"]["w"] = window.width;
-            windowJson["geometry"]["h"] = window.height;
-            windowJson["windowIcon"] = window.iconName;
-            windowsJson.append(std::move(windowJson));
-            iconsResource->addIcon(window.iconName.data(), window.icon);
-        } 
-        CollectionResourceUpdater updater(windowsResource);
-        updater.update(windowsJson);
-        updater.notify(notifier, "windows");
+        char path[1024] = {0};
+
+        for (const WindowInfo& windowInfo: WindowInfo::normalWindows()) {
+            snprintf(path, 1024, "/window/%lu", windowInfo.window);
+            newResources[path] = buildWindowResource(windowInfo);
+            iconsResource->addIcon(windowInfo.iconName.data(), windowInfo.icon);
+            snprintf(path, 1024, "/window/%lu/raiseAndFocus", windowInfo.window);
+            newResources[path] = buildActionResource(windowInfo);
+            actions.append(path + 1);
+        }
+
+        newResources["/display"] = std::make_unique<JsonResource>(buildDisplay());
+        newResources["/actions"] = std::make_unique<JsonResource>(std::move(actions));
+
+        jsonResources.updateCollection(std::move(newResources));
     }
-
 }

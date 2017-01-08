@@ -9,13 +9,10 @@
 #ifndef POWER_APPLICATION_H
 #define POWER_APPLICATION_H
 
-#include <vector>
-#include <map>
 #include <QCoreApplication>
-#include <refude/json.h>
-#include <refude/service.h>
-#include <refude/notifierresource.h>
-#include <refude/jsonresource.h>
+#include "notifierresource.h"
+#include "jsonresourcecollection.h"
+#include "service.h"
     
 class QDBusInterface;
     
@@ -28,17 +25,17 @@ namespace refude
     {
     public:
         PowerApplication(int& argc, char** argv);
-        virtual ~PowerApplication();
 
-        CollectionResource::ptr devicesResource;
-        CollectionResource::ptr actionsResource;
-        NotifierResource::ptr notifierResource;   
-    
-    public slots:
+    private slots:
+        void collectDevices();
+        
+    private:
         void collectDeviceJsons();
         void collectActionJsons();
 
-    private:
+        Service service;
+        NotifierResource::ptr notifier;
+        JsonResourceCollection jsonResources;
         std::vector<PropertiesIF*> deviceInterfaces;
         QDBusInterface* managerInterface;
     };

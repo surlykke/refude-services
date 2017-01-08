@@ -20,7 +20,7 @@ namespace refude
     class NotifierResource : public AbstractResource
     {
     public:
-        typedef std::shared_ptr<NotifierResource> ptr;
+        typedef std::unique_ptr<NotifierResource> ptr;
         NotifierResource();
 
         virtual void doGET(int& socket, HttpMessage& request) override;

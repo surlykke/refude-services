@@ -22,7 +22,7 @@ namespace refude
     class WebServer : public AbstractResource
     {
     public:
-        typedef std::shared_ptr<WebServer> ptr;
+        typedef std::unique_ptr<WebServer> ptr;
         WebServer(const char* rootDir);
         void doGET(int& socket, HttpMessage& request) override;
         virtual PathMimetypePair findFile(HttpMessage& request);

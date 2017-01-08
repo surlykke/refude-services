@@ -16,7 +16,7 @@
 #include <QDBusObjectPath>
 #include <QDBusAbstractInterface>
 #include <QDebug>
-#include <refude/json.h>
+#include "json.h"
 
 typedef QPair<QDBusObjectPath, QVariantMap> ObjectProperties;
 typedef QList<ObjectProperties> ObjectPropertiesList;
@@ -29,12 +29,12 @@ extern bool dbus_types_registered;
 namespace refude
 {
 
-    class ConnmanObject : public QDBusAbstractInterface
+    class DBusProxy : public QDBusAbstractInterface
     {
         Q_OBJECT
 
     public:
-        ConnmanObject(const QString& path, const char* interface, const QVariantMap properties = QVariantMap());
+        DBusProxy(const QString& path, const char* interface, const QVariantMap properties = QVariantMap());
         Json properties;
 
     private slots:
@@ -45,7 +45,7 @@ namespace refude
 		void jsonChanged();
     };
 
-    class ConnmanManager : public ConnmanObject
+    class ConnmanManager : public DBusProxy
     {
         Q_OBJECT
 

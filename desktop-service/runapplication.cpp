@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include <refude/errorhandling.h>
+#include "errorhandling.h"
 #include "runapplication.h"
 
 extern char** environ;
@@ -62,8 +62,8 @@ namespace refude
                 execvp(argv[0], argv);
                  
                 // If we arrive here an error occurred;
-                int errorNumber = (errno);
-                dprintf(2, "Error: doing execvpe: %s\n", errno);
+                int errorNumber = errno;
+                dprintf(2, "Error: doing execvpe: %d\n", errorNumber);
                 exit(errorNumber);
             }
             else {

@@ -17,7 +17,7 @@
 
 namespace refude
 {
-    class AbstractResource;
+    struct AbstractResource;
     class ThreadSafeQueue;
 
     class Service
@@ -31,14 +31,16 @@ namespace refude
         
         void wait();
 
-        void map(AbstractResource::ptr resource, const char* p1, const char* p2 = 0, const char* p3 = 0);
-        void map(AbstractResource::ptr resource, bool wildcarded, const char* p1, const char* p2 = 0, const char* p3 = 0);
-        void map(AbstractResource::ptr resource, bool wildcarded, std::vector<const char*> pathElements);
-        void unMap(const char* p1, const char* p2 = 0, const char* p3 = 0);
-        void unMap(std::vector<const char*> pathElements);
+        void map(AbstractResource::ptr&& resource, const char* path);
+        void map(AbstractResource::ptr&& resource, std::string path);
+        void mapByPrefix(AbstractResource::ptr&& resource, const char* path);
+        void mapByPrefix(AbstractResource::ptr&& resource, std::string path);
+        void unMap(const char* path);
         
 
-        AbstractResource::ptr mapping(const char* path, bool prefix = false);
+        AbstractResource* mapping(const char* path);
+        AbstractResource* prefixMapping(const char* path);
+
         Map<AbstractResource::ptr> resourceMappings;
         Map<AbstractResource::ptr> prefixMappings;
 

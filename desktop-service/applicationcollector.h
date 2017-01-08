@@ -9,8 +9,8 @@
 #ifndef APPLICATIONCOLLECTOR_H
 #define APPLICATIONCOLLECTOR_H
 #include <set>
-#include <refude/map.h>
-#include <refude/json.h>
+#include "map.h"
+#include "json.h"
 
 namespace refude
 {
@@ -20,12 +20,12 @@ namespace refude
         ApplicationCollector();
         virtual ~ApplicationCollector();
         void collect();
+        Map<Json> collectedApplications;
         Map<std::vector<std::string>> defaultApplications;
-        Json jsonArray;
 
     private:
-        void readDesktopFiles(std::vector<std::string> applicationsDirs, Map<Json>& jsonMap);
-        void readMimeappsListFile(std::string dir, Map<Json>& jsonMap);
+        void readDesktopFiles(std::vector<std::string> applicationsDirs);
+        void readMimeappsListFile(std::string dir);
 
     };
 }

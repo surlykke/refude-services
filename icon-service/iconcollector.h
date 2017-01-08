@@ -11,7 +11,7 @@
 #include <limits.h>
 #include <string>
 
-#include <refude/json.h>
+#include "json.h"
 
 #include "types.h"
 

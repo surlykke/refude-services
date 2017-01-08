@@ -6,9 +6,9 @@
  * Please refer to the GPL2 file for a copy of the license.
  */
 
-#include <refude/utils.h>
-#include <refude/jsonwriter.h>
-#include <refude/xdg.h>
+#include "utils.h"
+#include "jsonwriter.h"
+#include "xdg.h"
 #include "desktopentryreader.h"
 #include "mimeappslistreader.h"
 #include "applicationcollector.h"
@@ -16,8 +16,8 @@
 namespace refude
 {
     ApplicationCollector::ApplicationCollector() : 
-        defaultApplications(),
-        jsonArray(JsonConst::EmptyArray)
+        collectedApplications(),
+        defaultApplications()
     {
     }
 
@@ -27,38 +27,32 @@ namespace refude
 
     void ApplicationCollector::collect()
     {
-        Map<Json> jsonMap;
         for (const std::string& applicationsDir : append(xdg::data_dirs(), "/applications")) {
-            readDesktopFiles(directoryTree(applicationsDir), jsonMap);
-            readMimeappsListFile(applicationsDir, jsonMap);
+            readDesktopFiles(directoryTree(applicationsDir));
+            readMimeappsListFile(applicationsDir);
         }
 
-        readDesktopFiles(directoryTree(xdg::data_home() + "/applications"), jsonMap);
+        readDesktopFiles(directoryTree(xdg::data_home() + "/applications"));
 
         for (std::string configDir : xdg::config_dirs()) {
-            readMimeappsListFile(configDir, jsonMap);
+            readMimeappsListFile(configDir);
         }
 
-        readMimeappsListFile(xdg::config_home(), jsonMap);
-
-        jsonMap.each([this](const char* key, Json& json) {
-            jsonArray.append(std::move(json));
-        });
+        readMimeappsListFile(xdg::config_home());
     }
 
    
-    void ApplicationCollector::readDesktopFiles(std::vector<std::string> applicationsDirs, Map<Json>& jsonMap)
+    void ApplicationCollector::readDesktopFiles(std::vector<std::string> applicationsDirs)
     {
         for (const std::string& applicationsDir : applicationsDirs) {
             for (const std::string& desktopFile : files(applicationsDir, {".desktop"})) {
                 std::string desktopFilePath = applicationsDir + desktopFile; 
                 std::string appId = desktopFile;
                 std::replace(appId.begin(), appId.end(), '/', '-');
-                std::string icon = appId.substr(0, appId.size() - 8); // strip ending '.desktop'
                 
                 DesktopEntryReader reader(desktopFilePath);
                 if (reader.json.contains("Hidden") && reader.json["Hidden"].toBool()) {
-                    jsonMap.erase(appId.data());
+                    collectedApplications.erase(appId.data());
                 }
                 else {
                     if (!reader.json.contains("Icon")) {
@@ -66,21 +60,21 @@ namespace refude
                         reader.json["Icon"] = appId.substr(appId.size() - 8); 
                     }
                     reader.json["applicationId"] = appId;
-                    jsonMap[appId] = std::move(reader.json);
+                    collectedApplications[appId] = std::move(reader.json);
                 }
             }
         }
     }
 
-    void ApplicationCollector::readMimeappsListFile(std::string dir, Map<Json>& jsonMap)
+    void ApplicationCollector::readMimeappsListFile(std::string dir)
     {
         MimeappsList mimeappsList(dir + "/mimeapps.list");
-        mimeappsList.removedAssociations.each([&jsonMap](const char* mimetype, 
+        mimeappsList.removedAssociations.each([this](const char* mimetype,
                                                      std::set<std::string>& deAssociatedApplications) {
             for (const std::string& deAssociatedApplication : deAssociatedApplications) {
-                int pos = jsonMap.find(deAssociatedApplication);
+                int pos = collectedApplications.find(deAssociatedApplication);
                 if ( pos >= 0) {
-                    Json& associatedAppsArray = jsonMap.pairAt(pos).value["mimetype"];
+                    Json& associatedAppsArray = collectedApplications.pairAt(pos).value["mimetype"];
                     while (int index = associatedAppsArray.find(deAssociatedApplication) > -1) {
                         associatedAppsArray.take(index);
                     }
@@ -88,11 +82,11 @@ namespace refude
             }
         });
         
-        mimeappsList.addedAssociations.each([&jsonMap](const char* mimetype, std::set<std::string>& associatedApplications) {
+        mimeappsList.addedAssociations.each([this](const char* mimetype, std::set<std::string>& associatedApplications) {
             for (const std::string& associatedApplication : associatedApplications) {
-                int pos = jsonMap.find(associatedApplication);
+                int pos = collectedApplications.find(associatedApplication);
                 if (pos >= 0) {
-                    jsonMap.pairAt(pos).value["mimetype"].append(mimetype);
+                    collectedApplications.pairAt(pos).value["mimetype"].append(mimetype);
                 }
             }
         });

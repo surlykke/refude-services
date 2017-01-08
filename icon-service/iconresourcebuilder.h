@@ -8,7 +8,7 @@
 
 #ifndef ICONRESOURCEBUILDER_H
 #define ICONRESOURCEBUILDER_H
-#include <refude/service.h>
+#include "service.h"
 
 #include "icontheme.h"
 #include "iconresource.h"

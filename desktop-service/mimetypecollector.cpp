@@ -7,14 +7,14 @@
  */
 
 #include <tinyxml2.h>
-#include <refude/utils.h>
+#include "utils.h"
 
 #include "mimetypecollector.h"
 namespace refude
 {
 
     MimetypeCollector::MimetypeCollector() : 
-        jsonArray(JsonConst::EmptyArray)
+        collectedMimetypes()
     {
     }
 
@@ -128,25 +128,18 @@ namespace refude
                 json["genericIcon"] = type + "-x-generic";
             }
             
-            jsonArray.append(std::move(json));
+            collectedMimetypes[mimetype] = std::move(json);
         }
 
     }
 
-    void MimetypeCollector::addAssociations(Json& applicationArray)
+    void MimetypeCollector::addAssociations(Map<Json>& applications)
     {
-        Map<uint> index;
-        for (uint i = 0; i < jsonArray.size(); i++) {
-            index[jsonArray[i]["mimetype"].toString()] = i;
-        }
-
-
-        applicationArray.eachElement([this, &index](Json& appJson) {
-            const char* appId = appJson["applicationId"].toString();
-            appJson["mimetype"].eachElement([this, &index, &appId](const Json& mimetype) {
-                int pos = index.find(mimetype.toString());
-                if (pos >= 0) {
-                    jsonArray[index.pairAt(pos).value]["associatedApplications"].append(appId);
+        applications.each([this](const char* appId, Json& appJson) {
+            appJson["mimetype"].eachElement([this, &appId](const Json& mimetype) {
+                const char* mimetypeAsString = mimetype.toString();
+                if (collectedMimetypes.find(mimetypeAsString) >= 0){;
+                    collectedMimetypes[mimetypeAsString]["associatedApplications"].append(appId);
                 }
             });
         });
@@ -155,16 +148,12 @@ namespace refude
 
     void MimetypeCollector::addDefaultApplications(Map<std::vector<std::string> >& defaultApplications)
     {
-        Map<uint> index;
-        for (uint i = 0; i < jsonArray.size(); i++) {
-            index[jsonArray[i]["mimetype"].toString()] = i;
-        }
 
-        defaultApplications.each([this, &index](const char* mimetype, std::vector<std::string>& defaultApplicationIds) {
-            int pos = index.find(mimetype);
-            if (pos >= 0) {
+        defaultApplications.each([this](const char* mimetypeAsString, std::vector<std::string>& defaultApplicationIds) {
+            if (collectedMimetypes.find(mimetypeAsString) >= 0) {
+                Json& mimetype = collectedMimetypes[mimetypeAsString];
                 for (std::string& defaultApplicationId : defaultApplicationIds) {
-                    jsonArray[index.pairAt(pos).value]["defaultApplications"].append(defaultApplicationId);
+                    mimetype["defaultApplications"].append(defaultApplicationId);
                 }
             }
         });

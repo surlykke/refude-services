@@ -6,7 +6,7 @@
  * Please refer to the GPL2 file for a copy of the license.
  */
 
-#include "connmanobject.h"
+#include "dbusproxy.h"
 
 bool dbus_types_registered = []() -> bool {
     qDBusRegisterMetaType<ObjectProperties>();
@@ -67,21 +67,21 @@ namespace refude
         }
     }
 
-    ConnmanObject::ConnmanObject(const QString& path, const char* interface, const QVariantMap properties) :
+    DBusProxy::DBusProxy(const QString& path, const char* interface, const QVariantMap properties) :
         QDBusAbstractInterface("net.connman", path, interface, QDBusConnection::systemBus(), 0),
         properties(qVariant2Json(properties))
     {
         this->properties["path"] = path.toUtf8().data() + 1; // Skip leading '/'
-        connect(this, &ConnmanObject::PropertyChanged, this, &ConnmanObject::onPropertyChanged);
+        connect(this, &DBusProxy::PropertyChanged, this, &DBusProxy::onPropertyChanged);
     }
 
-    void ConnmanObject::onPropertyChanged(const QString& name, const QDBusVariant& newValue)
+    void DBusProxy::onPropertyChanged(const QString& name, const QDBusVariant& newValue)
     {
         properties[name.toStdString()] = qVariant2Json(newValue.variant());
 		emit jsonChanged();
     }
 
-    ConnmanManager::ConnmanManager() : ConnmanObject("/", "net.connman.Manager")
+    ConnmanManager::ConnmanManager() : DBusProxy("/", "net.connman.Manager")
     {
         qDebug() << "Manager constructed..";
     }

@@ -16,9 +16,11 @@
 namespace refude
 {
 
-    JsonResource::JsonResource() :
-        AbstractCachingResource(),
-        json(JsonConst::EmptyObject)
+    JsonResource::JsonResource() : AbstractCachingResource(), json(JsonConst::EmptyObject)
+    {
+    }
+
+    JsonResource::JsonResource(Json&& json) : AbstractCachingResource(), json(std::move(json))
     {
     }
 

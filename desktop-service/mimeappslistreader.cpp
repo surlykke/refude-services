@@ -7,10 +7,10 @@
  */
 
 #include <algorithm>
-#include <refude/errorhandling.h>
+#include "errorhandling.h"
 #include "mimeappslistreader.h"
-#include <refude/inireader.h>
-#include <refude/utils.h>
+#include "inireader.h"
+#include "utils.h"
 
 namespace refude
 {

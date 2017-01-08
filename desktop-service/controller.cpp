@@ -7,16 +7,16 @@
  */
 
 #include <set>
-#include <refude/service.h>
-#include <refude/jsonresource.h>
-#include <refude/jsonwriter.h>
-#include <refude/notifierresource.h>
+#include "service.h"
+#include "jsonresource.h"
+#include "jsonwriter.h"
+#include "notifierresource.h"
 
 
 #include "applicationcollector.h"
 #include "mimetypecollector.h"
 #include "mimeappslistreader.h"
-#include <refude/xdg.h>
+#include "xdg.h"
 #include "desktopwatcher.h"
 #include "runapplication.h"
 
@@ -26,24 +26,27 @@
 namespace refude
 {
 
-    struct ApplicationsResource : public CollectionResource
+    struct ActionResource : public JsonResource
     {
-        ApplicationsResource() : CollectionResource("applicationId") {}
+        ActionResource(Json&& action, std::string command) :
+            JsonResource(std::move(action)),
+            command(command)
+        {}
+
         void doPOST(int& socket, HttpMessage& request) override
         {
-            if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
-            runApplication(jsonArray[indexes[request.remainingPath]]["Exec"].toString());
+            runApplication(command.data());
             throw HttpCode::Http204;
         }
 
+        std::string command;
     };
    
-    struct MimetypesResource : public CollectionResource
+    struct MimetypeResource : public JsonResource
     {
-        MimetypesResource() : CollectionResource("mimetype") {}
+        MimetypeResource(Json&& mimetype) : JsonResource(std::move(mimetype)) {}
         void doPATCH(int& socket, HttpMessage& request) override
         {
-            if (indexes.find(request.remainingPath) < 0)  throw HttpCode::Http404;
             Json mergeJson;
             mergeJson << request.body;
             if (mergeJson.type() != JsonType::Object) throw HttpCode::Http406;
@@ -67,15 +70,12 @@ namespace refude
 
     Controller::Controller() : 
         service(),
-        applicationsResource(std::make_shared<ApplicationsResource>()),
-        mimetypesResource(std::make_shared<MimetypesResource>()),
-        notifier(std::make_shared<NotifierResource>()),
+        notifier(std::make_unique<NotifierResource>()),
+        resources(&service, notifier.get()),
         desktopWatcher(new DesktopWatcher(*this, true))        
     {
         
-        service.map(applicationsResource, true, "applications");
-        service.map(mimetypesResource, true, "mimetypes");
-        service.map(notifier, true, "notify");
+        service.map(std::move(notifier), "/notify");
     }
 
     Controller::~Controller()
@@ -95,16 +95,40 @@ namespace refude
         MimetypeCollector mimetypeCollector;
         mimetypeCollector.collect();
        
-        mimetypeCollector.addAssociations(applicationCollector.jsonArray);
+        mimetypeCollector.addAssociations(applicationCollector.collectedApplications);
         mimetypeCollector.addDefaultApplications(applicationCollector.defaultApplications);
 
-        CollectionResourceUpdater applicationsResourceUpdater(applicationsResource);
-        applicationsResourceUpdater.update(applicationCollector.jsonArray);
-        applicationsResourceUpdater.notify(notifier, "applications");
+        Map<JsonResource::ptr> newResources;
 
-        CollectionResourceUpdater mimetypesResourceUpdater(mimetypesResource);
-        mimetypesResourceUpdater.update(mimetypeCollector.jsonArray);
-        mimetypesResourceUpdater.notify(notifier, "mimetypes");
+        char path[1024] = {0};
+        Json actions = JsonConst::EmptyArray;
+
+        applicationCollector.collectedApplications.each([&newResources, &path, &actions, this](const char* appId, Json& app) {
+            snprintf(path, 1024, "/application/%s/launch", appId);
+            newResources[path] = buildAction(app);
+            actions.append(path + 1);
+            snprintf(path, 1024, "/application/%s", appId);
+            std::cout << "Mapping: " << path << "\n";
+            newResources[path] = std::make_unique<JsonResource>(std::move(app));
+        });
+
+        newResources["/actions"] = std::make_unique<JsonResource>(std::move(actions));
+
+        strcpy(path, "/mimetype/");
+        mimetypeCollector.collectedMimetypes.each([&newResources, &path, this](const char* mimetypeStr, Json& mimetype) {
+            snprintf(path, 1024, "/mimetype/%s", mimetypeStr);
+            newResources[path] = std::make_unique<MimetypeResource>(std::move(mimetype));
+        });
+
+        resources.updateCollection(std::move(newResources));
+    }
+
+    JsonResource::ptr Controller::buildAction(Json& application) {
+        Json action = JsonConst::EmptyObject;
+        action["_ripc:localized:name"] = application["_ripc:localized:Name"].copy();
+        action["_ripc:localized:comment"] = application["_ripc:localized:Comment"].copy();
+        action["icon"] = application["Icon"].copy();
+        return std::make_unique<ActionResource>(std::move(action), application["Exec"].toString());
     }
 
 }

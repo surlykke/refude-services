@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <linux/un.h>
 #include <unistd.h>
-#include <refude/errorhandling.h>
+#include "errorhandling.h"
 
 #define SOCK_PATH "test_speed"
 

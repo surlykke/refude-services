@@ -43,7 +43,6 @@ namespace refude
     {
     public:
         Json() : mType(JsonType::Undefined) {}
-        Json(Json& other) = delete;
         Json(Json&& other);
         Json(JsonConst jsonConst);
         Json(const char* string);
@@ -53,7 +52,6 @@ namespace refude
 
         Json copy() const;
         Json& operator=(Json&& other);
-        Json& operator=(Json& other) = delete;
         Json& operator=(JsonConst jsonConst);
         bool operator==(const Json& other) const;
         bool operator!=(const Json& other) const;
@@ -61,7 +59,7 @@ namespace refude
         Json& operator[](const char* index);
         Json& operator[](std::string index);
         Json& operator[](int index) const;
-        std::vector<const char*> keys() const; // TODO  Use some imutable array here
+        std::vector<const char*> keys() const;
         const char* toString() const;
         double toDouble() const;
         bool toBool() const;

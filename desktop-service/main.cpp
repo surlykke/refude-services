@@ -8,10 +8,10 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include <refude/service.h>
-#include <refude/errorhandling.h>
+#include "service.h"
+#include "errorhandling.h"
 
-#include <refude/xdg.h>
+#include "xdg.h"
 #include "controller.h"
 
 int main(int argc, char *argv[])
@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     Controller controller;
     try {
         controller.setupAndRun();
-        std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.desktop-service";
+        std::string socketPath = xdg::runtime_dir() + "/org.refude.desktop-service";
         controller.service.dumpRequests = true;
         controller.service.serve(socketPath.data());
         controller.service.wait();

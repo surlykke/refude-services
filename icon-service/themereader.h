@@ -9,8 +9,8 @@
 #ifndef THEMEREADER_H
 #define THEMEREADER_H
 #include <string>
-#include <refude/json.h>
-#include <refude/inireader.h>
+#include "json.h"
+#include "inireader.h"
 
 namespace refude
 {

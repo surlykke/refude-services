@@ -9,8 +9,8 @@
 #ifndef MIMETYPECOLLECTOR_H
 #define MIMETYPECOLLECTOR_H
 #include <set>
-#include <refude/map.h>
-#include <refude/json.h>
+#include "map.h"
+#include "json.h"
 
 namespace refude 
 {
@@ -19,10 +19,10 @@ namespace refude
         MimetypeCollector();
         virtual ~MimetypeCollector();
         void collect(); 
-        void addAssociations(Json& applicationArray);
+        void addAssociations(Map<Json>& applications);
         void addDefaultApplications(Map<std::vector<std::string>>& defaultApplications);
         
-        Json jsonArray;
+        Map<Json> collectedMimetypes;
     };
 }
 

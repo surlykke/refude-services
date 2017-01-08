@@ -8,10 +8,10 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include <refude/service.h>
-#include <refude/errorhandling.h>
+#include "service.h"
+#include "errorhandling.h"
 
-#include <refude/xdg.h>
+#include "xdg.h"
 #include "controller.h"
 
 int main(int argc, char *argv[])
@@ -21,10 +21,7 @@ int main(int argc, char *argv[])
         /*std::string configDir = xdg::config_home() + "/RefudeService";
         system((std::string("mkdir -p ") + configDir).data());*/
 
-        std::string socketPath = xdg::runtime_dir() + "/org.restfulipc.refude.wm-service";
-        Controller controller;
-        controller.dispatcher.serve(socketPath.data());
-        controller.run();
+        Controller().run();
     }
     catch (RuntimeError re) {
         std::cerr << re.what() << "\n";

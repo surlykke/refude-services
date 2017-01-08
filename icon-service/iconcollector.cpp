@@ -9,10 +9,10 @@
 #include <sys/stat.h>
 
 #include <iostream>
-#include <refude/errorhandling.h>
-#include <refude/utils.h>
+#include "errorhandling.h"
+#include "utils.h"
 #include <unistd.h>
-#include <refude/json.h>
+#include "json.h"
 #include "iconcollector.h"
 
 namespace refude

@@ -21,8 +21,9 @@ namespace refude
     class JsonResource : public AbstractCachingResource
     {
     public:
-        typedef std::shared_ptr<JsonResource> ptr; 
+        typedef std::unique_ptr<JsonResource> ptr; 
         JsonResource();
+        JsonResource(Json&& json);
         virtual ~JsonResource();
         Json& getJson(); 
         void setJson(Json&& json);

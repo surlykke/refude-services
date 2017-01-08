@@ -1,3 +1,4 @@
+<!-- !:mime text/markdown -->
 # Refude-services - Restful Desktop Environment Services
 
 ## What is it?

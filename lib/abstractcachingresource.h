@@ -19,7 +19,7 @@ namespace refude
     class AbstractCachingResource : public AbstractResource
     {
     public:
-        typedef std::shared_ptr<AbstractCachingResource> ptr;
+        typedef std::unique_ptr<AbstractCachingResource> ptr;
         AbstractCachingResource();
         virtual ~AbstractCachingResource();
         virtual void doGET(int& socket, HttpMessage& request) override;

@@ -74,8 +74,8 @@ namespace refude
         threads(),
         mNumThreads(5),
         listenSocket(-1),
-        requestSockets(new ThreadSafeQueue()),
         resourceMappings(),
+        requestSockets(new ThreadSafeQueue()),
         prefixMappings(),
         shuttingDown(false)
     {
@@ -124,76 +124,45 @@ namespace refude
         }
     }
 
-    void Service::map(AbstractResource::ptr resource, const char* p1, const char* p2, const char* p3)
+    void Service::map(AbstractResource::ptr&& resource, const char* path)
     {
-        map(resource, false, p1, p2, p3);
+        resourceMappings[path] = std::move(resource);
     }
 
-    void Service::map(AbstractResource::ptr resource, bool wildcarded, const char* p1, const char* p2, const char* p3)
+
+    void Service::map(AbstractResource::ptr&& resource, std::string path)
     {
-        std::vector<const char*> pathElements;
-        for (const char*  p : {p1, p2, p3}) {
-            if (p) pathElements.push_back(p);
-        }
-        
-        map(resource, wildcarded, pathElements);
+        map(std::move(resource), path.data());
     }
 
-    void Service::map(AbstractResource::ptr resource, bool wildcarded, std::vector<const char*> pathElements)
+    void Service::mapByPrefix(AbstractResource::ptr&& resource, const char* path)
     {
-        char path[PATH_MAX];
-        int pos = 0;
-        for (const char* p : pathElements) {
-            pos += snprintf(path + pos, PATH_MAX - pos, "/%s", p);
-            if (pos >= PATH_MAX - 1) {
-                throw RuntimeError("Path too long");
-            }
-        }
-    
-        if (wildcarded) {
-            prefixMappings[path] = resource;
-        }
-        else {
-            resourceMappings[path] = resource;
-        }
-
-    }
- 
-
-   void Service::unMap(const char* p1, const char* p2, const char* p3)
-    {
-        std::vector<const char*> pathElements;
-        for (const char* p : {p1, p2, p3}) if (p) pathElements.push_back(p);
-        unMap(pathElements);
+        prefixMappings[path] = std::move(resource);
     }
 
-    void Service::unMap(std::vector<const char*> pathElements)
+    void Service::mapByPrefix(AbstractResource::ptr&& resource, std::string path)
     {
-        char path[PATH_MAX];
-        int pos = 0;
-        for (const char* p: pathElements) {
-            pos += snprintf(path + pos, PATH_MAX - pos, "/%s", p);
-            if (pos >= PATH_MAX - 1) {
-                throw RuntimeError("Path too long");
-            }
-        }
-        if (resourceMappings.find(path) > -1) {
-            resourceMappings.take(path);
-        }
-        
-        if (prefixMappings.find(path) > -1) {
-            prefixMappings.take(path);
-        }
-
+        mapByPrefix(std::move(resource), path.data());
     }
 
-    AbstractResource::ptr Service::mapping(const char* path, bool prefix)
+    void Service::unMap(const char* path)
     {
-        Map<AbstractResource::ptr>& map = prefix ? prefixMappings : resourceMappings;
-        int pos = map.find(path); 
-        return pos < 0 ? NULL : map.pairAt(pos).value;
+        resourceMappings.erase(path);
+        prefixMappings.erase(path);
     }
 
+    AbstractResource* Service::mapping(const char* path)
+    {
+        int pos = resourceMappings.find(path);
+        return pos < 0 ? NULL : resourceMappings.pairAt(pos).value.get();
+    }
+
+
+    AbstractResource* Service::prefixMapping(const char* path)
+    {
+        int pos = prefixMappings.find(path);
+        return pos < 0 ? NULL : prefixMappings.pairAt(pos).value.get();
+    }
 
     void Service::startThreads()
     {
@@ -252,10 +221,10 @@ namespace refude
                     HttpMessageReader reader(requestSocket, request);
                     reader.dumpRequest = dumpRequests;
                     reader.readRequest();
-                    AbstractResource::ptr handler; 
+                    AbstractResource* handler;
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex > -1) {
-                        handler = resourceMappings.pairAt(resourceIndex).value;
+                        handler = resourceMappings.pairAt(resourceIndex).value.get();
                         request.setMatchedPathLength(strlen(resourceMappings.pairAt(resourceIndex).key));
                     }
                     else { 
@@ -265,7 +234,7 @@ namespace refude
                             const char firstCharAfterMatch = request.path[strlen(matchedPath)];
                             if ( firstCharAfterMatch == '\0' || firstCharAfterMatch == '/') {
                                 request.setMatchedPathLength(strlen(matchedPath));
-                                handler = prefixMappings.pairAt(resourceIndex).value;
+                                handler = prefixMappings.pairAt(resourceIndex).value.get();
                             }
                         }
                     }

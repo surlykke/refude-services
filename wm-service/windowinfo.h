@@ -31,9 +31,7 @@ namespace refude
         static std::vector<WindowInfo> normalWindows();
 
         WindowInfo(Window window);
-        WindowInfo(WindowInfo& other) = delete;
         WindowInfo(WindowInfo&& other);
-        WindowInfo& operator=(WindowInfo& other) = delete;
         WindowInfo& operator=(WindowInfo&& other);
 
         void raiseAndFocus();

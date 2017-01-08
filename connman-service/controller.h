@@ -10,9 +10,9 @@
 #define CONTROLLER_H
 
 #include <QCoreApplication>
-#include "refude/collectionresource.h"
-#include "refude/service.h"
-#include "connmanobject.h"
+#include "jsonresourcecollection.h"
+#include "service.h"
+#include "dbusproxy.h"
 #include "agent.h"
 
 namespace refude
@@ -25,20 +25,20 @@ namespace refude
         Controller(int argc, char** argv);
 
     private:
-        void updateTechnologiesJson();
         void updateTechnologyJson(const QString& path);
-        void updateServicesJson();
         void updateServiceJson(const QString& path);
+        void update();
 
         ConnmanManager manager;
-        QMap<QString, ConnmanObject*> technologyObjects;
-        QMap<QString, ConnmanObject*> serviceObjects;
-        QVector<QString> servicesOrder;
+        QMap<QString, DBusProxy*> technologyObjects;
+        QMap<QString, DBusProxy*> serviceObjects;
+
+        std::vector<std::string> servicesOrder;
+
         Agent agent;
-        CollectionResource::ptr technologiesResource;
-        CollectionResource::ptr servicesResource;
-        NotifierResource::ptr notifier;
         Service service;
+        NotifierResource::ptr notifier;
+        JsonResourceCollection resources;
 
     private slots:
         void onTechnologyAdded(const QDBusObjectPath& path, const QVariantMap& properties);

@@ -9,10 +9,10 @@
 #include <unistd.h>
 #include <climits>
 #include <png++/png.hpp>
-#include <refude/utils.h>
+#include "utils.h"
 
 #include "runningappsicons.h"
-#include <refude/xdg.h>
+#include "xdg.h"
 
 namespace refude
 {

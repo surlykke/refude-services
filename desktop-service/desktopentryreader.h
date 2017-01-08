@@ -12,8 +12,8 @@
 #include <string>
 #include <list>
 
-#include <refude/json.h>
-#include <refude/inireader.h>
+#include "json.h"
+#include "inireader.h"
 
 namespace refude 
 {

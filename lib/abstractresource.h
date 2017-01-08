@@ -23,7 +23,7 @@ namespace refude
 
     struct  AbstractResource
     {
-        typedef std::shared_ptr<AbstractResource> ptr;
+        typedef std::unique_ptr<AbstractResource> ptr;
 
         AbstractResource() {}
 

@@ -12,7 +12,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <refude/map.h>
+#include "map.h"
 
 namespace refude
 {

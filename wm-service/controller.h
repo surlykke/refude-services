@@ -8,10 +8,10 @@
 
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
-#include <refude/notifierresource.h>
-#include <refude/jsonresource.h>
-#include <refude/collectionresource.h>
-#include <refude/service.h>
+#include "service.h"
+#include "notifierresource.h"
+#include "jsonresourcecollection.h"
+#include "map.h"
 
 #include "runningappsicons.h"
 
@@ -23,16 +23,16 @@ namespace refude
         Controller();
         ~Controller();
         void run();
-        Service dispatcher;
-        void buildDisplayResource();
-        void updateWindowsResource();
-     
+
     private:
+        void update();
+        Map<Json> collectWindows();
+        Json buildDisplay();
+        Json collectActions(Map<Json>& windows);
+        Service dispatcher;
         NotifierResource::ptr notifier;
-        CollectionResource::ptr windowsResource;
-        JsonResource::ptr displayResource;
+        JsonResourceCollection jsonResources;
         RunningAppsIcons::ptr iconsResource;
-        bool windowsResourceStale;
     };
 }
 #endif // CONTROLLER_H

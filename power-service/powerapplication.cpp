@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
 #include <QDBusInterface>
 #include <QDBusConnection>
 #include <QDBusInterface>
@@ -15,9 +16,9 @@
 #include <QDebug>
 #include <QDBusObjectPath>
 #include <sys/socket.h>
-#include <refude/collectionresource.h>
-#include <refude/jsonwriter.h>
-#include <refude/jsonreader.h>
+#include "jsonwriter.h"
+#include "jsonreader.h"
+#include "xdg.h"
 #include "properties_if.h"
 
 #include "powerapplication.h"
@@ -25,23 +26,24 @@
 namespace refude
 {
 
-    struct ActionsResource : public CollectionResource 
-    {
-        ActionsResource(QDBusInterface* managerIf) : 
-            CollectionResource("actionId"),
-            managerIf(managerIf)
+    struct ActionResource : public JsonResource
+    { 
+        ActionResource(Json&& json, QDBusInterface* managerIf, QString action) :
+            JsonResource(std::move(json)),
+            managerIf(managerIf),
+            action(action)
         {
         }
 
         void doPOST(int& socket, HttpMessage& request) override
         {
             std::cout << "POST against " << request.path << ", remaining path: " << request.remainingPath << "\n";
-            if (indexes.find(request.remainingPath) < 0) throw HttpCode::Http404;
-            managerIf->call(request.remainingPath, false);
+            managerIf->call(action, false);
             throw HttpCode::Http204;
         }
 
         QDBusInterface* managerIf;
+        QString action;
     };
 
     static const QDBusConnection sysBus = QDBusConnection::systemBus();
@@ -60,13 +62,14 @@ namespace refude
 
    
     PowerApplication::PowerApplication(int& argc, char** argv) : 
-        QCoreApplication(argc, argv)
- 
+        QCoreApplication(argc, argv),
+        service(),
+        notifier(std::make_unique<NotifierResource>()),
+        jsonResources(&service, notifier.get()),
+        deviceInterfaces(),
+        managerInterface(0)
     {
         managerInterface = new QDBusInterface(LOGIN1_SERVICE, LOGIN1_PATH, LOGIN1_MANAGER_IF, sysBus, this);
-        actionsResource = std::make_shared<ActionsResource>(managerInterface);
-        devicesResource = std::make_shared<CollectionResource>("deviceId");
-        notifierResource = std::make_shared<NotifierResource>();
         
         QDBusInterface* uPower = new QDBusInterface(UPOW_SERVICE, UPOW_PATH, UPOW_IF, sysBus);
         PropertiesIF* displayDeviceIF = new PropertiesIF(UPOW_SERVICE, DISPLAY_DEVICE_PATH, sysBus);
@@ -77,10 +80,12 @@ namespace refude
         foreach(QDBusObjectPath p, reply.value()) { 
             deviceInterfaces.push_back(new PropertiesIF(UPOW_SERVICE, p.path(), sysBus));
         }
-    }
 
-    PowerApplication::~PowerApplication()
-    {
+        service.map(std::move(notifier), "/notify");
+        collectActionJsons();
+        collectDeviceJsons();
+
+        service.serve((xdg::runtime_dir() + "/org.refude.power-service").data());
     }
 
 
@@ -107,8 +112,9 @@ namespace refude
 
     void PowerApplication::collectDeviceJsons()
     {
-        Json deviceJsons = JsonConst::EmptyArray;
-        for (PropertiesIF* device : deviceInterfaces) 
+        Map<JsonResource::ptr> newResources;
+        char path[1024];
+        for (PropertiesIF* device : deviceInterfaces)
         {
             QVariantMap map =  device->GetAll(DEV_IF).value();
             Json jsonDevice = JsonConst::EmptyObject; 
@@ -142,63 +148,42 @@ namespace refude
             jsonDevice["WarningLevel"] = map["WarningLevel"].toDouble();
             jsonDevice["IconName"] = map["IconName"].toString().toUtf8().constData();
 
-            deviceJsons.append(std::move(jsonDevice));
+            std::cout << "deviceId: " << JsonWriter(jsonDevice["deviceId"]).buffer.data() << "\n";
+            snprintf(path, 1024, "/device/%s", jsonDevice["deviceId"].toString());
+            newResources[path] = std::make_unique<JsonResource>(std::move(jsonDevice));
+            std::cout << "Printing done\n";
         }
-        
-        CollectionResourceUpdater updater(devicesResource);
-        updater.update(deviceJsons);
-        updater.notify(notifierResource, "devices");
+        jsonResources.updateCollection(std::move(newResources));
     }
 
     void PowerApplication::collectActionJsons()
     {
-        const char* allActionsTemplate = R"json(
-        [
-            {
-                "actionId": "PowerOff",
-                "description": "Power off the machine",
-                "icon": "system-shutdown"
-            },
-            {
-                "actionId": "Reboot",
-                "description": "Reboot the machine",
-                "icon": "system-reboot"
-            },
-            {
-                "actionId": "Suspend",
-                "description": "Suspend the machine",
-                "icon": "system-suspend"
-            },
-            {
-                "actionId": "Hibernate",
-                "description": "Put the machine into hibernation",
-                "icon": "system-suspend-hibernate"
-            },
-            {
-                "actionId": "HybridSleep",
-                "description": "Put the machine into hybrid sleep",
-                "icon": "system-suspend-hibernate"
-            }
-        ] 
-        )json";
+        static std::vector<std::string> actionsAsStrings =
+        {
+            "{\"actionId\": \"PowerOff\", \"description\": \"Power off the machine\", \"icon\": \"system-shutdown\" }",
+            "{ \"actionId\": \"Reboot\", \"description\": \"Reboot the machine\", \"icon\": \"system-reboot\" }",
+            "{ \"actionId\": \"Suspend\", \"description\": \"Suspend the machine\", \"icon\": \"system-suspend\" }",
+            "{ \"actionId\": \"Hibernate\", \"description\": \"Put the machine into hibernation\", \"icon\": \"system-suspend-hibernate\" }",
+            "{ \"actionId\": \"HybridSleep\", \"description\": \"Put the machine into hybrid sleep\", \"icon\": \"system-suspend-hibernate\" }"
+        };
 
-        Json allActions;
-        allActions << allActionsTemplate;
-        Json availableActions = JsonConst::EmptyArray;
+        Json actionPaths = JsonConst::EmptyArray;
 
-
-        for (int i = 0; i < allActions.size(); i++) {
-            QDBusReply<QString> canAction = 
-                managerInterface->call(QString("Can") + allActions[i]["actionId"].toString());
+        for (const std::string& actionAsString : actionsAsStrings) {
+            Json action;
+            action << actionAsString.data();
+            QDBusReply<QString> canAction =  managerInterface->call(QString("Can") + action["actionId"].toString());
 
             if (canAction.value() == "yes") {
-                availableActions.append(std::move(allActions[i]));
+                char path[1024];
+                QString actionId = action["actionId"].toString();
+                snprintf(path, 1023, "/action/%s", actionId.toLatin1().data());
+                service.map(std::make_unique<ActionResource>(std::move(action), managerInterface, actionId), path);
+                actionPaths.append(path + 1);
             }
         }
 
-        CollectionResourceUpdater updater(actionsResource);
-        updater.update(availableActions);
-        updater.notify(notifierResource, "actions");
+        service.map(std::make_unique<JsonResource>(std::move(actionPaths)), "/actions");
     }
 
 }

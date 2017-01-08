@@ -11,8 +11,8 @@
 #include <sys/types.h>
 #include <vector>
 #include <string>
-#include <refude/json.h>
-#include <refude/webserver.h>
+#include "json.h"
+#include "webserver.h"
 
 #include "types.h"
 
@@ -21,7 +21,7 @@ namespace refude
     class IconResource : public WebServer
     {
     public:
-        typedef std::shared_ptr<IconResource> ptr;
+        typedef std::unique_ptr<IconResource> ptr;
         IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap);
         virtual ~IconResource();
         virtual PathMimetypePair findFile(HttpMessage& request) override;

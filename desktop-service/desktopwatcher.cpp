@@ -11,9 +11,9 @@
 #include <limits.h>
 #include <unistd.h>
 #include <thread>
-#include <refude/errorhandling.h>
-#include <refude/utils.h>
-#include <refude/xdg.h>
+#include "errorhandling.h"
+#include "utils.h"
+#include "xdg.h"
 #include "desktopwatcher.h"
 
 #define LEN (sizeof(struct inotify_event) + NAME_MAX + 1)
