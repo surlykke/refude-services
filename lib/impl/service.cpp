@@ -124,41 +124,30 @@ namespace refude
         }
     }
 
-    void Service::map(AbstractResource::ptr&& resource, const char* path)
+    void Service::map(AbstractResource::ptr&& resource, const std::string& p1, const std::string& p2, const std::string& p3, const std::string& p4)
     {
-        resourceMappings[path] = std::move(resource);
+        resourceMappings[p1 + p2 + p3 + p4] = std::move(resource);
     }
 
-
-    void Service::map(AbstractResource::ptr&& resource, std::string path)
+    void Service::mapByPrefix(AbstractResource::ptr&& resource, const std::string& p1, const std::string& p2, const std::string& p3, const std::string& p4)
     {
-        map(std::move(resource), path.data());
+        prefixMappings[p1 + p2 + p3 + p4] = std::move(resource);
     }
 
-    void Service::mapByPrefix(AbstractResource::ptr&& resource, const char* path)
-    {
-        prefixMappings[path] = std::move(resource);
-    }
-
-    void Service::mapByPrefix(AbstractResource::ptr&& resource, std::string path)
-    {
-        mapByPrefix(std::move(resource), path.data());
-    }
-
-    void Service::unMap(const char* path)
+    void Service::unMap(const std::string& path)
     {
         resourceMappings.erase(path);
         prefixMappings.erase(path);
     }
 
-    AbstractResource* Service::mapping(const char* path)
+    AbstractResource* Service::mapping(const std::string& path)
     {
         int pos = resourceMappings.find(path);
         return pos < 0 ? NULL : resourceMappings.pairAt(pos).value.get();
     }
 
 
-    AbstractResource* Service::prefixMapping(const char* path)
+    AbstractResource* Service::prefixMapping(const std::string& path)
     {
         int pos = prefixMappings.find(path);
         return pos < 0 ? NULL : prefixMappings.pairAt(pos).value.get();
@@ -225,15 +214,15 @@ namespace refude
                     int resourceIndex = resourceMappings.find(request.path);
                     if (resourceIndex > -1) {
                         handler = resourceMappings.pairAt(resourceIndex).value.get();
-                        request.setMatchedPathLength(strlen(resourceMappings.pairAt(resourceIndex).key));
+                        request.setMatchedPathLength(resourceMappings.pairAt(resourceIndex).key.size());
                     }
                     else { 
                         resourceIndex = prefixMappings.find_longest_prefix(request.path);
                         if (resourceIndex >= 0) {
-                            const char* matchedPath = prefixMappings.pairAt(resourceIndex).key; 
-                            const char firstCharAfterMatch = request.path[strlen(matchedPath)];
+                            const std::string& matchedPath = prefixMappings.pairAt(resourceIndex).key;
+                            const char firstCharAfterMatch = request.path[matchedPath.size()];
                             if ( firstCharAfterMatch == '\0' || firstCharAfterMatch == '/') {
-                                request.setMatchedPathLength(strlen(matchedPath));
+                                request.setMatchedPathLength(matchedPath.size());
                                 handler = prefixMappings.pairAt(resourceIndex).value.get();
                             }
                         }

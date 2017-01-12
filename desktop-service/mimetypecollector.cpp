@@ -135,28 +135,32 @@ namespace refude
 
     void MimetypeCollector::addAssociations(Map<Json>& applications)
     {
-        applications.each([this](const char* appId, Json& appJson) {
+        for (auto& entry: applications) {
+            const std::string& appId = entry.key;
+            Json& appJson = entry.value;
             appJson["mimetype"].eachElement([this, &appId](const Json& mimetype) {
                 const char* mimetypeAsString = mimetype.toString();
                 if (collectedMimetypes.find(mimetypeAsString) >= 0){;
                     collectedMimetypes[mimetypeAsString]["associatedApplications"].append(appId);
                 }
             });
-        });
+        };
 
     }
 
     void MimetypeCollector::addDefaultApplications(Map<std::vector<std::string> >& defaultApplications)
     {
 
-        defaultApplications.each([this](const char* mimetypeAsString, std::vector<std::string>& defaultApplicationIds) {
-            if (collectedMimetypes.find(mimetypeAsString) >= 0) {
-                Json& mimetype = collectedMimetypes[mimetypeAsString];
-                for (std::string& defaultApplicationId : defaultApplicationIds) {
-                    mimetype["defaultApplications"].append(defaultApplicationId);
+        for (const auto& entry : defaultApplications) {
+            const std::string& mimetypeAsString = entry.key;
+            const std::vector<std::string>& defaultApplicationIds = entry.value;
+                if (collectedMimetypes.find(mimetypeAsString) >= 0) {
+                    Json& mimetype = collectedMimetypes[mimetypeAsString];
+                    for (const std::string& defaultApplicationId : defaultApplicationIds) {
+                        mimetype["defaultApplications"].append(defaultApplicationId);
+                    }
                 }
-            }
-        });
+        };
 
     }
 

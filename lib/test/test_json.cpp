@@ -20,11 +20,11 @@ int main()
 
    std::cout << "Start building\n";
     Json json = JsonConst::EmptyObject;
-    std::vector<Pair<Json>> v;
+    std::vector<Map<Json>::Entry> v;
     for (int i = 0; i < 5000000; i++) {
-        v.push_back(Pair<Json>("foo", 1));
-        v.push_back(Pair<Json>("baa", 2));
-        v.push_back(Pair<Json>("yxy", 3));
+        v.push_back(Map<Json>::Entry("foo", 1));
+        v.push_back(Map<Json>::Entry("baa", 2));
+        v.push_back(Map<Json>::Entry("yxy", 3));
     }
     json.append(std::move(v));
     std::cout << "Start sorting\n";

@@ -31,15 +31,22 @@ namespace refude
         
         void wait();
 
-        void map(AbstractResource::ptr&& resource, const char* path);
-        void map(AbstractResource::ptr&& resource, std::string path);
-        void mapByPrefix(AbstractResource::ptr&& resource, const char* path);
-        void mapByPrefix(AbstractResource::ptr&& resource, std::string path);
-        void unMap(const char* path);
-        
+        void map(AbstractResource::ptr&& resource,
+                 const std::string& p1,
+                 const std::string& p2 = std::string(),
+                 const std::string& p3 = std::string(),
+                 const std::string& p4 = std::string());
 
-        AbstractResource* mapping(const char* path);
-        AbstractResource* prefixMapping(const char* path);
+        void mapByPrefix(AbstractResource::ptr&& resource,
+                         const std::string& p1,
+                         const std::string& p2 = std::string(),
+                         const std::string& p3 = std::string(),
+                         const std::string& p4 = std::string());
+
+        void unMap(const std::string& path);
+
+        AbstractResource* mapping(const std::string& path);
+        AbstractResource* prefixMapping(const std::string& path);
 
         Map<AbstractResource::ptr> resourceMappings;
         Map<AbstractResource::ptr> prefixMappings;

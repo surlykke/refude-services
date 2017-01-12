@@ -71,12 +71,12 @@ namespace refude
         bool contains(std::string key) const;
         int find(const char* str) const;
         int find(std::string str) const;
-        const char* keyAt(size_t index) const;
+        const std::string& keyAt(size_t index) const;
         uint size() const;
 
         Json& append(Json&& json);
         Json& insertAt(int index, Json&& json);
-        void append(std::vector<Pair<Json>>&& pairs);
+        void append(std::vector<Map<Json>::Entry>&& pairs);
 
         const char* typeAsString() const;
         const char* typeAsString(const JsonType type) const;
@@ -87,7 +87,9 @@ namespace refude
         void eachEntry(Visitor entryVisitor)
         {
             typeAssert(JsonType::Object, "eachEntry(<lambda>)");
-            entries->each(entryVisitor);
+            for (auto& entry : *entries) {
+                entryVisitor(entry.key, entry.value);
+            }
         }
 
         template<typename Visitor>

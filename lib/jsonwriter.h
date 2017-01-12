@@ -30,8 +30,8 @@ namespace refude
         JsonWriter();
         void write(refude::Json& json);
         void writeObject(Json& json);
-        virtual void writeKeyValue(int& written, const char* key, refude::Json& value);
-        void writeString(const char *string);
+        virtual void writeKeyValue(int& written, const std::string &key, refude::Json& value);
+        void writeString(const std::string &string);
         void writeChar(const char chr);
     };
 

@@ -69,8 +69,8 @@ namespace refude
     void ApplicationCollector::readMimeappsListFile(std::string dir)
     {
         MimeappsList mimeappsList(dir + "/mimeapps.list");
-        mimeappsList.removedAssociations.each([this](const char* mimetype,
-                                                     std::set<std::string>& deAssociatedApplications) {
+        for (const auto& entry : mimeappsList.removedAssociations) {
+            const std::set<std::string>& deAssociatedApplications = entry.value;
             for (const std::string& deAssociatedApplication : deAssociatedApplications) {
                 int pos = collectedApplications.find(deAssociatedApplication);
                 if ( pos >= 0) {
@@ -80,29 +80,32 @@ namespace refude
                     }
                 }
             }
-        });
+        };
         
-        mimeappsList.addedAssociations.each([this](const char* mimetype, std::set<std::string>& associatedApplications) {
+        for (const auto& entry : mimeappsList.addedAssociations) {
+            const std::string& mimetype = entry.key;
+            const std::set<std::string>& associatedApplications = entry.value;
             for (const std::string& associatedApplication : associatedApplications) {
                 int pos = collectedApplications.find(associatedApplication);
                 if (pos >= 0) {
                     collectedApplications.pairAt(pos).value["mimetype"].append(mimetype);
                 }
             }
-        });
+        };
 
-        mimeappsList.defaultApps.each([this](const char* mimetype, 
-                                             std::vector<std::string>& defaultApplicationIds){
-            for (std::string& defaultApplicationId : defaultApplicationIds) {
+        for (const auto& entry : mimeappsList.defaultApps) {
+            const std::string& mimetype = entry.key;
+            const std::vector<std::string>& defaultApplicationIds = entry.value;
+            for (const std::string& defaultApplicationId : defaultApplicationIds) {
                 std::vector<std::string>& defaults = defaultApplications[mimetype];
                 defaults.erase(std::remove(defaults.begin(), defaults.end(), defaultApplicationId), defaults.end());
             }
             
             int pos = 0;
-            for (std::string& defaultApplicationId : defaultApplicationIds) {
+            for (const std::string& defaultApplicationId : defaultApplicationIds) {
                 defaultApplications[mimetype].insert(defaultApplications[mimetype].begin() + pos++, defaultApplicationId);
             }
-        });
+        }
         
     }
 

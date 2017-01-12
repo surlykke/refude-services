@@ -65,9 +65,11 @@ namespace refude
                 
                 IconMap& iconMap = themeIconMap[themeDir];
 
-                themeJson["IconDirectories"].eachEntry([&](const char* iconDirPath, Json& iconDirJson) {
-                    IconCollector(*dirIterator + "/" + themeDir + "/" + iconDirPath, iconDirJson).collectInto(iconMap);
-                });
+                themeJson["IconDirectories"].eachEntry(
+                    [&](const std::string iconDirPath, Json& iconDirJson) {
+                        IconCollector(*dirIterator + "/" + themeDir + "/" + iconDirPath, iconDirJson).collectInto(iconMap);
+                    }
+                );
 
                 if (themeDir == "hicolor") { 
                     if (themeJson.contains("Inherits")) {
@@ -97,12 +99,14 @@ namespace refude
 
         service.map(std::move(iconResource), "/icons/icon");
 
-        themeJsonMap.each([&service, this](const char* themeDirName, Json& themeJson){
+        for (auto& entry : themeJsonMap) {
+            const std::string& themeDirName = entry.key;
+            Json& themeJson = entry.value;
             themesJson["themes"].append(themeDirName);
             JsonResource::ptr themeResource = std::make_unique<JsonResource>();
             themeResource->setJson(std::move(themeJson));
             service.map(std::move(themeResource), std::string("/icons/themes") + themeDirName);
-        });
+        };
 
         JsonResource::ptr themesResource = std::make_unique<JsonResource>();
         themesResource->setJson(std::move(themesJson));

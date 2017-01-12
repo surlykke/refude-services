@@ -10,60 +10,39 @@
 #define MAP_H
 
 #include <vector>
+#include <string>
 #include <utility>
 #include <algorithm>
 #include "errorhandling.h"
 
 namespace refude
 {
-    template<class V>
-    struct Pair
-    {
-        Pair(const char *key, V& value) : key(strdup(key)), value(value)
-        {
-        }
 
-        Pair(const char *key, V&& value) : key(strdup(key)), value(std::move(value))
-        {
-        }
 
-        ~Pair()
-        {
-            if (key) {
-                free(key);
-            }
-        }
-        
-        Pair(Pair& other) = delete;
-
-        Pair(Pair&& other)
-        {
-            key = other.key;
-            other.key = 0;
-            value = std::move(other.value);
-        }
-
-        Pair& operator=(Pair& other) = delete;
-        
-        Pair& operator=(Pair&& other)
-        {
-            if (key) {
-                free(key);
-            }
-            key = other.key;
-            other.key = 0;
-            value = std::move(other.value);
-            return *this;
-        }
-
-        char* key;
-        V value;
-    };
-
-    template<class V>
+    template<typename V>
     struct Map
     {
-        std::vector<Pair<V>> list;
+
+        struct Entry
+        {
+            std::string key;
+            V value;
+
+            Entry(const std::string& key, V&& value):
+                key(key),
+                value(std::move(value))
+            {
+            }
+
+            Entry(std::string&& key, V&& value):
+                key(std::move(key)),
+                value(std::move(value))
+            {
+            }
+        };
+
+
+        std::vector<Entry> list;
 
         Map() : list(), inserting(false)
         {
@@ -85,7 +64,7 @@ namespace refude
             return *this;
         }
 
-        int find(const char* key) const
+        int find(const std::string& key) const
         {
             bool found;
             int pos = search(key, found);
@@ -97,24 +76,19 @@ namespace refude
             }
         }
 
-        int find(std::string key) const
-        {
-            return find(key.data());
-        }
-
-        Pair<V>& pairAt(int pos)
+        Entry& pairAt(int pos) // FIXME name
         {
             return list[pos];
         }
 
-        int find_longest_prefix(const char* key) const
+        int find_longest_prefix(const std::string& key) const
         {
             bool found;
             int pos = search(key, found);
             if (found) {
                 return pos;
             }
-            else if (pos > 0 && !strncmp(key, list.at(pos - 1).key, strlen(list.at(pos - 1).key))) {
+            else if (pos > 0 && key != list.at(pos - 1).key) {
                 return pos - 1;
             }
             else {
@@ -122,17 +96,27 @@ namespace refude
             }
         }
 
-        V& operator[](const char* key)
+        V& operator[](const std::string& key)
         {
             bool found;
             int pos = search(key, found);
             if (!found) {
-                list.insert(list.begin() + pos, Pair<V>(key, V()));
+                list.insert(list.begin() + pos, Entry(key, V()));
             }
             return list.at(pos).value;
         }
 
-        const V& operator[](const char* key) const
+        V& operator[](std::string&& key)
+        {
+            bool found;
+            int pos = search(key, found);
+            if (!found) {
+                list.insert(list.begin() + pos, Entry(std::move(key), V()));
+            }
+            return list.at(pos).value;
+        }
+
+        const V& operator[](const std::string& key) const
         {
             bool found;
             int pos = search(key, found);
@@ -140,12 +124,7 @@ namespace refude
             return list[pos].value;
         }
 
-        V& operator[](const std::string& key)
-        {
-            return operator[](key.data());
-        }
-
-        V take(const char* key)
+        V take(const std::string& key)
         {
             bool found;
             int pos = search(key, found);
@@ -155,12 +134,7 @@ namespace refude
             return tmp;
         }
 
-        V take(const std::string key) 
-        {
-            return take(key.data());
-        }
-
-        void erase(const char* key)
+        void erase(const std::string& key)
         {
             bool found;
             int pos = search(key, found);
@@ -169,11 +143,6 @@ namespace refude
             }
         }
         
-        void erase(const std::string key) 
-        {
-            erase(key.data()); 
-        }
-
         void clear()
         {
             if (inserting) throw RuntimeError("Clearing map during insert");
@@ -197,14 +166,14 @@ namespace refude
         {
             if (!inserting) throw RuntimeError("Call endInsert, but not inserting");
             inserting = false;
-            std::stable_sort(list.begin(), list.end(), [](const Pair<V>& p1, const Pair<V>& p2) -> bool { 
-                return strcmp(p1.key, p2.key) < 0; 
+            std::stable_sort(list.begin(), list.end(), [](const Entry& p1, const Entry& p2) -> bool {
+                return p1.key.compare(p2.key) < 0;
             });
             
             if (list.size() >= 2) {
                 auto to = list.begin();
                 for(auto from = list.begin() + 1; from != list.end(); from++) {
-                    if (strcmp(to->key, from->key) < 0) {
+                    if (to->key.compare(from->key) < 0) {
                         to++; 
                     }
                     if (to != from) {
@@ -215,18 +184,28 @@ namespace refude
             }
         }
 
-        void insert(const char* key, V&& value)
+        void insert(const std::string& key, V&& value)
         {
             if (!inserting) throw RuntimeError("Call insert, but not inserting");
-            list.push_back(Pair<V>(key, std::move(value)));
+            list.push_back(Entry(key, std::move(value)));
         }
         
         template <typename Visitor>
-        void each(Visitor visitor)
+        void jeden(Visitor visitor)
         {
             for (int i = 0; i < size(); i++) {
                 visitor(list.at(i).key, list.at(i).value);
             }
+        }
+
+        typedef typename std::vector<Entry>::iterator iterator;
+
+        iterator begin() {
+            return list.begin();
+        }
+
+        iterator end() {
+            return list.end();
         }
 
     private:
@@ -243,13 +222,13 @@ namespace refude
          *         equal to the given key or, if none such exists, size().
          *         This returned value is where the given key would be inserted in the map.
          */
-        int search(const char * key, bool& found) const
+        int search(const std::string& key, bool& found) const
         {
             int lo = -1;
             int hi = list.size();
             while (lo < hi - 1) {
                 int mid = (lo + hi) / 2;
-                int comp = strcmp(key, list.at(mid).key);
+                int comp = key.compare(list.at(mid).key);
                 if (comp == 0) {
                     found = true;
                     return mid;

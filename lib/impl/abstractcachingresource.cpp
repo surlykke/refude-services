@@ -51,14 +51,15 @@ namespace refude
         static std::vector<const char*> interestingHeaders = {"accept-language"}; // FIXME: What else?
 
         Buffer result;
-        request.queryParameterMap.each([&result](const char* key, const std::vector<const char*> values) {
-            for (const char* value : values)  {
+        for (const auto& entry : request.queryParameterMap) {
+            for (const char* value : entry.value)  {
                 result.write('&');
-                result.write(key);
+                result.write(entry.key.data());
                 result.write('=');
                 result.write(value);
             }
-        });
+        }
+
         for (const char* headerName : interestingHeaders) {
             if (request.headers.find(headerName) > -1) {
                 result.write('@');
@@ -67,6 +68,7 @@ namespace refude
                 result.write(request.headers[headerName]);
             }
         }
+
         result.write(request.path);
         return result;
     }

@@ -24,16 +24,20 @@ namespace refude
         NotifierResource();
 
         virtual void doGET(int& socket, HttpMessage& request) override;
-        void resourceRemoved(const char* path);
-        void resourceRemoved(const char* p1, const char* p2);
-        void resourceRemoved(const char* p1, const char* p2, const char* p3);
-        void resourceAdded(const char* path);
-        void resourceAdded(const char* p1, const char* p2);
-        void resourceAdded(const char* p1, const char* p2, const char* p3);
-        void resourceUpdated(const char* path);
-        void resourceUpdated(const char* p1, const char* p2);
-        void resourceUpdated(const char* p1, const char* p2, const char* p3);
-        void notifyClients(const char* event, const char* path);
+
+        void resourceRemoved(const std::string& p1,
+                             const std::string& p2 = std::string(),
+                             const std::string& p3 = std::string());
+
+        void resourceAdded(const std::string& p1,
+                           const std::string& p2 = std::string(),
+                           const std::string& p3 = std::string());
+
+        void resourceUpdated(const std::string& p1,
+                             const std::string& p2 = std::string(),
+                             const std::string& p3 = std::string());
+
+        void notifyClients(const std::string& event,  const std::string& path);
 
     private:
         void addClient(int socket);

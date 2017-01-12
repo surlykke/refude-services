@@ -28,7 +28,7 @@ namespace refude
 
     private:
         void update();
-        JsonResource::ptr buildAction(Json& application);
+        JsonResource::ptr buildAction(Json &application);
         NotifierResource::ptr notifier;
         JsonResourceCollection resources;
         DesktopWatcher* desktopWatcher;

@@ -68,11 +68,11 @@ namespace refude
             json = JsonConst::EmptyObject;
             skip();
             if (*cc != '}') {
-                std::vector<Pair<Json>> collectedElements;
+                std::vector<Map<Json>::Entry> collectedElements;
                 for(;;) {
                     const char* entryKey = readString();
                     skip(':');
-                    Pair<Json> pair(entryKey, Json());
+                    Map<Json>::Entry pair(entryKey, Json());
                     readNext(pair.value);
                     collectedElements.push_back(std::move(pair));
                     if (*cc != ',') break;

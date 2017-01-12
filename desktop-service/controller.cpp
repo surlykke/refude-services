@@ -103,29 +103,31 @@ namespace refude
         char path[1024] = {0};
         Json actions = JsonConst::EmptyArray;
 
-        applicationCollector.collectedApplications.each([&newResources, &path, &actions, this](const char* appId, Json& app) {
-            snprintf(path, 1024, "/application/%s/launch", appId);
+        for (auto& entry : applicationCollector.collectedApplications) {
+            const std::string& appId = entry.key;
+            Json& app = entry.value;
+            std::string path = std::string("/application/") + appId + "/launch";
             newResources[path] = buildAction(app);
-            actions.append(path + 1);
-            snprintf(path, 1024, "/application/%s", appId);
+            actions.append(path.substr(1));
+            path = std::string("/application/") + appId;
             std::cout << "Mapping: " << path << "\n";
             newResources[path] = std::make_unique<JsonResource>(std::move(app));
-        });
+        };
 
         newResources["/actions"] = std::make_unique<JsonResource>(std::move(actions));
 
-        strcpy(path, "/mimetype/");
-        mimetypeCollector.collectedMimetypes.each([&newResources, &path, this](const char* mimetypeStr, Json& mimetype) {
-            snprintf(path, 1024, "/mimetype/%s", mimetypeStr);
-            newResources[path] = std::make_unique<MimetypeResource>(std::move(mimetype));
-        });
+        for (auto& entry: mimetypeCollector.collectedMimetypes) {
+            const std::string& mimetypeStr = entry.key;
+            Json& mimetype = entry.value;
+            newResources[std::string("/mimetype/") + mimetypeStr] = std::make_unique<MimetypeResource>(std::move(mimetype));
+        };
 
         resources.updateCollection(std::move(newResources));
     }
 
     JsonResource::ptr Controller::buildAction(Json& application) {
         Json action = JsonConst::EmptyObject;
-        action["_ripc:localized:name"] = application["_ripc:localized:Name"].copy();
+        action[std::string("_ripc:localized:name")] = application[std::string("_ripc:localized:Name")].copy();
         action["_ripc:localized:comment"] = application["_ripc:localized:Comment"].copy();
         action["icon"] = application["Icon"].copy();
         return std::make_unique<ActionResource>(std::move(action), application["Exec"].toString());

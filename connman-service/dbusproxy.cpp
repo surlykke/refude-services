@@ -30,13 +30,13 @@ namespace refude
 
     Json qVariantMap2Json(const QVariantMap& variantMap)
     {
-        std::vector<Pair<Json>> pairs;
+        std::vector<Map<Json>::Entry> pairs;
         for (const QString& key: variantMap.keys()) {
             Json json = qVariant2Json(variantMap[key]);
             if (json.undefined()) {
                 continue;
             }
-            pairs.push_back(Pair<Json>(key.toUtf8().data(), std::move(json)));
+            pairs.push_back(Map<Json>::Entry(key.toUtf8().data(), std::move(json)));
         }
         Json map = JsonConst::EmptyObject;
         map.append(std::move(pairs));

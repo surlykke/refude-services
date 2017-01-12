@@ -22,10 +22,10 @@ namespace refude
     {
     }
 
-    void LocalizingJsonWriter::writeKeyValue(int& written, const char* key, Json& value)
+    void LocalizingJsonWriter::writeKeyValue(int& written, const std::string& key, Json& value)
     {
-        if (!strncmp("_ripc:localized:", key, 16)) {
-            key += 16;
+        if (key == "_ripc:localized:") {
+            std::string tmp = key.substr(16);
             Json* localizedValue = NULL;
             for (std::string locale : acceptableLocales) {
                 if (value.contains(locale)) {
@@ -41,7 +41,7 @@ namespace refude
                 if (written) {
                     buffer.write(", ");
                 }
-                writeString(key);
+                writeString(tmp);
                 buffer.write(": ");
                 write(*localizedValue);
                 written++;

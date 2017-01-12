@@ -40,7 +40,7 @@ namespace refude
     void JsonWriter::writeObject(Json& json){
     }
 
-    void JsonWriter::writeKeyValue(int& written, const char* key, Json& value)
+    void JsonWriter::writeKeyValue(int& written, const std::string& key, Json& value)
     {
         if (!value.undefined()) {
             if (written) {
@@ -58,7 +58,7 @@ namespace refude
         if (json.mType == JsonType::Object) {
             buffer.write('{');
             int written = 0;
-            json.eachEntry([&written, this](const char* key, Json& value) {
+            json.eachEntry([&written, this](const std::string& key, Json& value) {
                 writeKeyValue(written, key, value);
             });
             buffer.write('}');
@@ -90,12 +90,11 @@ namespace refude
         }
     }
 
-    void JsonWriter::writeString(const char* string)
+    void JsonWriter::writeString(const std::string& string)
     {
         buffer.write('"');
-        const char* c = string;
-        while (*c) {
-            writeChar(*(c++));
+        for (auto c = string.begin(); c != string.end(); c++) {
+            writeChar(*c);
         }
         buffer.write('"');
     }

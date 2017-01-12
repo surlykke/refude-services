@@ -49,30 +49,36 @@ namespace refude
         std::ofstream stream(filePath);
     
         stream << "[Default Applications]\n";
-        defaultApps.each([&stream](const char* mimetype, std::vector<std::string>& defaultApps){
-            stream << mimetype << "=";
-            for (std::string defaultApp : defaultApps) {
-                stream << defaultApp << ";";
-            }
-            stream << "\n";
-        });
+        for (const auto& entry : defaultApps) {
+            const std::string& mimetype = entry.key;
+            const std::vector<std::string>& defaultApps = entry.value;
+                stream << mimetype << "=";
+                for (std::string defaultApp : defaultApps) {
+                    stream << defaultApp << ";";
+                }
+                stream << "\n";
+        };
 
         stream << "[Added Associations]\n";
-        addedAssociations.each([&stream](const char* mimetype, std::set<std::string>& associatedApps){
-            stream << mimetype << "=";
-            for (std::string associatedApp : associatedApps) {
-                stream << associatedApp << ";";
-            }
-            stream << "\n";
-        });
+        for (const auto& entry : addedAssociations) {
+            const std::string& mimetype = entry.key;
+            const std::set<std::string>& associatedApps = entry.value;
+                stream << mimetype << "=";
+                for (std::string associatedApp : associatedApps) {
+                    stream << associatedApp << ";";
+                }
+                stream << "\n";
+        };
 
         stream << "[Removed Associations]\n";
-        removedAssociations.each([&stream](const char* mimetype, std::set<std::string>& deAssociatedApps){
+        for (const auto& entry : removedAssociations) {
+            const std::string& mimetype = entry.key;
+            const std::set<std::string>& deAssociatedApps = entry.value;
             stream << mimetype << "=";
             for (std::string deAssociatedApp : deAssociatedApps) {
                 stream << deAssociatedApp << ";";
             }
             stream << "\n";
-        });
+        };
     }
 }

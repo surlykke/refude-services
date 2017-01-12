@@ -22,7 +22,7 @@ namespace refude
         virtual ~LocalizingJsonWriter();
     
     protected:
-        virtual void writeKeyValue(int& written, const char* key, Json& value) override;
+        virtual void writeKeyValue(int& written, const std::string& key, Json& value) override;
     
     private:
         std::vector<std::string> acceptableLocales;

@@ -119,9 +119,9 @@ namespace refude
         }
         else if (mType == JsonType::Object) {
             Json obj = JsonConst::EmptyObject;
-            std::vector<Pair<Json>> copiedEntries;
+            std::vector<Map<Json>::Entry> copiedEntries;
             for (size_t sz = 0; sz < entries->size(); sz++) {
-                copiedEntries.push_back(Pair<Json>(entries->list[sz].key, entries->list[sz].value.copy()));
+                copiedEntries.push_back(Map<Json>::Entry(entries->list[sz].key, entries->list[sz].value.copy()));
             }
             obj.append(std::move(copiedEntries));
             return obj;
@@ -199,7 +199,7 @@ namespace refude
                 return false;
             }
             for (int i = 0; i < size(); i++) {
-                if (strcmp(entries->list.at(i).key, other.entries->list.at(i).key) ||
+                if (entries->list.at(i).key !=  other.entries->list.at(i).key ||
                     entries->list.at(i).value != other.entries->list.at(i).value) {
                     return false;
                 }
@@ -280,7 +280,7 @@ namespace refude
         return find(str.data());
     }
 
-    const char* Json::keyAt(size_t index) const
+    const std::string& Json::keyAt(size_t index) const
     {
         typeAssert(JsonType::Object, "keyAt(%d)", index);
         if (index >= entries->size()) {
@@ -317,7 +317,7 @@ namespace refude
     }
 
 
-    void Json::append(std::vector<Pair<Json>>&& pairs) {
+    void Json::append(std::vector<Map<Json>::Entry>&& pairs) {
         typeAssert(JsonType::Object, "append(pairs)");
         entries->beginInsert();
         for (auto& p : pairs) {

@@ -9,8 +9,8 @@
 #define TYPES_H
 #include <string>
 #include <map>
-#include "refude/map.h"
-#include "refude/json.h"
+#include "map.h"
+#include "json.h"
 
 namespace refude
 {

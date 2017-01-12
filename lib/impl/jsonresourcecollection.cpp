@@ -22,7 +22,9 @@ namespace refude
 
         resourcePaths.clear();
 
-        pathsAndResources.each([this](const char* path, JsonResource::ptr& json) {
+        for (auto& entry: pathsAndResources) {
+            const std::string& path = entry.key;
+            JsonResource::ptr& json = entry.value;
             AbstractResource* resource = service->mapping(path);
             if (resource) {
                 JsonResource* jsonResource = dynamic_cast<JsonResource*>(resource);
@@ -37,6 +39,6 @@ namespace refude
             }
 
             resourcePaths.push_back(path);
-        });
+        };
     }
 }

@@ -57,52 +57,23 @@ namespace refude
         mClientSockets.push_back(socket);
     }
 
-    void NotifierResource::resourceAdded(const char* path)
+    void NotifierResource::resourceRemoved(const std::string& p1, const std::string& p2, const std::string& p3)
     {
-        notifyClients("resource-added", path);
+        notifyClients("resource-removed", p1 + p2 + p3);
     }
 
-    void NotifierResource::resourceAdded(const char* p1, const char* p2)
+    void NotifierResource::resourceAdded(const std::string& p1, const std::string& p2, const std::string& p3)
     {
-        resourceAdded((std::string(p1) + "/" + p2).data());
+        notifyClients("resource-added", p1 + p2 + p3);
     }
 
-    void NotifierResource::resourceAdded(const char* p1, const char* p2, const char* p3)
+    void NotifierResource::resourceUpdated(const std::string& p1, const std::string& p2, const std::string& p3)
     {
-        resourceAdded((std::string(p1) + "/" + p2 + "/" + p3).data());
+        notifyClients("resource-updated", p1 + p2 + p3);
     }
 
-    void NotifierResource::resourceRemoved(const char* path)
-    {
-        notifyClients("resource-removed", path);
-    }
 
-    void NotifierResource::resourceRemoved(const char* p1, const char* p2)
-    {
-        resourceRemoved((std::string(p1) + "/" + p2).data());
-    }
-
-    void NotifierResource::resourceRemoved(const char* p1, const char* p2, const char* p3)
-    {
-        resourceRemoved((std::string(p1) + "/" + p2 + "/" + p3).data());
-    }
- 
-    void NotifierResource::resourceUpdated(const char* path)
-    {
-        notifyClients("resource-updated", path);
-    }
-
-    void NotifierResource::resourceUpdated(const char* p1, const char* p2)
-    {
-        resourceUpdated((std::string(p1) + "/" + p2).data());
-    }
-
-    void NotifierResource::resourceUpdated(const char* p1, const char* p2, const char* p3)
-    {
-        resourceUpdated((std::string(p1) + "/" + p2 + "/" + p3).data());
-    }
-   
-    void NotifierResource::notifyClients(const char* event, const char* data)
+    void NotifierResource::notifyClients(const std::string& event, const std::string& data)
     {
         static const char* notificationTemplate =
                 "%x\r\n"     // chunk length
@@ -113,17 +84,17 @@ namespace refude
 
         char notification[300];
 
-        if (strlen(data) > 256) {
-            throw RuntimeError("Path too long");
-        }
-
-        int chunkLength = strlen(event) + strlen(data) + 14;
+        int chunkLength = event.size() + data.size() + 14;
         int dataLength = snprintf(notification,
-                                  256,
+                                  299,
                                   notificationTemplate,
                                   chunkLength,
-                                  event,
-                                  data);
+                                  event.data(),
+                                  data.data());
+
+        if (dataLength >= 299) {
+            throw RuntimeError("Notification too long");
+        }
 
         {
             std::lock_guard<std::mutex> lock(mMutex);

@@ -281,21 +281,22 @@ namespace refude
             buf << "HTTP " << method2String(method) << " " << path;
             if (queryParameterMap.size() > 0) {
                 char separator = '?';
-                queryParameterMap.each([&buf, &separator](const char* key, const std::vector<const char*>& values){
-                    for (const char* value : values) {
-                        buf << separator << key << "=" << value;
+                for (const auto& entry : queryParameterMap) {
+                    for (const char* value : entry.value) {
+                        buf << separator << entry.key.data() << "=" << value;
                         separator = '&';
                     }
-                });
+                };
             }
         }
         else {
             buf << status;
         }
         buf << "\n";
-        headers.each([&buf](const char* key, const char* value) {
-            buf << key << ": " << value << "\n";
-        });
+        for (const auto& entry : headers) {
+            buf << entry.key.data() << ": " << entry.value << "\n";
+        };
+
         buf << "\n";
         if (body) {
             buf << body << "\n";
