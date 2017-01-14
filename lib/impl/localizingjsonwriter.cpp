@@ -24,7 +24,7 @@ namespace refude
 
     void LocalizingJsonWriter::writeKeyValue(int& written, const std::string& key, Json& value)
     {
-        if (key == "_ripc:localized:") {
+        if (!strncmp(key.c_str(), "_ripc:localized:", 16)) {
             std::string tmp = key.substr(16);
             Json* localizedValue = NULL;
             for (std::string locale : acceptableLocales) {
