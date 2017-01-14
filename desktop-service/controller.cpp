@@ -110,7 +110,6 @@ namespace refude
             newResources[path] = buildAction(app);
             actions.append(path.substr(1));
             path = std::string("/application/") + appId;
-            std::cout << "Mapping: " << path << "\n";
             newResources[path] = std::make_unique<JsonResource>(std::move(app));
         };
 

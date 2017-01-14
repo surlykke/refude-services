@@ -99,7 +99,7 @@ namespace refude
         action["geometry"]["w"] = window.width;
         action["geometry"]["h"] = window.height;
         char iconUrl[1024] = {0};
-        snprintf(iconUrl, 1024, "/icons/%s", window.iconName.data());
+        snprintf(iconUrl, 1024, "../../icons/%s", window.iconName.data());
         action["iconUrl"] = iconUrl;
 
         return std::make_unique<ActionResource>(std::move(action), window.window);
@@ -112,7 +112,7 @@ namespace refude
         iconsResource(std::make_unique<RunningAppsIcons>())
     {
         dispatcher.map(std::move(notifier), "/notify");
-        dispatcher.map(std::move(iconsResource), "/icons");
+        dispatcher.mapByPrefix(std::move(iconsResource), "/icons");
     }
 
     Controller::~Controller()
