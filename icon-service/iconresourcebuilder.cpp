@@ -66,7 +66,7 @@ namespace refude
                 IconMap& iconMap = themeIconMap[themeDir];
 
                 themeJson["IconDirectories"].eachEntry(
-                    [&](const std::string iconDirPath, Json& iconDirJson) {
+                    [&](const std::string& iconDirPath, Json& iconDirJson) {
                         IconCollector(*dirIterator + "/" + themeDir + "/" + iconDirPath, iconDirJson).collectInto(iconMap);
                     }
                 );

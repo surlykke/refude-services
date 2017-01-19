@@ -26,9 +26,38 @@
 namespace refude
 {
 
-    struct ActionResource : public JsonResource
+
+    struct ApplicationResource : public JsonResource
     {
-        ActionResource(Json&& action, std::string command) :
+        ApplicationResource(Json&& application) : JsonResource(std::move(application))
+        {
+        }
+
+        void doPOST(int& socket, HttpMessage& request)
+        {
+            std::string key;
+            if (request.queryParameterMap.find("action")) {
+                key = "_default";
+            }
+            else {
+                key = request.queryParameterMap["action"][0];
+            }
+
+            getJson()["_actions"].eachElement([&key](Json& action) {
+                if (key == action["id"].toString()) {
+                    runApplication(action["exec"].toString());
+                    throw HttpCode::Http204;
+                }
+            });
+
+            throw HttpCode::Http406;
+        }
+
+    };
+
+    struct WindowResource : public JsonResource
+    {
+        WindowResource(Json&& action, std::string command) :
             JsonResource(std::move(action)),
             command(command)
         {}
@@ -98,38 +127,54 @@ namespace refude
         mimetypeCollector.addAssociations(applicationCollector.collectedApplications);
         mimetypeCollector.addDefaultApplications(applicationCollector.defaultApplications);
 
+        Json applicationPaths = JsonConst::EmptyArray;
+        Json mimetypePaths = JsonConst::EmptyArray;
         Map<JsonResource::ptr> newResources;
 
-        char path[1024] = {0};
-        Json actions = JsonConst::EmptyArray;
-
         for (auto& entry : applicationCollector.collectedApplications) {
-            const std::string& appId = entry.key;
-            Json& app = entry.value;
-            std::string path = std::string("/application/") + appId + "/launch";
-            newResources[path] = buildAction(app);
-            actions.append(path.substr(1));
-            path = std::string("/application/") + appId;
-            newResources[path] = std::make_unique<JsonResource>(std::move(app));
+            buildActions(entry.value);
+            std::string path = std::string("/application/") + entry.key;
+            newResources[path] =  std::make_unique<ApplicationResource>(std::move(entry.value));
+            applicationPaths.append(path.substr(1));
         };
 
-        newResources["/actions"] = std::make_unique<JsonResource>(std::move(actions));
+        newResources["/applications"] = std::make_unique<JsonResource>(std::move(applicationPaths));
 
         for (auto& entry: mimetypeCollector.collectedMimetypes) {
-            const std::string& mimetypeStr = entry.key;
-            Json& mimetype = entry.value;
-            newResources[std::string("/mimetype/") + mimetypeStr] = std::make_unique<MimetypeResource>(std::move(mimetype));
+            std::string path = std::string("/mimetype/") + entry.key;
+            newResources[path] = std::make_unique<MimetypeResource>(std::move(entry.value));
+            mimetypePaths.append(path.substr(1));
         };
+
+        newResources["/mimetypes"] = std::make_unique<JsonResource>(std::move(mimetypePaths));
 
         resources.updateCollection(std::move(newResources));
     }
 
-    JsonResource::ptr Controller::buildAction(Json& application) {
+    Json Controller::buildActions(Json& application) {
+        Json actions = JsonConst::EmptyArray;
         Json action = JsonConst::EmptyObject;
-        action[std::string("_ripc:localized:name")] = application[std::string("_ripc:localized:Name")].copy();
+        action["id"] = "_default";
+        action["_ripc:localized:name"] = application["_ripc:localized:Name"].copy();
         action["_ripc:localized:comment"] = application["_ripc:localized:Comment"].copy();
         action["icon"] = application["Icon"].copy();
-        return std::make_unique<ActionResource>(std::move(action), application["Exec"].toString());
+        action["exec"] = application["Exec"].copy();
+        actions.append(std::move(action));
+        if (application.contains("Actions")) {
+            application["Actions"].eachEntry(
+                [&application, &actions](const std::string& key, Json& value) {
+                    Json action = JsonConst::EmptyObject;
+                    action["id"] = key;
+                    action["_ripc:localized:name"] = value["_ripc:localized:Name"].copy();
+                    action["_ripc:localized:comment"] = application["_ripc:localized:Name"].copy();
+                    action["icon"] = application["Icon"].copy();
+                    action["exec"] = value["Exec"].copy();
+                    actions.append(std::move(action));
+                }
+            );
+            application.erase("Actions");
+        }
+        application["_actions"] = std::move(actions);
     }
 
 }

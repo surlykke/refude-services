@@ -26,9 +26,9 @@
 namespace refude
 {
 
-    struct ActionResource : public JsonResource
+    struct WindowResource : public JsonResource
     { 
-        ActionResource(Json&& json, QDBusInterface* managerIf, QString action) :
+        WindowResource(Json&& json, QDBusInterface* managerIf, QString action) :
             JsonResource(std::move(json)),
             managerIf(managerIf),
             action(action)
@@ -113,6 +113,7 @@ namespace refude
     void PowerApplication::collectDeviceJsons()
     {
         Map<JsonResource::ptr> newResources;
+        Json devices = JsonConst::EmptyArray;
         char path[1024];
         for (PropertiesIF* device : deviceInterfaces)
         {
@@ -151,8 +152,10 @@ namespace refude
             std::cout << "deviceId: " << JsonWriter(jsonDevice["deviceId"]).buffer.data() << "\n";
             snprintf(path, 1024, "/device/%s", jsonDevice["deviceId"].toString());
             newResources[path] = std::make_unique<JsonResource>(std::move(jsonDevice));
+            devices.append(path);
             std::cout << "Printing done\n";
         }
+        newResources["/devices"] = std::make_unique<JsonResource>(std::move(devices));
         jsonResources.updateCollection(std::move(newResources));
     }
 
@@ -178,7 +181,7 @@ namespace refude
                 char path[1024];
                 QString actionId = action["actionId"].toString();
                 snprintf(path, 1023, "/action/%s", actionId.toLatin1().data());
-                service.map(std::make_unique<ActionResource>(std::move(action), managerInterface, actionId), path);
+                service.map(std::make_unique<WindowResource>(std::move(action), managerInterface, actionId), path);
                 actionPaths.append(path + 1);
             }
         }

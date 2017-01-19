@@ -15,9 +15,9 @@
 namespace refude 
 {
 
-    struct ActionResource : public JsonResource
+    struct WindowResource : public JsonResource
     {
-        ActionResource(Json&& action, Window window) :
+        WindowResource(Json&& action, Window window) :
             JsonResource(std::move(action)),
             window(window)
         {
@@ -65,6 +65,19 @@ namespace refude
         }
     }
 
+    void addAction(Json& window)
+    {
+        Json action = JsonConst::EmptyObject;
+
+        action["id"] = "_default";
+        action["name"] = window["name"].copy();
+        action["comment"] = std::string("Raise and focus");
+        action["iconUrl"] = window["iconUrl"].copy();
+
+        window["_actions"] = JsonConst::EmptyArray;
+        window["_actions"].append(std::move(action));
+    }
+
     JsonResource::ptr buildWindowResource(const WindowInfo& window)
     {
         Json windowJson = JsonConst::EmptyObject;
@@ -84,25 +97,9 @@ namespace refude
         windowJson["geometry"]["y"] = window.y;
         windowJson["geometry"]["w"] = window.width;
         windowJson["geometry"]["h"] = window.height;
-        windowJson["windowIcon"] = window.iconName;
-        return std::make_unique<JsonResource>(std::move(windowJson));
-    }
-
-    JsonResource::ptr buildActionResource(const WindowInfo& window)
-    {
-        Json action = JsonConst::EmptyObject;
-        action["name"] = window.title;
-        action["comment"] = std::string("Raise and focus");
-        action["geometry"] = JsonConst::EmptyObject;
-        action["geometry"]["x"] = window.x;
-        action["geometry"]["y"] = window.y;
-        action["geometry"]["w"] = window.width;
-        action["geometry"]["h"] = window.height;
-        char iconUrl[1024] = {0};
-        snprintf(iconUrl, 1024, "../../icons/%s", window.iconName.data());
-        action["iconUrl"] = iconUrl;
-
-        return std::make_unique<ActionResource>(std::move(action), window.window);
+        windowJson["iconUrl"] = std::string("../icons/") +  window.iconName.data();
+        addAction(windowJson);
+        return std::make_unique<WindowResource>(std::move(windowJson), window.window);
     }
 
     Controller::Controller() :
@@ -155,22 +152,18 @@ namespace refude
 
     void Controller::update()
     {
-        Json actions = JsonConst::EmptyArray;
+        Json windows = JsonConst::EmptyArray;
         Map<JsonResource::ptr> newResources;
-
-        char path[1024] = {0};
-
         for (const WindowInfo& windowInfo: WindowInfo::normalWindows()) {
-            snprintf(path, 1024, "/window/%lu", windowInfo.window);
+            std::string path = "/window/" + std::to_string(windowInfo.window);
+
             newResources[path] = buildWindowResource(windowInfo);
+            windows.append(path.substr(1));
             iconsResource->addIcon(windowInfo.iconName.data(), windowInfo.icon);
-            snprintf(path, 1024, "/window/%lu/raiseAndFocus", windowInfo.window);
-            newResources[path] = buildActionResource(windowInfo);
-            actions.append(path + 1);
         }
 
         newResources["/display"] = std::make_unique<JsonResource>(buildDisplay());
-        newResources["/actions"] = std::make_unique<JsonResource>(std::move(actions));
+        newResources["/windows"] = std::make_unique<JsonResource>(std::move(windows));
 
         jsonResources.updateCollection(std::move(newResources));
     }
