@@ -15,6 +15,7 @@
 namespace refude 
 {
 
+    // FIXME
     struct WindowResource : public JsonResource
     {
         WindowResource(Json&& action, Window window) :
@@ -74,8 +75,8 @@ namespace refude
         action["comment"] = std::string("Raise and focus");
         action["iconUrl"] = window["iconUrl"].copy();
 
-        window["_actions"] = JsonConst::EmptyArray;
-        window["_actions"].append(std::move(action));
+        window["_actions"] = JsonConst::EmptyObject;
+        window["_actions"]["_default"] = std::move(action);
     }
 
     JsonResource::ptr buildWindowResource(const WindowInfo& window)

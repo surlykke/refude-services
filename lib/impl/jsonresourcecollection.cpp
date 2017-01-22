@@ -16,7 +16,7 @@ namespace refude
         for (const std::string& path : resourcePaths) {
             if (pathsAndResources.find(path) < 0) {
                 service->unMap(path.data());
-                notifier->resourceRemoved(path.data());
+                notifier->resourceRemoved(path.substr(1));
             }
         }
 
@@ -30,12 +30,12 @@ namespace refude
                 JsonResource* jsonResource = dynamic_cast<JsonResource*>(resource);
                 if (jsonResource == 0 || jsonResource->getJson() != json->getJson()) {
                     service->map(std::move(json), path);
-                    notifier->resourceUpdated(path);
+                    notifier->resourceUpdated(path.substr(1));
                 }
             }
             else {
                 service->map(std::move(json), path);
-                notifier->resourceAdded(path);
+                notifier->resourceAdded(path.substr(1));
             }
 
             resourcePaths.push_back(path);

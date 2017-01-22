@@ -36,21 +36,25 @@ namespace refude
         void doPOST(int& socket, HttpMessage& request)
         {
             std::string key;
-            if (request.queryParameterMap.find("action")) {
+            if (request.queryParameterMap.find("action") < 0) {
                 key = "_default";
             }
             else {
                 key = request.queryParameterMap["action"][0];
             }
 
-            getJson()["_actions"].eachElement([&key](Json& action) {
-                if (key == action["id"].toString()) {
-                    runApplication(action["exec"].toString());
-                    throw HttpCode::Http204;
-                }
-            });
+            if (getJson()["_actions"].contains(key)) {
+                execute(getJson()["_actions"][key]);
+                throw HttpCode::Http204;
+            }
+            else {
+                throw HttpCode::Http406;
+            }
+        }
 
-            throw HttpCode::Http406;
+        void execute(Json& action)
+        {
+            runApplication(action["exec"].toString());
         }
 
     };
@@ -152,24 +156,22 @@ namespace refude
     }
 
     Json Controller::buildActions(Json& application) {
-        Json actions = JsonConst::EmptyArray;
+        Json actions = JsonConst::EmptyObject;
         Json action = JsonConst::EmptyObject;
-        action["id"] = "_default";
         action["_ripc:localized:name"] = application["_ripc:localized:Name"].copy();
         action["_ripc:localized:comment"] = application["_ripc:localized:Comment"].copy();
         action["icon"] = application["Icon"].copy();
         action["exec"] = application["Exec"].copy();
-        actions.append(std::move(action));
+        actions["_default"] = std::move(action);
         if (application.contains("Actions")) {
             application["Actions"].eachEntry(
                 [&application, &actions](const std::string& key, Json& value) {
                     Json action = JsonConst::EmptyObject;
-                    action["id"] = key;
                     action["_ripc:localized:name"] = value["_ripc:localized:Name"].copy();
                     action["_ripc:localized:comment"] = application["_ripc:localized:Name"].copy();
                     action["icon"] = application["Icon"].copy();
                     action["exec"] = value["Exec"].copy();
-                    actions.append(std::move(action));
+                    actions[key] = std::move(action);
                 }
             );
             application.erase("Actions");
