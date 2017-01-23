@@ -20,7 +20,7 @@ add_subdirectory(power-service)
 add_subdirectory(connman-service)
 
 install(FILES haproxy/haproxy.cfg DESTINATION /etc/refude)
-install(FILES bin/runRefude.sh 
+install(FILES bin/runRefude.sh bin/refudeHTTP
 	    DESTINATION ${CMAKE_INSTALL_BINDIR} 
 		PERMISSIONS OWNER_READ GROUP_READ WORLD_READ 
 		            OWNER_WRITE 

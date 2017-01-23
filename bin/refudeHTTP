@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+PROTOCOL=http
+ARGS=$(getopt -u -o su:h:p: -l secure,unix:,host:,port: -- "$@") || exit 1
+set -- $ARGS
+
+while [[ -n "$1" ]]; do
+    case $1 in
+		-s|--secure) 
+			PROTOCOL=https 
+		;;
+		-u|--unix) 
+			UNIX=$2
+			shift
+		;;
+		-h|--host) 
+			HOST=$2
+			shift
+		;;
+		-p|--port) 
+			HOST=$2
+			shift
+		;;
+		(--) 
+			shift; 
+			break;;
+    	(-*) 
+			echo "error - unrecognized option $1" >&2; 
+			exit 1
+		;;
+		(*)
+			echo "*: $1"
+			break
+		;;
+    esac
+    shift
+done
+
+[[ -z "$1" ]] && { echo "No path given" >&2; exit 1; }
+
+[[ -n "$2" ]] && { echo "Extraneous arguments: $2" >&2; exit 1; }
+
+[[ -n "$UNIX" ]] && [[ -n "$PORT" ]] && { echo "-u/--unix and -p/--port are mutually exclusive" >&2; exit 1; }
+
+[[ -n "$UNIX" ]] && [[ -n "$HOST" ]] && { echo "-u/--unix and -h/--host are mutually exclusive" >&2; exit 1; }
+
+if [[ -n "$UNIX" ]]; then
+	UNIX="--unix $UNIX";
+else 
+	if [[ -z "$HOST" ]]; then
+		HOST=localhost
+	fi
+	
+	if [[ -z "$PORT" ]]; then
+		PORT=":80"
+	else 
+		PORT=":$PORT"
+	fi
+fi
+
+CURLCMD="curl --silent ${UNIX} $PROTOCOL://${HOST}${PORT}${1}"
+
+$CURLCMD
