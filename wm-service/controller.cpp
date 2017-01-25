@@ -160,7 +160,8 @@ namespace refude
 
             newResources[path] = buildWindowResource(windowInfo);
             windows.append(path.substr(1));
-            iconsResource->addIcon(windowInfo.iconName.data(), windowInfo.icon);
+            RunningAppsIcons* icons = dynamic_cast<RunningAppsIcons*>(dispatcher.prefixMapping("/icons"));
+            icons->addIcon(windowInfo.iconName.data(), windowInfo.icon);
         }
 
         newResources["/display"] = std::make_unique<JsonResource>(buildDisplay());

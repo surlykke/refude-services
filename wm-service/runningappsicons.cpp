@@ -43,14 +43,12 @@ namespace refude
         const char* iconName = request.remainingPath;
 
         if (iconPaths.find(iconName) < 0) {
-            std::cout << "name ikke fundet\n";
             throw HttpCode::Http404;
         }
 
         int size = 32;
         const char* sizeS = request.parameter("size");
         if (sizeS) {
-            std::cout << "Looking for size: " << sizeS << "\n";
             char* endptr;
             size = strtoul(request.queryParameterMap["size"][0], &endptr, 10);
             if (*endptr) {
@@ -67,7 +65,6 @@ namespace refude
                 path = sizePath.path.data();
             }
         }
-        std::cout << "RunningAppsIcons, returning: " << path << "\n";
         return {path, "image/png"};
     }
 
@@ -100,7 +97,6 @@ namespace refude
         unsigned int width = static_cast<unsigned int>(data[pos++]);
         unsigned int height = static_cast<unsigned int>(data[pos++]);
         
-        std::cout << "Create png of size " << height << ", " << width << "\n";
         png::image<png::rgba_pixel> img(height, width);
         for (unsigned long row = 0; row < height; row++) {
             for (unsigned long column = 0; column < width; column++) {
@@ -115,7 +111,6 @@ namespace refude
                 img[row][column] = png::rgba_pixel(R, G, B, A);
             }
         }
-        std::cout << "Writing: " << filePath << "\n";
         img.write(filePath);
     }
 
