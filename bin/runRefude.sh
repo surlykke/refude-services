@@ -14,7 +14,7 @@ fi
 
 for app in RefudeDesktopService RefudeIconService RefudePowerService RefudeWmService RefudeConnmanService ; do
 	echo "Looking for $app"	
-	ps -ef | grep -v grep | grep $app >/dev/null 2>/dev/null || { echo "starting $app"; nohup $app & }
+	ps -ef | grep -v grep | grep $app >/dev/null 2>/dev/null || { echo "starting $app"; nohup $app >/dev/null 2>/dev/null & }
 done
 
 HAPIDFILE=$XDG_RUNTIME_DIR/refude-haproxy.pid
