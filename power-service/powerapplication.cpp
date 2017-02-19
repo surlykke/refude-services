@@ -16,6 +16,8 @@
 #include <QDebug>
 #include <QDBusObjectPath>
 #include <sys/socket.h>
+#include "resourcecollection.h"
+#include "comm.h"
 #include "jsonwriter.h"
 #include "jsonreader.h"
 #include "xdg.h"
@@ -26,20 +28,20 @@
 namespace refude
 {
 
-    struct WindowResource : public JsonResource
+    struct PowerResource : public JsonResource
     { 
-        WindowResource(Json&& json, QDBusInterface* managerIf, QString action) :
+        PowerResource(Json&& json, QDBusInterface* managerIf, QString action) :
             JsonResource(std::move(json)),
             managerIf(managerIf),
             action(action)
         {
         }
 
-        void doPOST(int& socket, HttpMessage& request) override
+        virtual void doPOST(Descriptor& socket, HttpMessage& request, const char* remainingPath) override
         {
-            std::cout << "POST against " << request.path << ", remaining path: " << request.remainingPath << "\n";
+            std::lock_guard<std::shared_mutex> lock(mutex);
             managerIf->call(action, false);
-            throw HttpCode::Http204;
+            sendStatus(socket, HttpCode::Http204);
         }
 
         QDBusInterface* managerIf;
@@ -63,9 +65,7 @@ namespace refude
    
     PowerApplication::PowerApplication(int& argc, char** argv) : 
         QCoreApplication(argc, argv),
-        service(),
-        notifier(std::make_unique<NotifierResource>()),
-        jsonResources(&service, notifier.get()),
+        jsonResources(),
         deviceInterfaces(),
         managerInterface(0)
     {
@@ -81,11 +81,10 @@ namespace refude
             deviceInterfaces.push_back(new PropertiesIF(UPOW_SERVICE, p.path(), sysBus));
         }
 
-        service.map(std::move(notifier), "/notify");
         collectActionJsons();
         collectDeviceJsons();
-
-        service.serve((xdg::runtime_dir() + "/org.refude.power-service").data());
+        service::listen(xdg::runtime_dir() + "/org.refude.power-service");
+        service::run();
     }
 
 
@@ -181,12 +180,12 @@ namespace refude
                 char path[1024];
                 QString actionId = action["actionId"].toString();
                 snprintf(path, 1023, "/action/%s", actionId.toLatin1().data());
-                service.map(std::make_unique<WindowResource>(std::move(action), managerInterface, actionId), path);
+                ResourceCollection::mapPath(std::make_unique<PowerResource>(std::move(action), managerInterface, actionId), path);
                 actionPaths.append(path + 1);
             }
         }
 
-        service.map(std::make_unique<JsonResource>(std::move(actionPaths)), "/actions");
+        ResourceCollection::mapPath(std::make_unique<JsonResource>(std::move(actionPaths)), "/actions");
     }
 
 }

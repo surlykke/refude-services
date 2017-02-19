@@ -17,6 +17,7 @@ namespace refude
 {
     void AbstractResource::handleRequest(Descriptor& socket, HttpMessage& request, const char* remainingPath)
     {
+
         switch (request.method) {
         case Method::GET: doGET(socket, request, remainingPath); break;
         case Method::PATCH: doPATCH(socket, request, remainingPath); break;

@@ -6,28 +6,9 @@
  * Please refer to the GPL2 file for a copy of the license.
  */
 
-#include <stdlib.h>
-#include <iostream>
-#include "service.h"
-#include "errorhandling.h"
-
-#include "xdg.h"
-#include "controller.h"
+#include "desktopservice.h"
 
 int main(int argc, char *argv[])
 {
-    using namespace refude;
-    Controller controller;
-    try {
-        controller.setupAndRun();
-        std::string socketPath = xdg::runtime_dir() + "/org.refude.desktop-service";
-        controller.service.dumpRequests = true;
-        controller.service.serve(socketPath.data());
-        controller.service.wait();
-    }
-    catch (RuntimeError re) {
-        std::cerr << re.what() << "\n";
-        re.printStackTrace();
-        std::cerr << "\n";
-    }
+    refude::DesktopService::run();
 }

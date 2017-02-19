@@ -19,7 +19,6 @@
 #include <sstream>
 
 #include "httpprotocol.h"
-#include "httpprotocol.h"
 
 /**
  * We throw 3 types of exceptions:

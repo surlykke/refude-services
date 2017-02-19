@@ -16,35 +16,32 @@
 
 namespace refude 
 {
+    struct NotificationStream
+    {
+        NotificationStream();
+        void addClient(Descriptor&& clientSocket);
+        void resourceRemoved(const std::string& path);
+        void resourceAdded(const std::string& path);
+        void resourceUpdated(const std::string& path);
+        void notifyClients(const std::string& event,  const std::string& path);
+
+    private:
+        std::vector<Descriptor> mClientSockets;
+        std::mutex mutex;
+
+    };
 
     class NotifierResource : public AbstractResource
     {
     public:
         typedef std::unique_ptr<NotifierResource> ptr;
-        NotifierResource();
+        NotifierResource(NotificationStream* notificationStream);
 
-        virtual void doGET(int& socket, HttpMessage& request) override;
-
-        void resourceRemoved(const std::string& p1,
-                             const std::string& p2 = std::string(),
-                             const std::string& p3 = std::string());
-
-        void resourceAdded(const std::string& p1,
-                           const std::string& p2 = std::string(),
-                           const std::string& p3 = std::string());
-
-        void resourceUpdated(const std::string& p1,
-                             const std::string& p2 = std::string(),
-                             const std::string& p3 = std::string());
-
-        void notifyClients(const std::string& event,  const std::string& path);
-
+        virtual void doGET(Descriptor& socket, HttpMessage& request, const char* remainingPath) override;
     private:
-        void addClient(int socket);
-
-        std::vector<int> mClientSockets;
-        std::mutex mMutex;
+        NotificationStream* notificationStream;
     };
+
 
 }
 #endif // NOTIFIERRESOURCE_H

@@ -9,6 +9,8 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+#include <memory>
+
 namespace refude
 {
     /**
@@ -22,20 +24,14 @@ namespace refude
      * 
      *    Buffer buffer;
      *    Buffer bufferCopy;
-     *    .
-     *    .
      *    bufferCopy.write(buffer.data());
      * 
      */
     class Buffer
     {
     public:
-        static Buffer fromFile(const char* filePath);
         Buffer();
-        Buffer(Buffer& other) = delete;
         Buffer(Buffer&& other);
-
-        Buffer& operator=(Buffer& other) = delete;
         Buffer& operator=(Buffer&& other);
 
         ~Buffer();
@@ -45,13 +41,13 @@ namespace refude
         Buffer& write(double d);
         Buffer& write(int i); 
 
-        void toFile(const char* filePath);
+        void writeOut(int fd) const;
         void clear();
 
         bool operator==(Buffer& other);
 
-        const char* data();
-        int size();
+        const char* data() const;
+        int size() const;
 
     private:
         void ensureCapacity(int numChars);
@@ -60,10 +56,5 @@ namespace refude
         int _capacity;
 
     };
-
-    Buffer& operator<<(Buffer& buffer, const char* str);
-    Buffer& operator<<(Buffer& buffer, const char ch);
-    Buffer& operator<<(Buffer& buffer, double d);
-    Buffer& operator<<(Buffer& buffer, int i);
 }
 #endif // BUFFER_H

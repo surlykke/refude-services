@@ -1,44 +1,40 @@
 #include <string.h>
+#include "resourcecollection.h"
 #include "jsonresource.h"
 #include "jsonresourcecollection.h"
 
 namespace refude
 {
-    JsonResourceCollection::JsonResourceCollection(Service* service, NotifierResource* notifier):
-        service(service),
-        notifier(notifier),
+    JsonResourceCollection::JsonResourceCollection():
         resourcePaths()
     {
     }
 
     void JsonResourceCollection::updateCollection(Map<JsonResource::ptr>&& pathsAndResources)
     {
+        std::shared_lock<std::shared_mutex> writeLock(ResourceCollection::resourceMutex);
+
+        Map<AbstractResource::ptr> addOrReplace;
+        std::vector<std::string> remove;
+
         for (const std::string& path : resourcePaths) {
             if (pathsAndResources.find(path) < 0) {
-                service->unMap(path.data());
-                notifier->resourceRemoved(path.substr(1));
+                remove.push_back(path);
             }
         }
 
         resourcePaths.clear();
 
-        for (auto& entry: pathsAndResources) {
-            const std::string& path = entry.key;
-            JsonResource::ptr& json = entry.value;
-            AbstractResource* resource = service->mapping(path);
-            if (resource) {
-                JsonResource* jsonResource = dynamic_cast<JsonResource*>(resource);
-                if (jsonResource == 0 || jsonResource->getJson() != json->getJson()) {
-                    service->map(std::move(json), path);
-                    notifier->resourceUpdated(path.substr(1));
-                }
-            }
-            else {
-                service->map(std::move(json), path);
-                notifier->resourceAdded(path.substr(1));
+
+        for (Map<JsonResource::ptr>::Entry& entry : pathsAndResources) {
+            JsonResource* resource = dynamic_cast<JsonResource*>(ResourceCollection::mapping(entry.key));
+            if (! (resource && entry.value->getJson() == resource->getJson())) {
+                addOrReplace[entry.key] = std::move(entry.value);
             }
 
-            resourcePaths.push_back(path);
-        };
+            resourcePaths.push_back(entry.key);
+        }
+
+        ResourceCollection::bulkUpdate(std::move(addOrReplace), remove);
     }
 }

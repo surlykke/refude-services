@@ -6,6 +6,7 @@
  * Please refer to the LGPL21 file for a copy of the license.
  */
 
+#include <sys/time.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -15,48 +16,6 @@
 
 namespace refude
 {
-
-    struct FileDescriptor 
-    {
-        FileDescriptor(const char* path, int flags) 
-        {
-            _fd = open(path, flags);
-            C_ERROR_IF(_fd < 0);
-        }
-
-        FileDescriptor(const char* path, int flags, int mode) 
-        {
-            _fd = open(path, flags, mode); 
-            C_ERROR_IF(_fd < 0);
-        }
-
-        ~FileDescriptor() 
-        {
-            if (_fd > -1) {
-                close(_fd);
-            }
-        }
-
-        operator int() { return _fd; }
-
-        int _fd;
-    };
-
-    Buffer Buffer::fromFile(const char* filePath)
-    {
-        Buffer buf;
-        FileDescriptor fd(filePath, O_RDONLY | O_CLOEXEC);
-        int bytesRead = 0;
-        buf.ensureCapacity(1024);
-        while((bytesRead = read(fd, buf._data, 1024)) > 0) {
-            buf._size += bytesRead;
-            buf._data[buf._size] = '\0';
-            buf.ensureCapacity(1024);
-        }
-        C_ERROR_IF(bytesRead < 0);
-        return buf;
-    }
-
 
     Buffer::Buffer() :
         _size(0),
@@ -136,6 +95,15 @@ namespace refude
         return *this;
     }
 
+    void Buffer::writeOut(int fd) const
+    {
+        for (int bytesWritten = 0; bytesWritten < _size;) {
+            int n = ::write(fd, _data + bytesWritten, _size - bytesWritten);
+            if (n < 0) throw C_Error();
+            bytesWritten += n;
+        }
+    }
+
     void Buffer::clear()
     {
         _size = 0;
@@ -146,25 +114,14 @@ namespace refude
         return _size == other._size && strcmp(data(), other.data()) == 0;
     }
 
-    const char* Buffer::data()
+    const char* Buffer::data() const
     {
         return _data ? _data : "";
     }
 
-    int Buffer::size()
+    int Buffer::size() const
     {
         return _size;
-    }
-
-    void Buffer::toFile(const char* filePath)
-    {
-        FileDescriptor fd(filePath, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
-        int bytesWritten = 0;
-        int bytesWrittenTotal = 0;
-        while ((bytesWritten = ::write(fd, _data + bytesWrittenTotal, _size - bytesWrittenTotal)) > 0) {
-            bytesWrittenTotal += bytesWritten;
-        }
-        C_ERROR_IF(bytesWritten < 0);
     }
 
 
@@ -188,26 +145,6 @@ namespace refude
         _data = (char*) realloc(_data, _capacity);
 
         if (!_data) throw C_Error();
-    }
-
-    Buffer& operator<<(Buffer& buffer, const char* str)
-    {
-        return buffer.write(str);
-    }
-
-    Buffer& operator<<(Buffer& buffer, const char ch)
-    {
-        return buffer.write(ch);
-    }
-
-    Buffer& operator<<(Buffer& buffer, double d)
-    {
-        return buffer.write(d);
-    }
-
-    Buffer& operator<<(Buffer& buffer, int i)
-    {
-        return buffer.write(i);
     }
 
 }

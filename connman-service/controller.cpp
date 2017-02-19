@@ -24,9 +24,7 @@ namespace refude
         technologyObjects(),
         serviceObjects(),
         agent(),
-        service(),
-        notifier(std::make_unique<NotifierResource>()),
-        resources(&service, notifier.get())
+        resources()
     {
         QDBusObjectPath agentPath("/org/lxqt/lxqt_connman_agent");
         new AgentAdaptor(&agent);
@@ -57,9 +55,6 @@ namespace refude
 
         QDBusReply<ObjectPropertiesList> GetServicesReply = manager.call("GetServices");
         onServicesUpdated(GetServicesReply.value(), QList<QDBusObjectPath>());
-
-        std::string socketpath = xdg::runtime_dir() + "/org.refude.connman-service";
-        service.serve(socketpath.data());
     }
 
     void Controller::onTechnologyAdded(const QDBusObjectPath& path, const QVariantMap& properties)

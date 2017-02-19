@@ -9,7 +9,6 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 #include "service.h"
-#include "notifierresource.h"
 #include "jsonresourcecollection.h"
 #include "map.h"
 
@@ -17,22 +16,10 @@
 
 namespace refude 
 {
-    class Controller
+    namespace WmService
     {
-    public:
-        Controller();
-        ~Controller();
         void run();
 
-    private:
-        void update();
-        Map<Json> collectWindows();
-        Json buildDisplay();
-        Json collectActions(Map<Json>& windows);
-        Service dispatcher;
-        NotifierResource::ptr notifier;
-        JsonResourceCollection jsonResources;
-        RunningAppsIcons::ptr iconsResource;
-    };
+    }
 }
 #endif // CONTROLLER_H

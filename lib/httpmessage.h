@@ -10,74 +10,51 @@
 #define    HTTPMESSAGE_H
 #include <iostream>
 #include <vector>
+#include <memory>
 #include "map.h"
-#include "buffer.h"
 #include "httpprotocol.h"
 
 namespace refude
 {
     struct HttpMessage
     {
-        Method method;
-        int status;
-        char* path;
-        Map<const char*> headers;
-        Map<std::vector<const char*>> queryParameterMap;
-        int contentLength;
-        char* body;
-        
-        char buffer[8192];
-
-        /**
-         * This field is not really part of the Http Message. Used to 
-         * communicate between service and request handlers the part of the request 
-         * path that was matched (which may be different from the request path when 
-         * wildcarding is in play).
-         */
-        char* remainingPath; 
-
-        HttpMessage();
+        virtual void read(int socket) = 0;
         virtual ~HttpMessage();
         const char* header(const char* headerName);
         const char* parameter(const char* parameterName);
-        void clear();
         
-        Buffer toBuf();
-        
-        void setMatchedPathLength(size_t matchedPathLength); 
+        Method method;
+        int status;
+        char* path;
+        Map<std::vector<const char*>> queryParameterMap;
+        Map<const char*> headers;
+        int contentLength;
+        char* body;
+        char buffer[8192];
+
+        void addTimestamp(const char* desc);
+        void printoutTimestamps();
+
+    protected:
+        HttpMessage();
+        std::pair<const char*, long> timestamps[32];
+        int numtimeStamps;
     };
 
-    class HttpMessageReader
+    struct HttpRequest : public HttpMessage
     {
-    public:
-        HttpMessageReader(int socket, HttpMessage& message, bool dumpRequest = false);
-        void readRequest();
-        void readResponse();
-        bool dumpRequest; 
-        void clear();
-        void receive();
+        typedef std::unique_ptr<HttpRequest> ptr;
+        HttpRequest() : HttpMessage() {}
+        virtual void read(int socket) override;
+    };
 
-    private:
-        void readRequestLine();
-        void readQueryString();
-        void readStatusLine();
-        void readHeaderLines();
-        void readHeaderLine();
-        void readHeaders();
-        void readBody();
-        char currentChar();
-        char nextChar();
-        bool isTChar(char c);
-
-
-        int _socket;
-        HttpMessage& _message;
-        int _bufferEnd;
-        int _currentPos;
+    struct HttpResponse : public HttpMessage
+    {
+        typedef std::unique_ptr<HttpRequest> ptr;
+        HttpResponse() : HttpMessage() {}
+        virtual void read(int socket) override;
     };
 }
-
-std::ostream& operator<<(std::ostream& out, const refude::HttpMessage& message);
 
 #endif    /* HTTPMESSAGE_H */
 

@@ -4,7 +4,6 @@
 #include <set>
 #include <string>
 #include "service.h"
-#include "notifierresource.h"
 #include "jsonresource.h"
 
 namespace refude
@@ -12,12 +11,10 @@ namespace refude
     class JsonResourceCollection
     {
     public:
-        JsonResourceCollection(Service* service, NotifierResource *notifier);
+        JsonResourceCollection();
         void updateCollection(Map<JsonResource::ptr>&& pathsAndResources);
 
     private:
-        Service* service;
-        NotifierResource* notifier;
         std::vector<std::string> resourcePaths;
     };
 }

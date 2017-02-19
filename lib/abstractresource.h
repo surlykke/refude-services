@@ -12,6 +12,8 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <shared_mutex>
+#include "descriptor.h"
 #include "map.h"
 
 #include "httpprotocol.h"
@@ -19,7 +21,6 @@
 
 namespace refude
 {
-
 
     struct  AbstractResource
     {
@@ -29,17 +30,18 @@ namespace refude
 
         virtual ~AbstractResource() {}
 
-        virtual void handleRequest(int &socket, HttpMessage& request);
+        virtual void handleRequest(Descriptor& socket, HttpMessage& request,  const char* remainingPath);
 
-        virtual void     doGET(int& socket, HttpMessage& request);
-        virtual void   doPATCH(int& socket, HttpMessage& request);
-        virtual void    doPOST(int& socket, HttpMessage& request);
-        virtual void  doDELETE(int& socket, HttpMessage& request);
-        virtual void     doPUT(int& socket, HttpMessage& request);
-        virtual void    doHEAD(int& socket, HttpMessage& request);
-        virtual void   doTRACE(int& socket, HttpMessage& request);
-        virtual void doOPTIONS(int& socket, HttpMessage& request);
-        virtual void doCONNECT(int& socket, HttpMessage& request);
+    protected:
+        virtual void     doGET(Descriptor& socket, HttpMessage& request, const char* remainingPath);
+        virtual void   doPATCH(Descriptor& socket, HttpMessage& request, const char* remainingPath);
+        virtual void    doPOST(Descriptor& socket, HttpMessage& request, const char* remainingPath);
+        virtual void  doDELETE(Descriptor& socket, HttpMessage& request, const char* remainingPath);
+        virtual void     doPUT(Descriptor& socket, HttpMessage& request, const char* remainingPath);
+        virtual void    doHEAD(Descriptor& socket, HttpMessage& request, const char* remainingPath);
+        virtual void   doTRACE(Descriptor& socket, HttpMessage& request, const char* remainingPath);
+        virtual void doOPTIONS(Descriptor& socket, HttpMessage& request, const char* remainingPath);
+        virtual void doCONNECT(Descriptor& socket, HttpMessage& request, const char* remainingPath);
 
         /**
          * Extract acceptable locales from accept-language header as an ordered  list.
@@ -53,12 +55,7 @@ namespace refude
          */
         std::vector<std::string> getAcceptedLocales(HttpMessage& request);
 
-    protected:
-        void buildResponse(Buffer& response, Buffer&& content, 
-                           const std::map<std::string, std::string>& headers);
-
-        void sendFully(int socket, const char* data, int nbytes);
-
+        std::shared_mutex mutex;
     };
 
 }

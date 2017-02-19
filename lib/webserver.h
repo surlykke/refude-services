@@ -13,24 +13,15 @@
 #include "magic.h"
 namespace refude 
 {
-    struct PathMimetypePair
-    {
-        const char* path;
-        const char* mimetype;
-    };
-
     class WebServer : public AbstractResource
     {
     public:
         typedef std::unique_ptr<WebServer> ptr;
         WebServer(const char* rootDir);
-        void doGET(int& socket, HttpMessage& request) override;
-        virtual PathMimetypePair findFile(HttpMessage& request);
+        void doGET(Descriptor& socket, HttpMessage& request, const char* remainingPath) override;
     
     private:
-        magic_t magic_cookie;
         const std::string rootDir;
-        int rootFd;
     };
 }
 #endif // WEBSERVER_H

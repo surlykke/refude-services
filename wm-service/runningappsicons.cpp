@@ -10,6 +10,7 @@
 #include <climits>
 #include <png++/png.hpp>
 #include "utils.h"
+#include "comm.h"
 
 #include "runningappsicons.h"
 #include "xdg.h"
@@ -18,7 +19,7 @@ namespace refude
 {
     static const std::string icondirRoot = xdg::cache_home() + "/RefudeService/icons";
 
-    RunningAppsIcons::RunningAppsIcons() : WebServer(icondirRoot.data())
+    RunningAppsIcons::RunningAppsIcons() : AbstractResource()
     {
         for (const std::string& subdirectory : subdirectories(icondirRoot)) {
             unsigned long size = atol(subdirectory.data());
@@ -38,12 +39,11 @@ namespace refude
     {
     }
 
-    PathMimetypePair RunningAppsIcons::findFile(HttpMessage& request)
+    void RunningAppsIcons::doGET(Descriptor& socket, HttpMessage& request, const char* remainingPath)
     {
-        const char* iconName = request.remainingPath;
 
-        if (iconPaths.find(iconName) < 0) {
-            throw HttpCode::Http404;
+        if (iconPaths.find(remainingPath) < 0) {
+            return sendStatus(socket, HttpCode::Http404);
         }
 
         int size = 32;
@@ -52,20 +52,20 @@ namespace refude
             char* endptr;
             size = strtoul(request.queryParameterMap["size"][0], &endptr, 10);
             if (*endptr) {
-                throw HttpCode::Http406;
+                return sendStatus(socket, HttpCode::Http406);
             } 
         }
 
         unsigned long distance = ULONG_MAX;
         const char* path ;
-        for (const SizePath& sizePath : iconPaths[iconName]) {
+        for (const SizePath& sizePath : iconPaths[remainingPath]) {
             unsigned long newdist = sizePath.size > size ? sizePath.size - size : size - sizePath.size;
             if (newdist < distance) {
                 distance = newdist;
                 path = sizePath.path.data();
             }
         }
-        return {path, "image/png"};
+        return sendFile(socket, path, "image/png");
     }
 
 

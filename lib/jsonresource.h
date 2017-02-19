@@ -14,22 +14,25 @@
 #include "buffer.h"
 #include "json.h"
 #include "httpmessage.h"
-#include "abstractcachingresource.h"
+#include "abstractresource.h"
 
 namespace refude
 {
-    class JsonResource : public AbstractCachingResource
+    class JsonResource : public AbstractResource
     {
     public:
-        typedef std::unique_ptr<JsonResource> ptr; 
+        using ptr = std::unique_ptr<JsonResource>;
         JsonResource();
         JsonResource(Json&& json);
         virtual ~JsonResource();
-        Json& getJson(); 
+        virtual void doGET(Descriptor& socket, HttpMessage &request, const char* remainingPath) override;
+
+        Json& getJson();
         void setJson(Json&& json);
 
-    protected:
-        virtual Buffer buildContent(HttpMessage& request, std::map<std::string, std::string>& headers) override;
+    private:
+        Buffer buildContent(std::vector<std::string> locales);
+        Map<Buffer> localizedCache; // Maps from lang to serialization
         Json json;
     };
 }

@@ -17,11 +17,10 @@
 int main(int argc, char *argv[])
 {
     using namespace refude;
-    Service service;
     IconResourceBuilder iconResourceBuilder;
     iconResourceBuilder.buildResources();
-    iconResourceBuilder.mapResources(service);
-    std::string socketPath = xdg::runtime_dir() + "/org.refude.icon-service";
-    service.serve(socketPath.data());
-    service.wait();
+    iconResourceBuilder.mapResources();
+
+    service::listen(xdg::runtime_dir() + "/org.refude.icon-service");
+    service::runAndWait();
 }

@@ -10,7 +10,6 @@
 #define POWER_APPLICATION_H
 
 #include <QCoreApplication>
-#include "notifierresource.h"
 #include "jsonresourcecollection.h"
 #include "service.h"
     
@@ -26,15 +25,10 @@ namespace refude
     public:
         PowerApplication(int& argc, char** argv);
 
-    private slots:
-        void collectDevices();
-        
     private:
         void collectDeviceJsons();
         void collectActionJsons();
 
-        Service service;
-        NotifierResource::ptr notifier;
         JsonResourceCollection jsonResources;
         std::vector<PropertiesIF*> deviceInterfaces;
         QDBusInterface* managerInterface;

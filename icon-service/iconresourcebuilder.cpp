@@ -12,6 +12,7 @@
 #include "xdg.h"
 #include "themereader.h"
 #include "iconcollector.h"
+#include "resourcecollection.h"
 
 #include "iconresourcebuilder.h"
 
@@ -91,13 +92,13 @@ namespace refude
         IconCollector("/usr/share/pixmaps", dummyIconJson).collectInto(usrSharePixmapsIcons);
     }
 
-    void IconResourceBuilder::mapResources(Service& service)
+    void IconResourceBuilder::mapResources()
     {
         IconResource::ptr iconResource = std::make_unique<IconResource>(std::move(themeIconMap),
                                                                         std::move(usrSharePixmapsIcons), 
                                                                         std::move(inheritanceMap));
 
-        service.map(std::move(iconResource), "/icons/icon");
+        ResourceCollection::mapPath(std::move(iconResource), "/icons/icon");
 
         for (auto& entry : themeJsonMap) {
             const std::string& themeDirName = entry.key;
@@ -105,12 +106,12 @@ namespace refude
             themesJson["themes"].append(themeDirName);
             JsonResource::ptr themeResource = std::make_unique<JsonResource>();
             themeResource->setJson(std::move(themeJson));
-            service.map(std::move(themeResource), std::string("/icons/themes") + themeDirName);
+            ResourceCollection::mapPath(std::move(themeResource), std::string("/icons/themes") + themeDirName);
         };
 
         JsonResource::ptr themesResource = std::make_unique<JsonResource>();
         themesResource->setJson(std::move(themesJson));
-        service.map(std::move(themesResource), "/icons/themes");
+        ResourceCollection::mapPath(std::move(themesResource), "/icons/themes");
     }
 
 }

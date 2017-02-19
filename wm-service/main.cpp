@@ -16,16 +16,5 @@
 
 int main(int argc, char *argv[])
 {
-    using namespace refude;
-    try {
-        /*std::string configDir = xdg::config_home() + "/RefudeService";
-        system((std::string("mkdir -p ") + configDir).data());*/
-
-        Controller().run();
-    }
-    catch (RuntimeError re) {
-        std::cerr << re.what() << "\n";
-        re.printStackTrace();
-        std::cerr << "\n";
-    }
+    refude::WmService::run();
 }

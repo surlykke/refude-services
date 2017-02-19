@@ -22,7 +22,7 @@ namespace refude
         IconResourceBuilder();
         virtual ~IconResourceBuilder();
         void buildResources();
-        void mapResources(Service& service);
+        void mapResources();
 
         Json themesJson;
         Map<Json> themeJsonMap;

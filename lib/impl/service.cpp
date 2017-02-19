@@ -9,268 +9,170 @@
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <poll.h>
 #include <mutex>
 #include <limits.h>
 
+#include "comm.h"
 #include "httpmessage.h"
+#include "httpmessagereader.h"
 #include "abstractresource.h"
+#include "notifierresource.h"
+#include "socketqueue.h"
+#include "resourcecollection.h"
+
 #include "service.h"
 
 namespace refude
 {
-
-    struct ThreadSafeQueue
+    namespace service
     {
 
-        ThreadSafeQueue() : elements(), count(0), m() { }
+        bool dumpRequests;
+        std::vector<std::thread> listenThreads;
+        std::vector<std::thread> workerThreads;
+        SocketQueue socketQueue;
 
-        void enqueue(int s) {
-           {
-                std::unique_lock<std::mutex> lock(m);
+        bool shuttingDown = false;
 
-                while (count >= 16) {
-                    notFull.wait(lock);
+        std::shared_mutex mutex;
+
+        void listenOnSocket(Descriptor&& socket)
+        {
+            struct pollfd pollfd;
+            pollfd.fd = socket;
+            pollfd.events = POLLIN;
+
+            for (;;) {
+                int pollRes = poll(&pollfd, 1, -1);
+                if (pollRes < 0) {
+                    throw C_Error();
                 }
 
-                for (int i = count; i > 0; i--) {
-                    elements[i] = elements[i - 1];
+                if (shuttingDown) {
+                    break;
                 }
 
-                elements[0] = s;
-                count++;
-            }
+                if (pollRes > 0) {
+                    struct timeval starttime;
+                    gettimeofday(&starttime, NULL);
+                    std::cout << "Incoming:    " << (1000000*starttime.tv_sec + starttime.tv_usec) << "\n";
+                    int requestSocket = accept4(socket, NULL, NULL, SOCK_CLOEXEC);
+                    if (requestSocket < 0) {
+                        continue;
+                    }
 
-            notEmpty.notify_one();
-        }
-
-        int dequeue() {
-            int result;
-            {
-                std::unique_lock<std::mutex> lock(m);
-
-                while (count <= 0) {
-                    notEmpty.wait(lock);
+                    struct timeval tv;
+                    tv.tv_sec = 0;
+                    tv.tv_usec = 200000;
+                    setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv , sizeof(struct timeval));
+                    socketQueue.push(requestSocket);
                 }
-
-                result = elements[--count];
-            }
-            notFull.notify_one();
-
-            return result;
-        }
-
-        int elements[16];
-        int count;
-
-        std::mutex m;
-        std::condition_variable notFull;
-        std::condition_variable notEmpty;
-    };
-
-    Service::Service() :
-        dumpRequests(false),
-        threads(),
-        mNumThreads(5),
-        listenSocket(-1),
-        resourceMappings(),
-        requestSockets(new ThreadSafeQueue()),
-        prefixMappings(),
-        shuttingDown(false)
-    {
-    }
-
-    Service::~Service()
-    {
-        shuttingDown = true;
-        wait(); 
-        close(listenSocket);
-
-    }
-
-    void Service::serve(uint16_t portNumber) 
-    {
-        struct sockaddr_in sockaddr;
-        memset(&sockaddr, 0, sizeof(struct sockaddr_in));
-        sockaddr.sin_family = AF_INET;
-        sockaddr.sin_port = htons(portNumber);
-        sockaddr.sin_addr.s_addr = INADDR_ANY;
-        if ((listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
-        if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sockaddr)) < 0) throw C_Error();
-    
-        startThreads();
-    }
-
-
-    void Service::serve(const char* socketPath) 
-    {
-        struct sockaddr_un sockaddr;
-        memset(&sockaddr, 0, sizeof(struct sockaddr_un));
-        sockaddr.sun_family = AF_UNIX;
-        strncpy(&sockaddr.sun_path[0], socketPath, strlen(socketPath));
-        if ((listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) < 0) throw C_Error();
-        unlink(socketPath);
-        if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + strlen(socketPath) + 1) < 0) {
-            throw C_Error();
-        }
-   
-        startThreads();
-    }
-
-    void Service::wait() {
-        for (int i = 0; i < threads.size(); i++) {
-            threads.at(i).join();
-        }
-    }
-
-    void Service::map(AbstractResource::ptr&& resource, const std::string& p1, const std::string& p2, const std::string& p3, const std::string& p4)
-    {
-        resourceMappings[p1 + p2 + p3 + p4] = std::move(resource);
-    }
-
-    void Service::mapByPrefix(AbstractResource::ptr&& resource, const std::string& p1, const std::string& p2, const std::string& p3, const std::string& p4)
-    {
-        prefixMappings[p1 + p2 + p3 + p4] = std::move(resource);
-    }
-
-    void Service::unMap(const std::string& path)
-    {
-        resourceMappings.erase(path);
-        prefixMappings.erase(path);
-    }
-
-    AbstractResource* Service::mapping(const std::string& path)
-    {
-        int pos = resourceMappings.find(path);
-        return pos < 0 ? NULL : resourceMappings.pairAt(pos).value.get();
-    }
-
-
-    AbstractResource* Service::prefixMapping(const std::string& path)
-    {
-        int pos = prefixMappings.find(path);
-        return pos < 0 ? NULL : prefixMappings.pairAt(pos).value.get();
-    }
-
-    void Service::startThreads()
-    {
-        if (listen(listenSocket, 8) < 0) throw C_Error();
-        for (int i = 0; i < mNumThreads; i++) {
-            threads.push_back(std::thread(&Service::worker, this));
-        }
-        threads.push_back(std::thread(&Service::listener, this));
-    }
-
-
-    void Service::listener()
-    {
-        struct pollfd pollfd;
-        pollfd.fd = listenSocket;
-        pollfd.events = POLLIN;
-
-        for (;;) {
-            int pollRes = poll(&pollfd, 1, 250);
-            if (shuttingDown) {
-                for (int i = 1; i < threads.size(); i++) {
-                    requestSockets->enqueue(-1); // Tell workers to quit
-                }
-
-                return;
-            }
-
-            if (pollRes > 0) {
-                int requestSocket = accept4(listenSocket, NULL, NULL, SOCK_CLOEXEC);
-                if (requestSocket < 0) {
-                    continue;
-                }
-
-                struct timeval tv;
-                tv.tv_sec = 0;  
-                tv.tv_usec = 200000;  
-                setsockopt(requestSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv , sizeof(struct timeval));
-                requestSockets->enqueue(requestSocket);
             }
         }
-    }
 
-    void Service::worker()
-    {
-        int requestSocket;
-        HttpMessage request;
-
-        for (;;) {
-            requestSocket = requestSockets->dequeue();
-            if (requestSocket < 0) {
-                return;
+        void shutDown()
+        {
+            shuttingDown = true;
+            for (std::thread& t : listenThreads) {
+                t.join();
             }
+            for (std::thread& t : workerThreads) {
+                t.join();
+            }
+        }
 
-            do {
-                try {
-                    HttpMessageReader reader(requestSocket, request);
-                    reader.dumpRequest = dumpRequests;
-                    reader.readRequest();
+        void listen(uint16_t portNumber)
+        {
+            struct sockaddr_in sockaddr;
+            memset(&sockaddr, 0, sizeof(struct sockaddr_in));
+            sockaddr.sin_family = AF_INET;
+            sockaddr.sin_port = htons(portNumber);
+            sockaddr.sin_addr.s_addr = INADDR_ANY;
+            Descriptor listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
+            if (listenSocket < 0) throw C_Error();
+            if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sockaddr)) < 0) throw C_Error();
+            if (::listen(listenSocket, 8) < 0) throw C_Error();
+
+            listenThreads.push_back(std::thread(&listenOnSocket, std::move(listenSocket)));
+        }
+
+        void listen(std::string socketPath)
+        {
+            struct sockaddr_un sockaddr;
+            memset(&sockaddr, 0, sizeof(struct sockaddr_un));
+            sockaddr.sun_family = AF_UNIX;
+            strncpy(&sockaddr.sun_path[0], socketPath.data(), socketPath.size());
+            Descriptor listenSocket = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
+            if (listenSocket < 0) throw C_Error();
+            unlink(socketPath.data());
+            if (bind(listenSocket, (struct sockaddr*)(&sockaddr), sizeof(sa_family_t) + socketPath.size() + 1) < 0) {
+                throw C_Error();
+            }
+            if (::listen(listenSocket, 8) < 0) throw C_Error();
+
+            listenThreads.push_back(std::thread(&listenOnSocket, std::move(listenSocket)));
+        }
+
+
+        void readRequest(Descriptor&& requestSocket)
+        {
+            try {
+
+                HttpRequest request;
+                request.addTimestamp("Start readRequest");
+                request.read(requestSocket);
+
+                {
+                    std::shared_lock<std::shared_mutex> readLock(ResourceCollection::resourceMutex);
                     AbstractResource* handler;
-                    int resourceIndex = resourceMappings.find(request.path);
-                    if (resourceIndex > -1) {
-                        handler = resourceMappings.pairAt(resourceIndex).value.get();
-                        request.setMatchedPathLength(resourceMappings.pairAt(resourceIndex).key.size());
+                    int matchedLength;
+                    if (ResourceCollection::getResource(handler, matchedLength, request.path)) {
+                        handler->handleRequest(requestSocket, request, request.path + matchedLength);
                     }
-                    else { 
-                        resourceIndex = prefixMappings.find_longest_prefix(request.path);
-                        if (resourceIndex >= 0) {
-                            const std::string& matchedPath = prefixMappings.pairAt(resourceIndex).key;
-                            const char firstCharAfterMatch = request.path[matchedPath.size()];
-                            if ( firstCharAfterMatch == '\0' || firstCharAfterMatch == '/') {
-                                request.setMatchedPathLength(matchedPath.size());
-                                handler = prefixMappings.pairAt(resourceIndex).value.get();
-                            }
-                        }
-                    }
+                }
 
-                    if (! handler) {
-                        throw HttpCode::Http404;
-                    }
-                    
-                    handler->handleRequest(requestSocket, request);
-
-                    if (requestSocket > -1 &&
-                        request.header(Header::connection) != 0 &&
-                        strcasecmp("close", request.header(Header::connection)) == 0) {
-                        close(requestSocket);
-                        requestSocket = -1;
-                    }
+                request.addTimestamp("request handled");
+                request.printoutTimestamps();
+            }
+            catch (HttpCode status) {
+                sendStatus(requestSocket, status);
+            }
+            catch (RuntimeError re) {
+                try {
+                    sendStatus(requestSocket, HttpCode::Http500);
                 }
-                catch (HttpCode status) {
-                    send(requestSocket, statusLine(status), strlen(statusLine(status)), MSG_NOSIGNAL);
-                    send(requestSocket, "\r\n", 2, MSG_NOSIGNAL);
-                    close(requestSocket);
-                    requestSocket = -1;
-                }
-                catch (C_Error c_Error) {
-                    if (c_Error.errorNumber != 0 &&
-                        c_Error.errorNumber != EAGAIN &&
-                        c_Error.errorNumber != EWOULDBLOCK) {
-                       std::cerr << "Worker caught RuntimeError: " << c_Error.what() << "\n";
-                        c_Error.printStackTrace();
-                        std::cerr << "\n";
-                    }
-                    else {
-                        // We can get here 'benign' error - i.e. connection timed out, peer closed 
-                        // or some such
-                    }
-                    close(requestSocket);
-                    requestSocket = -1;
-                }
-                catch (RuntimeError runtimeError) {
-                    close(requestSocket);
-                    requestSocket = -1;
-                    std::cerr << "Worker caught RuntimeError: " << runtimeError.what() << "\n";
-                    runtimeError.printStackTrace();
-                    std::cerr << "\n";
+                catch(RuntimeError re2) {
                 }
             }
-            while (requestSocket > -1);
         }
+
+        void work() {
+            for(;;) {
+                int socket = socketQueue.pop();
+                if (socket < 0) return;
+                readRequest(Descriptor(socket));
+            }
+        }
+
+        void run(int numberOfWorkers)
+        {
+            for (; numberOfWorkers > 0; numberOfWorkers--) {
+                workerThreads.push_back(std::thread(&work));
+            }
+        }
+
+        void runAndWait(int numberOfWorkers)
+        {
+            run(numberOfWorkers);
+            for (std::thread& t : workerThreads) {
+                t.join();
+            }
+        }
+
     }
 }
+
+

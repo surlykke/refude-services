@@ -7,7 +7,6 @@
  */
 
 #include "service.h"
-#include "notifierresource.h"
 #include "xdg.h"
 #include "powerapplication.h"
 

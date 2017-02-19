@@ -36,8 +36,6 @@ namespace refude
         std::vector<std::string> servicesOrder;
 
         Agent agent;
-        Service service;
-        NotifierResource::ptr notifier;
         JsonResourceCollection resources;
 
     private slots:

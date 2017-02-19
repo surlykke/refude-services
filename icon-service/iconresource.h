@@ -18,16 +18,16 @@
 
 namespace refude
 {
-    class IconResource : public WebServer
+    class IconResource : public AbstractResource
     {
     public:
         typedef std::unique_ptr<IconResource> ptr;
         IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap);
         virtual ~IconResource();
-        virtual PathMimetypePair findFile(HttpMessage& request) override;
+        virtual void doGET(Descriptor &socket, HttpMessage &request, const char *remainingPath);
         
     private:
-        PathMimetypePair findByPath(const char *path); 
+        void findByPath(Descriptor& socket, const char* path);
         Json* findPathOfClosest(Json& iconList, int size);
         bool othersHavePermissions(const char* filePath, mode_t permissions);
         

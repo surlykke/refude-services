@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <sys/stat.h>
 
+#include "comm.h"
 #include "map.h"
 #include "utils.h"
 #include "jsonwriter.h"
@@ -19,7 +20,7 @@ namespace refude
 {
 
     IconResource::IconResource(ThemeIconMap&& themeIconMap, IconMap&& usrSharePixmapIcons, InheritanceMap&& inheritanceMap) :
-        WebServer("/"),
+        AbstractResource(),
         themeIconMap(std::move(themeIconMap)),
         usrSharePixmapsIcons(std::move(usrSharePixmapIcons)),
         inheritanceMap(std::move(inheritanceMap))
@@ -30,7 +31,7 @@ namespace refude
     {
     }
 
-    PathMimetypePair IconResource::findFile(HttpMessage& request)
+    void IconResource::doGET(Descriptor &socket, HttpMessage &request, const char *remainingPath)
     {
         std::vector<std::string> names;
         std::string themeName;
@@ -43,7 +44,7 @@ namespace refude
         if (request.queryParameterMap["name"].size() == 1 && *(request.queryParameterMap["name"][0]) == '/') {
             // We do not support mixing names and absolute paths in one request, nor giving more than one 
             // absolute path.
-            return findByPath(request.queryParameterMap["name"][0]);
+            return findByPath(socket, request.queryParameterMap["name"][0]);
         }
 
         if (request.queryParameterMap["theme"].size() == 1) {
@@ -72,7 +73,7 @@ namespace refude
                 if (pos >= 0) {
                     Json* icon = findPathOfClosest(iconMap.pairAt(pos).value, size);
                     if (icon) {
-                        return { (*icon)["path"].toString(), (*icon)["mimetype"].toString() };
+                        return sendFile(socket, (*icon)["path"].toString(), (*icon)["mimetype"].toString());
                     }
                 }
             }
@@ -90,16 +91,16 @@ namespace refude
             if (pos >= 0) {
                 Json* icon = findPathOfClosest(usrSharePixmapsIcons.pairAt(pos).value, size);
                 if (icon) { 
-                    return { (*icon)["path"].toString(), (*icon)["mimetype"].toString() };
+                    return sendFile(socket, (*icon)["path"].toString(), (*icon)["mimetype"].toString());
                 }
             }
         }
 
         // Abandon all hope
-        throw HttpCode::Http404;
+        sendStatus(socket, HttpCode::Http404);
     }
 
-    PathMimetypePair IconResource::findByPath(const char* path)
+    void IconResource::findByPath(Descriptor& socket, const char* path)
     {
         char resolvedPath[PATH_MAX];
         if (!realpath(path, resolvedPath)) throw C_Error();
@@ -122,16 +123,16 @@ namespace refude
             }
         }
         if (!strlen(mimetype)) {
-            throw HttpCode::Http404;
+            return sendStatus(socket, HttpCode::Http404);
         }
 
         do {
-            if (!dirname(resolvedPath)) throw C_Error();
-            if (!othersHavePermissions(resolvedPath, 1)) throw HttpCode::Http405;
+            if (!dirname(resolvedPath)) return sendStatus(socket, HttpCode::Http404);
+            if (!othersHavePermissions(resolvedPath, 1)) return sendStatus(socket,HttpCode::Http405);
         } 
         while (strcmp("/", resolvedPath));
         
-        return { path, mimetype };
+        return sendFile(socket, path, mimetype);
     }
 
     bool IconResource::othersHavePermissions(const char* filePath, mode_t permissions)

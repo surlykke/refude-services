@@ -23,13 +23,13 @@ namespace refude
 
     typedef std::vector<SizePath> SizePathList;
 
-    class RunningAppsIcons : public WebServer
+    class RunningAppsIcons : public AbstractResource
     {
     public:
         typedef std::unique_ptr<RunningAppsIcons> ptr;
         RunningAppsIcons();
         virtual ~RunningAppsIcons();
-        virtual PathMimetypePair findFile(HttpMessage& request);
+        virtual void doGET(Descriptor& socket, HttpMessage& request, const char* remainingPath);
     
         void addIcon(const char* iconName, const std::vector<unsigned long>& icon);
     private:

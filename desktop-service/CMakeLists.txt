@@ -1,4 +1,5 @@
 set(PROJECT "RefudeDesktopService")
+set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS}")
 project(${PROJECT})
 
 file(GLOB SOURCE_FILES *.cpp typedefs.h)

@@ -11,6 +11,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <shared_mutex>
 
 namespace refude
 {
