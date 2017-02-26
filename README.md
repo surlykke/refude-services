@@ -1,4 +1,11 @@
 <!-- !:mime text/markdown -->
+# ABANDONWARE! #
+
+I'm discontinuing this project - I've decided to migrate from c++ to go. 
+
+Check for progress on https://github.com/surlykke/RefudeServices.git
+
+
 # Refude-services - Restful Desktop Environment Services
 
 ## What is it?
